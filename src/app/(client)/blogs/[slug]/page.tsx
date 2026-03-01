@@ -158,6 +158,35 @@ export default async function SingleBlogPage({
 				user={session?.user}
 				limit={commentLimit}
 			/>
+
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify({
+						"@context": "https://schema.org",
+						"@type": "BlogPosting",
+						headline: blog.title,
+						description: blog.metaDescription || blog.excerpt,
+						image: blog.coverImage ? [blog.coverImage] : [],
+						datePublished: blog.createdAt,
+						dateModified: blog.updatedAt || blog.createdAt,
+						author: [
+							{
+								"@type": "Person",
+								name: blog.authorId?.name,
+								image: blog.authorId?.image,
+							},
+						],
+						mainEntityOfPage: {
+							"@type": "WebPage",
+							"@id": `${
+								process.env.NEXT_PUBLIC_APP_URL ||
+								"https://the-daily-canvas.vercel.app"
+							}/blogs/${blog.slug}`,
+						},
+					}),
+				}}
+			/>
 		</article>
 	);
 }

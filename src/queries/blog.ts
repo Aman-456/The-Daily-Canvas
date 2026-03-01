@@ -44,3 +44,14 @@ export const getBlogBySlugCached = unstable_cache(
 	["blog-single"],
 	{ revalidate: 300, tags: ["blogs"] }, // 5 minutes = 300 seconds
 );
+
+export const getAllBlogSlugs = async () => {
+	await dbConnect();
+	const blogs = await Blog.find({ isPublished: true })
+		.select("slug updatedAt")
+		.lean();
+	return blogs.map((blog) => ({
+		slug: blog.slug,
+		updatedAt: blog.updatedAt || blog.createdAt,
+	}));
+};

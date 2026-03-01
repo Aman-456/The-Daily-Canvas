@@ -14,24 +14,17 @@ export default async function ClientLayout({
 		<div className="min-h-screen flex flex-col relative">
 			<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="container mx-auto px-4 h-16 flex items-center justify-between">
-					<Link href="/" className="font-bold text-xl tracking-tight">
-						The Daily <span className="text-primary">Canvas</span>
-					</Link>
-
-					<nav className="hidden md:flex gap-6">
+					<div className="flex items-center gap-4">
+						<Link href="/" className="font-bold text-xl tracking-tight">
+							The Daily <span className="text-primary">Canvas</span>
+						</Link>
 						<Link
 							href="/about"
 							className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
 						>
 							About
 						</Link>
-						<Link
-							href="/"
-							className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-						>
-							Blogs
-						</Link>
-					</nav>
+					</div>
 
 					<div className="flex items-center gap-4">
 						{session?.user ? (

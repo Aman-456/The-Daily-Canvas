@@ -167,6 +167,28 @@ export default async function BlogsPage({
 					))}
 				</div>
 			)}
+
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify({
+						"@context": "https://schema.org",
+						"@type": "WebSite",
+						name: "The Daily Canvas",
+						url:
+							process.env.NEXT_PUBLIC_APP_URL ||
+							"https://the-daily-canvas.vercel.app",
+						potentialAction: {
+							"@type": "SearchAction",
+							target: `${
+								process.env.NEXT_PUBLIC_APP_URL ||
+								"https://the-daily-canvas.vercel.app"
+							}/?search={search_term_string}`,
+							"query-input": "required name=search_term_string",
+						},
+					}),
+				}}
+			/>
 		</div>
 	);
 }
