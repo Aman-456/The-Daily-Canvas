@@ -10,6 +10,18 @@ export const metadata: Metadata = {
 	title: "The Daily Canvas",
 	description:
 		"Discover daily inspiration, creative stories, and insightful articles on The Daily Canvas.",
+	// Robots & verification
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+		},
+	},
+	verification: {
+		google: "EUn9Qi_wd8C7ZLE6DZELjr87BvGSBIWKAaFoDZHauqQ",
+	},
 };
 
 export default function RootLayout({
