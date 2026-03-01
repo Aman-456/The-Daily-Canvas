@@ -9,9 +9,9 @@ const APP_URL =
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: Promise<{ sitemap_route: string[] }> },
+	{ params }: { params: Promise<{ sitemap_route?: string[] }> },
 ) {
-	const { sitemap_route } = await params;
+	const { sitemap_route = [] } = await params;
 	const pathname = request.nextUrl.pathname; // e.g. "/sitemap.xml" or "/sitemap/sitemap-0.xml"
 
 	// Handle sitemap index: /sitemap.xml
