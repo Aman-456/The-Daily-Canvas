@@ -7,9 +7,9 @@ import { Toaster } from "@/components/ui/sonner";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "The Daily Canvas",
+	title: "Daily Thoughts",
 	description:
-		"Discover daily inspiration, creative stories, and insightful articles on The Daily Canvas.",
+		"Discover daily inspiration, creative stories, and insightful articles on Daily Thoughts.",
 	// Robots & verification
 	robots: {
 		index: true,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { auth, signIn, signOut } from "@/auth";
+import { auth, signIn } from "@/auth";
 import { UserNav } from "@/components/client/UserNav";
 
 export default async function ClientLayout({
@@ -16,7 +16,7 @@ export default async function ClientLayout({
 				<div className="container mx-auto px-4 h-16 flex items-center justify-between">
 					<div className="flex items-center gap-4">
 						<Link href="/" className="font-bold text-xl tracking-tight">
-							The Daily <span className="text-primary">Canvas</span>
+							Daily <span className="text-primary">Thoughts</span>
 						</Link>
 						<Link
 							href="/about"
@@ -50,8 +50,7 @@ export default async function ClientLayout({
 
 			<footer className="border-t py-8 mt-auto">
 				<div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-					&copy; {new Date().getFullYear()} The Daily Canvas. All rights
-					reserved.
+					&copy; {new Date().getFullYear()} Daily Thoughts. All rights reserved.
 				</div>
 			</footer>
 		</div>

@@ -179,10 +179,7 @@ export default async function SingleBlogPage({
 						],
 						mainEntityOfPage: {
 							"@type": "WebPage",
-							"@id": `${
-								process.env.NEXT_PUBLIC_APP_URL ||
-								"https://the-daily-canvas.vercel.app"
-							}/blogs/${blog.slug}`,
+							"@id": `${process.env.NEXT_PUBLIC_APP_URL}/blogs/${blog.slug}`,
 						},
 					}),
 				}}

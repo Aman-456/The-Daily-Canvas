@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/client/FadeIn";
 
 export const metadata = {
-	title: "About The Daily Canvas",
+	title: "About Daily Thoughts",
 	description: "A personal blog about life, art, and everything in between.",
 };
 
@@ -13,21 +13,21 @@ export default function About() {
 		<div className="container max-w-3xl mx-auto py-16 md:py-20 px-4 space-y-12">
 			<FadeIn>
 				<h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-center">
-					About <span className="text-primary">The Daily Canvas</span>
+					About <span className="text-primary">Daily Thoughts</span>
 				</h1>
 			</FadeIn>
 
 			<FadeIn delay={0.1}>
 				<div className="prose dark:prose-invert max-w-none text-lg">
 					<p>
-						Hey, I'm <strong>Aman</strong> from Islamabad, Pakistan.
+						Hey, I&apos;m <strong>Aman</strong> from Islamabad, Pakistan.
 					</p>
 					<p>
-						Welcome to The Daily Canvas — where thoughts get messy, honest, and
+						Welcome to Daily Thoughts — where thoughts get messy, honest, and
 						occasionally helpful.
 					</p>
 					<p>
-						The Daily Canvas is my little corner of the internet — a space to
+						Daily Thoughts is my little corner of the internet — a space to
 						capture whatever lights up my brain: real-life hacks and
 						observations from life here, tech experiments I’m messing with,
 						random thoughts that won’t leave me alone, or the occasional

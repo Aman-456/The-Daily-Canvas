@@ -4,8 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const sitemapSize = 10000;
-const APP_URL =
-	process.env.NEXT_PUBLIC_APP_URL || "https://the-daily-canvas.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
 export async function GET(
 	request: NextRequest,

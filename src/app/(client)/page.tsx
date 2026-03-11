@@ -56,7 +56,7 @@ export default async function BlogsPage({
 						return (
 							<Link key={blog._id} href={`/blogs/${blog.slug}`}>
 								<article className="h-full group rounded-xl border border-border/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:border-border transition-all duration-300">
-									<div className="aspect-[16/10] bg-muted relative overflow-hidden">
+									<div className="aspect-16/10 bg-muted relative overflow-hidden">
 										{blog.coverImage ? (
 											// eslint-disable-next-line @next/next/no-img-element
 											<img
@@ -65,7 +65,7 @@ export default async function BlogsPage({
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
 											/>
 										) : (
-											<div className="w-full h-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 transition-transform duration-500 group-hover:scale-105" />
+											<div className="w-full h-full bg-linear-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 transition-transform duration-500 group-hover:scale-105" />
 										)}
 									</div>
 
@@ -174,15 +174,12 @@ export default async function BlogsPage({
 					__html: JSON.stringify({
 						"@context": "https://schema.org",
 						"@type": "WebSite",
-						name: "The Daily Canvas",
-						url:
-							process.env.NEXT_PUBLIC_APP_URL ||
-							"https://the-daily-canvas.vercel.app",
+						name: "The Thoughts",
+						url: process.env.NEXT_PUBLIC_APP_URL,
 						potentialAction: {
 							"@type": "SearchAction",
 							target: `${
-								process.env.NEXT_PUBLIC_APP_URL ||
-								"https://the-daily-canvas.vercel.app"
+								process.env.NEXT_PUBLIC_APP_URL
 							}/?search={search_term_string}`,
 							"query-input": "required name=search_term_string",
 						},
