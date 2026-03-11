@@ -1,16 +1,9 @@
 import { getAllComments } from "@/queries/comment";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { deleteComment, toggleCommentApproval } from "@/actions/comment";
 import Link from "next/link";
-import {
-	Trash2,
-	CheckCircle,
-	XCircle,
-	User,
-	MessageSquare,
-} from "lucide-react";
+import { User, MessageSquare } from "lucide-react";
+import { CommentActionButtons } from "@/components/admin/CommentActionButtons";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 
@@ -155,45 +148,12 @@ export default async function AdminCommentsPage({
 											</div>
 										</td>
 										<td className="p-4 align-top">
-											<div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-												<form
-													action={async () => {
-														"use server";
-														await toggleCommentApproval(comment._id);
-													}}
-												>
-													<Button
-														variant="ghost"
-														size="icon"
-														className={`h-8 w-8 ${comment.isApproved ? "text-amber-500 hover:text-amber-600" : "text-emerald-500 hover:text-emerald-600"}`}
-														title={comment.isApproved ? "Unapprove" : "Approve"}
-													>
-														{comment.isApproved ? (
-															<XCircle size={16} />
-														) : (
-															<CheckCircle size={16} />
-														)}
-													</Button>
-												</form>
-
-												<form
-													action={async () => {
-														"use server";
-														await deleteComment(
-															comment._id,
-															comment.blogId?._id,
-														);
-													}}
-												>
-													<Button
-														variant="ghost"
-														size="icon"
-														className="h-8 w-8 text-destructive hover:text-red-600"
-														title="Delete Permanent"
-													>
-														<Trash2 size={16} />
-													</Button>
-												</form>
+											<div className="opacity-0 group-hover:opacity-100 transition-opacity">
+												<CommentActionButtons
+													commentId={comment._id}
+													blogId={comment.blogId?._id}
+													isApproved={comment.isApproved}
+												/>
 											</div>
 										</td>
 									</tr>

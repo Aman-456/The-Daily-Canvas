@@ -9,37 +9,56 @@ export async function toggleUserRole(
 	userId: string,
 	newRole: "USER" | "ADMIN" | "SUBADMIN",
 ) {
-	const session = await auth();
+	try {
+		const session = await auth();
 
-	// Only ADMIN can change roles
-	if (session?.user?.role !== "ADMIN") {
-		throw new Error("Unauthorized: Only Admins can change user roles");
+		// Only ADMIN can change roles
+		if (session?.user?.role !== "ADMIN") {
+			return {
+				success: false,
+				error: "Unauthorized: Only Admins can change user roles",
+			};
+		}
+
+		// Prevent admin from demoting themselves if they are the last admin
+		// (Simplified for this project)
+		if (userId === session.user.id && newRole !== "ADMIN") {
+			return { success: false, error: "Cannot demote yourself" };
+		}
+
+		await dbConnect();
+		await User.findByIdAndUpdate(userId, { role: newRole });
+
+		revalidatePath("/admin/users");
+
+		return { success: true };
+	} catch (error: any) {
+		console.error("[toggleUserRole] Error:", error);
+		return {
+			success: false,
+			error: error.message || "An unexpected error occurred",
+		};
 	}
-
-	// Prevent admin from demoting themselves if they are the last admin
-	// (Simplified for this project)
-	if (userId === session.user.id && newRole !== "ADMIN") {
-		throw new Error("Cannot demote yourself");
-	}
-
-	await dbConnect();
-	await User.findByIdAndUpdate(userId, { role: newRole });
-
-	revalidatePath("/admin/users");
-
-	return { success: true };
 }
 
 export async function updateUserProfile(formData: FormData) {
-	const session = await auth();
-	if (!session?.user?.id) throw new Error("Unauthorized");
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-	const name = formData.get("name") as string;
+		const name = formData.get("name") as string;
 
-	await dbConnect();
-	await User.findByIdAndUpdate(session.user.id, { name });
+		await dbConnect();
+		await User.findByIdAndUpdate(session.user.id, { name });
 
-	revalidatePath("/admin");
+		revalidatePath("/admin");
 
-	return { success: true };
+		return { success: true };
+	} catch (error: any) {
+		console.error("[updateUserProfile] Error:", error);
+		return {
+			success: false,
+			error: error.message || "An unexpected error occurred",
+		};
+	}
 }

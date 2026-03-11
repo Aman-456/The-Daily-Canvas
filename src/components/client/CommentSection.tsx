@@ -104,9 +104,11 @@ export function CommentSection({
 						// If not loaded yet, just load the first page to show the new comment
 						handleInitialLoad();
 					}
+				} else {
+					toast.error(result.error || "Failed to post comment");
 				}
 			} catch (error: any) {
-				toast.error(error.message || "Failed to post comment");
+				toast.error("An unexpected error occurred");
 			}
 		});
 	};

@@ -88,17 +88,30 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 		}
 
 		try {
+			let result;
 			if (initialData && blogId) {
-				await updateBlog(blogId, formData);
-				toast.success("Blog updated successfully!");
+				result = await updateBlog(blogId, formData);
+				if (result.success) {
+					toast.success("Blog updated successfully!");
+				} else {
+					toast.error(result.error || "Failed to update blog");
+					setLoading(false);
+					return;
+				}
 			} else {
-				await createBlog(formData);
-				toast.success("Blog created successfully!");
+				result = await createBlog(formData);
+				if (result.success) {
+					toast.success("Blog created successfully!");
+				} else {
+					toast.error(result.error || "Failed to create blog");
+					setLoading(false);
+					return;
+				}
 			}
 			router.push("/admin/blogs");
 			router.refresh();
 		} catch (error: any) {
-			toast.error(error.message || "Failed to save blog");
+			toast.error("An unexpected error occurred while saving the blog");
 		} finally {
 			setLoading(false);
 		}

@@ -3,6 +3,8 @@ import Blog, { IBlog } from "@/models/Blog";
 import "@/models/User"; // Import User model to register it for population
 import { unstable_cache } from "next/cache";
 
+const cacheTTL = 1800; // 30 minutes
+
 export const getBlogsCached = unstable_cache(
 	async (page = 1, limit = 10, search = "") => {
 		await dbConnect();
@@ -27,7 +29,7 @@ export const getBlogsCached = unstable_cache(
 		};
 	},
 	["blogs-list"],
-	{ revalidate: 300, tags: ["blogs"] }, // 5 minutes = 300 seconds
+	{ revalidate: cacheTTL, tags: ["blogs"] }, // 5 minutes = 300 seconds
 );
 
 export const getBlogBySlugCached = unstable_cache(
@@ -42,7 +44,7 @@ export const getBlogBySlugCached = unstable_cache(
 		return JSON.parse(JSON.stringify(blog));
 	},
 	["blog-single"],
-	{ revalidate: 300, tags: ["blogs"] }, // 5 minutes = 300 seconds
+	{ revalidate: cacheTTL, tags: ["blogs"] }, // 5 minutes = 300 seconds
 );
 
 export const getAllBlogSlugs = async () => {

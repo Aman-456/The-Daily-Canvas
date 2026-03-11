@@ -25,6 +25,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isAdminOrSubAdmin } from "@/lib/utils";
 
 interface CommentItemProps {
 	comment: any;
@@ -61,7 +62,7 @@ export function CommentItem({
 
 	const isOwner =
 		user?.id === comment.userId?._id || user?.id === comment.userId;
-	const isAdmin = user?.role === "admin" || user?.role === "ADMIN";
+	const isAdmin = isAdminOrSubAdmin(user?.role);
 
 	const handleReplyDelete = (replyId: string) => {
 		setReplies((prev) => prev.filter((r) => r._id !== replyId));
@@ -131,9 +132,11 @@ export function CommentItem({
 					setIsCollapsed(false);
 					setHasMoreReplies(true); // At least one reply now
 					if (onTotalChange) onTotalChange(1);
+				} else {
+					toast.error(result.error || "Failed to add reply");
 				}
 			} catch (error: any) {
-				toast.error(error.message || "Failed to add reply");
+				toast.error("An unexpected error occurred");
 			}
 		});
 	};
@@ -148,9 +151,11 @@ export function CommentItem({
 				if (result.success) {
 					setIsEditing(false);
 					toast.success("Comment updated!");
+				} else {
+					toast.error(result.error || "Failed to update comment");
 				}
 			} catch (error: any) {
-				toast.error(error.message || "Failed to update comment");
+				toast.error("An unexpected error occurred");
 			}
 		});
 	};
@@ -165,9 +170,11 @@ export function CommentItem({
 					toast.success("Comment deleted!");
 					if (onDelete) onDelete();
 					if (onTotalChange) onTotalChange(-1);
+				} else {
+					toast.error(result.error || "Failed to delete comment");
 				}
 			} catch (error: any) {
-				toast.error(error.message || "Failed to delete comment");
+				toast.error("An unexpected error occurred");
 			}
 		});
 	};
@@ -271,7 +278,7 @@ export function CommentItem({
 						</p>
 					)}
 
-					{!isEditing && (
+					{!isEditing && user && (
 						<div className="flex items-center gap-2 pt-1">
 							{!comment.isDeleted && (
 								<Button
