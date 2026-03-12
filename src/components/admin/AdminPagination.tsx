@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, usePathname } from "next/navigation";
@@ -33,12 +34,16 @@ export function AdminPagination({
 			<div className="flex gap-1">
 				<Link
 					href={createPageURL(currentPage - 1)}
-					className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+					className={
+						currentPage <= 1
+							? "pointer-events-none opacity-50"
+							: "cursor-pointer"
+					}
 				>
 					<Button
 						variant="outline"
 						size="sm"
-						className="rounded-lg h-8 w-8 p-0"
+						className="rounded-lg h-8 w-8 p-0 cursor-pointer"
 						disabled={currentPage <= 1}
 					>
 						<ChevronLeft size={16} />
@@ -59,7 +64,7 @@ export function AdminPagination({
 							<Button
 								variant={currentPage === page ? "default" : "outline"}
 								size="sm"
-								className="rounded-lg h-8 w-8 p-0"
+								className="rounded-lg h-8 w-8 p-0 cursor-pointer"
 							>
 								{page}
 							</Button>
@@ -69,14 +74,16 @@ export function AdminPagination({
 
 				<Link
 					href={createPageURL(currentPage + 1)}
-					className={
-						currentPage >= totalPages ? "pointer-events-none opacity-50" : ""
-					}
+					className={cn(
+						currentPage >= totalPages
+							? "pointer-events-none opacity-50"
+							: "cursor-pointer",
+					)}
 				>
 					<Button
 						variant="outline"
 						size="sm"
-						className="rounded-lg h-8 w-8 p-0"
+						className="rounded-lg h-8 w-8 p-0 cursor-pointer"
 						disabled={currentPage >= totalPages}
 					>
 						<ChevronRight size={16} />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getBlogsCached } from "@/queries/blog";
+import SearchInput from "@/components/client/SearchInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Ensure route is dynamic since it uses searchParams
@@ -34,15 +35,7 @@ export default async function BlogsPage({
 				</div>
 
 				{/* Simple search form hitting the same route */}
-				<form className="flex w-full md:w-auto relative" method="get">
-					<input
-						type="search"
-						name="search"
-						defaultValue={search}
-						placeholder="Search blogs..."
-						className="w-full md:w-[300px] h-10 px-4 rounded-full border border-gray-300 dark:border-zinc-700 bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-					/>
-				</form>
+				<SearchInput defaultValue={search} />
 			</div>
 
 			{blogs.length === 0 ? (
@@ -174,7 +167,7 @@ export default async function BlogsPage({
 					__html: JSON.stringify({
 						"@context": "https://schema.org",
 						"@type": "WebSite",
-						name: "The Thoughts",
+						name: "The Daily Thoughts",
 						url: process.env.NEXT_PUBLIC_APP_URL,
 						potentialAction: {
 							"@type": "SearchAction",

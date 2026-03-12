@@ -124,4 +124,10 @@
 	body {
 		@apply bg-background text-foreground;
 	}
+
+	/* target the 'X' button in Webkit browsers (Chrome, Safari, Edge) */
+	input[type="search"]::-webkit-search-cancel-button {
+    cursor: pointer;
 }
+}
+
