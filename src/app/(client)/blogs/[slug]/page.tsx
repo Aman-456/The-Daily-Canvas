@@ -1,4 +1,5 @@
 import { getBlogBySlugCached } from "@/queries/blog";
+import { getLatestRootComment } from "@/queries/comment";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,10 @@ export default async function SingleBlogPage({
 	const totalComments = blog.commentsCount || 0;
 
 	const readTime = calculateReadTime(blog.content);
+
+	// Fetch latest comment for preview
+	const latestComment =
+		totalComments > 0 ? await getLatestRootComment(blog._id) : null;
 
 	return (
 		<article className="max-w-3xl mx-auto pb-12 px-2 md:px-0 space-y-10">
@@ -161,6 +166,7 @@ export default async function SingleBlogPage({
 				total={totalComments}
 				user={session?.user}
 				limit={commentLimit}
+				latestComment={latestComment}
 			/>
 
 			<script

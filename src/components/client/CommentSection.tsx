@@ -19,6 +19,7 @@ interface CommentSectionProps {
 	total: number;
 	user: any;
 	limit?: number;
+	latestComment?: any;
 }
 
 export function CommentSection({
@@ -29,6 +30,7 @@ export function CommentSection({
 	total,
 	user,
 	limit = 10,
+	latestComment,
 }: CommentSectionProps) {
 	const [content, setContent] = useState("");
 	const [comments, setComments] = useState(initialComments);
@@ -59,6 +61,7 @@ export function CommentSection({
 			hasInitial: initialComments.length > 0,
 		});
 	}, [blogId]);
+
 	const handleInitialLoad = async () => {
 		setIsLoadingMore(true);
 		try {
@@ -170,6 +173,27 @@ export function CommentSection({
 					>
 						{isLoadingMore ? "Loading conversation..." : "Show all responses"}
 					</Button>
+
+					{latestComment && !isLoadingMore && (
+						<div className="mt-8 w-full max-w-md bg-background/50 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
+							<div className="flex items-start gap-3">
+								<Avatar className="h-8 w-8 border">
+									<AvatarImage src={latestComment.userId?.image} />
+									<AvatarFallback>
+										{latestComment.userId?.name?.charAt(0)}
+									</AvatarFallback>
+								</Avatar>
+								<div className="flex-1 overflow-hidden">
+									<p className="text-xs font-bold text-primary mb-1">
+										Latest response from {latestComment.userId?.name}
+									</p>
+									<p className="text-sm text-muted-foreground line-clamp-2 italic">
+										"{latestComment.content}"
+									</p>
+								</div>
+							</div>
+						</div>
+					)}
 				</div>
 			</div>
 		);
@@ -178,66 +202,37 @@ export function CommentSection({
 	return (
 		<div className="mt-12 space-y-10 max-w-3xl mx-auto" id="comments">
 			<div className="flex items-center justify-between border-b pb-6">
-				<h3 className="text-2xl font-black tracking-tight">
-					Responses{" "}
-					<span className="text-muted-foreground ml-2">({localTotal})</span>
-				</h3>
-				<div className="flex items-center gap-2 text-sm text-muted-foreground">
-					<span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-					Conversation Active
-				</div>
-			</div>
-
-			{/* Comment Form */}
-			{user ? (
-				<form
-					onSubmit={handleSubmit}
-					className="bg-card rounded-2xl p-6 ring-1 ring-zinc-200 dark:ring-zinc-800"
-				>
-					<div className="flex gap-4">
-						<Avatar className="hidden sm:block h-10 w-10 border border-muted-foreground/20">
-							<AvatarImage src={user.image || ""} alt={user.name || "User"} />
-							<AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
-						</Avatar>
-						<div className="flex-1 space-y-4">
-							<Textarea
-								placeholder="What are your thoughts?"
-								value={content}
-								onChange={(e) => setContent(e.target.value)}
-								className="min-h-[120px] bg-muted/20 border focus-visible:ring-1 focus-visible:ring-primary/30 text-base resize-none"
-							/>
-							<div className="flex justify-end pt-2">
-								<Button
-									type="submit"
-									disabled={isPending || !content.trim()}
-									className="rounded-full px-8 font-bold shadow-md hover:shadow-lg transition-all"
-								>
-									{isPending ? "Posting..." : "Post Response"}
-								</Button>
-							</div>
-						</div>
-					</div>
-				</form>
-			) : (
-				<div className="bg-muted/30 border-2 border-dashed rounded-2xl p-10 text-center">
-					<p className="text-muted-foreground mb-4">
-						Sign in to join the discussion and share your perspective.
-					</p>
+				<div className="flex items-center gap-4">
+					<h3 className="text-2xl font-black tracking-tight">
+						{localTotal === 1 ? "Response" : "Responses"}{" "}
+						<span className="text-muted-foreground ml-1.5 font-bold">
+							({localTotal})
+						</span>
+					</h3>
 					<Button
-						variant="outline"
-						className="rounded-full px-8 font-semibold"
-						onClick={() => signIn("google")}
+						variant="secondary"
+						size="sm"
+						className="rounded-full h-8 px-4 text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
+						onClick={() =>
+							document
+								.getElementById("comment-form")
+								?.scrollIntoView({ behavior: "smooth" })
+						}
 					>
-						Sign In to Comment
+						Add response
 					</Button>
 				</div>
-			)}
+				<div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground font-medium">
+					<span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+					Discussion Active
+				</div>
+			</div>
 
 			{/* Comments List */}
 			<div className="space-y-4">
 				{comments.length > 0 ? (
 					<>
-						<div className="space-y-6">
+						<div className="space-y-8">
 							{comments.map((comment) => (
 								<CommentItem
 									key={comment._id}
@@ -254,7 +249,7 @@ export function CommentSection({
 						</div>
 
 						{hasMore && (
-							<div className="pt-8 flex justify-center">
+							<div className="pt-8 flex justify-center border-t mt-8">
 								<Button
 									variant="outline"
 									onClick={handleLoadMore}
@@ -269,8 +264,56 @@ export function CommentSection({
 				) : (
 					<div className="py-20 text-center bg-muted/10 rounded-3xl border border-dashed text-sm">
 						<p className="text-muted-foreground italic font-medium">
-							The conversation hasn't started yet.
+							The conversation hasn't started yet. Be the first to join!
 						</p>
+					</div>
+				)}
+			</div>
+
+			{/* Comment Form moved to bottom */}
+			<div id="comment-form" className="scroll-mt-20 pt-10 border-t">
+				<h4 className="text-lg font-bold mb-6">Leave a response</h4>
+				{user ? (
+					<form
+						onSubmit={handleSubmit}
+						className="bg-card rounded-2xl p-6 ring-1 ring-zinc-200 dark:ring-zinc-800 shadow-sm"
+					>
+						<div className="flex gap-4">
+							<Avatar className="hidden sm:block h-10 w-10 border border-muted-foreground/20">
+								<AvatarImage src={user.image || ""} alt={user.name || "User"} />
+								<AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
+							</Avatar>
+							<div className="flex-1 space-y-4">
+								<Textarea
+									placeholder="What are your thoughts?"
+									value={content}
+									onChange={(e) => setContent(e.target.value)}
+									className="min-h-[120px] bg-muted/20 border focus-visible:ring-1 focus-visible:ring-primary/30 text-base resize-none"
+								/>
+								<div className="flex justify-end pt-2">
+									<Button
+										type="submit"
+										disabled={isPending || !content.trim()}
+										className="rounded-full px-8 font-bold shadow-md hover:shadow-xl transition-all"
+									>
+										{isPending ? "Posting..." : "Post Response"}
+									</Button>
+								</div>
+							</div>
+						</div>
+					</form>
+				) : (
+					<div className="bg-muted/30 border-2 border-dashed rounded-2xl p-10 text-center shadow-inner">
+						<p className="text-muted-foreground mb-4 font-medium">
+							Sign in to join the discussion and share your perspective.
+						</p>
+						<Button
+							variant="outline"
+							className="rounded-full px-8 font-bold border-2"
+							onClick={() => signIn("google")}
+						>
+							Sign In to Comment
+						</Button>
 					</div>
 				)}
 			</div>

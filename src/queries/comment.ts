@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/mongoose";
 import Comment from "@/models/Comment";
+import { unstable_cache } from "next/cache";
 
 export async function getBlogComments(
 	blogId: string,
@@ -170,3 +171,25 @@ export async function getAllComments(page = 1, limit = 20, search?: string) {
 		totalPages: Math.ceil(total / limit),
 	};
 }
+
+export const getLatestRootComment = async (blogId: string) => {
+	const fetchWithCache = unstable_cache(
+		async () => {
+			await dbConnect();
+			const comment = await Comment.findOne({
+				blogId,
+				parentId: null,
+				isApproved: true,
+			})
+				.populate("userId", "name image")
+				.sort({ createdAt: -1 })
+				.lean();
+
+			return comment ? JSON.parse(JSON.stringify(comment)) : null;
+		},
+		["latest-comment", blogId],
+		{ revalidate: 3600, tags: ["blogs"] },
+	);
+
+	return fetchWithCache();
+};
