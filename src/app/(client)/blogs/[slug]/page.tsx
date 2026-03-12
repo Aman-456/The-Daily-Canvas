@@ -55,7 +55,7 @@ export default async function SingleBlogPage({
 	const session = await auth();
 
 	// Use aggregated count for deferred loading
-	const commentLimit = 2;
+	const commentLimit = 10;
 	const totalComments = blog.commentsCount || 0;
 
 	const readTime = calculateReadTime(blog.content);

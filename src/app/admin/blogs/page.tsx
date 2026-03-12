@@ -108,7 +108,20 @@ export default async function AdminBlogsPage({
 								</TableCell>
 								<TableCell className="text-right space-x-2">
 									<Link href={`/admin/blogs/${blog._id}`}>
-										<Button variant="outline" size="sm">
+										<Button
+											variant="outline"
+											size="sm"
+											className="cursor-pointer"
+										>
+											Details
+										</Button>
+									</Link>
+									<Link href={`/admin/blogs/${blog._id}/edit`}>
+										<Button
+											variant="outline"
+											size="sm"
+											className="cursor-pointer"
+										>
 											Edit
 										</Button>
 									</Link>

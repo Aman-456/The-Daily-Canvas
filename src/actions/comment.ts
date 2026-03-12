@@ -215,6 +215,33 @@ export async function deleteComment(
 	}
 }
 
+export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
+	try {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUBADMIN") {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		await dbConnect();
+		await Comment.deleteMany({ blogId });
+
+		// Update blog aggregate count and await it
+		await updateBlogCommentCount(blogId);
+
+		if (slug) revalidatePath(`/blogs/${slug}`);
+		revalidatePath("/");
+		revalidateTag("blogs", "max");
+
+		return { success: true };
+	} catch (error: any) {
+		console.error("[deleteAllCommentsForBlog] Error:", error);
+		return {
+			success: false,
+			error: error.message || "An unexpected error occurred",
+		};
+	}
+}
+
 import { getBlogComments, getCommentReplies } from "@/queries/comment";
 import { isAdminOrSubAdmin } from "@/lib/utils";
 
@@ -235,7 +262,7 @@ export async function getComments(
 export async function getReplies(
 	parentId: string,
 	page = 1,
-	limit = 10,
+	limit = 5,
 	lastTimestamp?: string,
 ) {
 	try {

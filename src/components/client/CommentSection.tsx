@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { CommentItem } from "./CommentItem";
 import { ChevronDown } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import { MessageSquarePlus } from "lucide-react";
 
 interface CommentSectionProps {
 	blogId: string;
@@ -131,7 +132,13 @@ export function CommentSection({
 
 			if (result.success && result.data) {
 				const newComments = result.data.comments;
-				setComments((prev) => [...prev, ...newComments]);
+				setComments((prev) => {
+					const existingIds = new Set(prev.map((c) => c._id));
+					const uniqueNew = newComments.filter(
+						(c: any) => !existingIds.has(c._id),
+					);
+					return [...prev, ...uniqueNew];
+				});
 				setHasMore(result.data.hasMore);
 				setPage(nextPage);
 			} else {
@@ -159,7 +166,9 @@ export function CommentSection({
 					<h3 className="text-xl font-bold mb-2">Community Discussion</h3>
 					<p className="text-muted-foreground text-center mb-6 max-w-md">
 						{localTotal > 0
-							? `Join the conversation. there are ${localTotal} responses waiting for you.`
+							? localTotal === 1
+								? "Join the conversation. There is 1 response waiting for you."
+								: `Join the conversation. There are ${localTotal} responses waiting for you.`
 							: "No responses yet. Be the first to share your thoughts!"}
 					</p>
 					<Button
@@ -171,27 +180,52 @@ export function CommentSection({
 							!isLoadingMore && "cursor-pointer",
 						)}
 					>
-						{isLoadingMore ? "Loading conversation..." : "Show all responses"}
+						{isLoadingMore
+							? "Loading conversation..."
+							: localTotal === 1
+								? "View full discussion"
+								: "Show all responses"}
 					</Button>
 
 					{latestComment && !isLoadingMore && (
-						<div className="mt-8 w-full max-w-md bg-background/50 backdrop-blur-sm rounded-xl p-4 border border-primary/10 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500">
-							<div className="flex items-start gap-3">
-								<Avatar className="h-8 w-8 border">
+						<div className="mt-8 w-full max-w-md bg-background/50 backdrop-blur-sm rounded-xl p-5 border border-primary/10 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-500 hover:border-primary/20 transition-colors">
+							<div className="flex items-start gap-3 mb-4">
+								<Avatar className="h-9 w-9 border">
 									<AvatarImage src={latestComment.userId?.image} />
 									<AvatarFallback>
 										{latestComment.userId?.name?.charAt(0)}
 									</AvatarFallback>
 								</Avatar>
 								<div className="flex-1 overflow-hidden">
-									<p className="text-xs font-bold text-primary mb-1">
-										Latest response from {latestComment.userId?.name}
-									</p>
-									<p className="text-sm text-muted-foreground line-clamp-2 italic">
-										"{latestComment.content}"
+									<div className="flex items-center justify-between mb-1">
+										<p className="text-xs font-bold text-primary">
+											Latest response from {latestComment.userId?.name}
+										</p>
+										<span className="text-[10px] text-muted-foreground font-medium">
+											{formatRelativeTime(latestComment.createdAt)}
+										</span>
+									</div>
+									<p className="text-sm text-muted-foreground line-clamp-2 italic leading-relaxed">
+										"{latestComment.content.replace(/^"|"$/g, "")}"
 									</p>
 								</div>
 							</div>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="w-full justify-center gap-2 text-xs font-bold hover:bg-primary/5 hover:text-primary transition-all rounded-lg group/btn cursor-pointer"
+								onClick={async () => {
+									if (!isLoaded) await handleInitialLoad();
+									setTimeout(() => {
+										document
+											.getElementById("comment-form")
+											?.scrollIntoView({ behavior: "smooth" });
+									}, 100);
+								}}
+							>
+								<MessageSquarePlus className="h-3.5 w-3.5 group-hover/btn:scale-110 transition-transform" />
+								Add your response
+							</Button>
 						</div>
 					)}
 				</div>
@@ -212,7 +246,7 @@ export function CommentSection({
 					<Button
 						variant="secondary"
 						size="sm"
-						className="rounded-full h-8 px-4 text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
+						className="rounded-full h-8 px-4 text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer"
 						onClick={() =>
 							document
 								.getElementById("comment-form")

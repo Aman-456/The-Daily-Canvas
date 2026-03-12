@@ -77,7 +77,14 @@ export function CommentItem({
 
 			const result = await getReplies(comment._id, nextPage, 10, lastTimestamp);
 			if (result.success && result.data) {
-				setReplies([...replies, ...result.data.replies]);
+				const newReplies = result.data.replies;
+				setReplies((prev) => {
+					const existingIds = new Set(prev.map((r) => r._id));
+					const uniqueNew = newReplies.filter(
+						(r: any) => !existingIds.has(r._id),
+					);
+					return [...prev, ...uniqueNew];
+				});
 				setHasMoreReplies(result.data.hasMore);
 				setReplyPage(nextPage);
 			}
@@ -284,7 +291,7 @@ export function CommentItem({
 								<Button
 									variant="ghost"
 									size="sm"
-									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
+									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors cursor-pointer"
 									onClick={() => setIsReplying(!isReplying)}
 								>
 									<MessageSquare className="h-3 w-3 mr-1.5" />
@@ -296,7 +303,7 @@ export function CommentItem({
 								<Button
 									variant="ghost"
 									size="sm"
-									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
+									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors cursor-pointer"
 									onClick={toggleCollapse}
 								>
 									{isCollapsed ? (
@@ -371,7 +378,7 @@ export function CommentItem({
 								size="sm"
 								onClick={loadMoreReplies}
 								disabled={isLoadingReplies}
-								className="text-xs text-primary hover:bg-primary/5 h-7 rounded-full px-3"
+								className="text-xs text-primary hover:bg-primary/5 h-7 rounded-full px-3 cursor-pointer"
 							>
 								{isLoadingReplies ? "Loading..." : "Load more replies"}
 							</Button>
