@@ -54,13 +54,13 @@ export default async function SingleBlogPage({
 	const session = await auth();
 
 	// Use aggregated count for deferred loading
-	const commentLimit = 15;
+	const commentLimit = 2;
 	const totalComments = blog.commentsCount || 0;
 
 	const readTime = calculateReadTime(blog.content);
 
 	return (
-		<article className="max-w-3xl mx-auto pb-12 px-6 md:px-0 space-y-10">
+		<article className="max-w-3xl mx-auto pb-12 px-2 md:px-0 space-y-10">
 			<div className="space-y-6">
 				<Link
 					href="/"
@@ -69,7 +69,7 @@ export default async function SingleBlogPage({
 					<span className="mr-2">←</span> Back to stories
 				</Link>
 
-				<h1 className="text-4xl md:[42px] font-bold tracking-normal leading-[40px] text-foreground mb-[10px]">
+				<h1 className="text-3xl sm:text-4xl font-bold tracking-normal leading-[40px]k sm:leading-[44px] text-foreground mb-[12px]">
 					{blog.title}
 				</h1>
 
@@ -142,7 +142,11 @@ export default async function SingleBlogPage({
 				<SocialShare url={`/blogs/${blog.slug}`} title={blog.title} />
 
 				<Link href="/" className="mt-8">
-					<Button variant="outline" size="lg" className="rounded-full px-8">
+					<Button
+						variant="outline"
+						size="lg"
+						className="rounded-full px-8 cursor-pointer"
+					>
 						Explore more stories
 					</Button>
 				</Link>

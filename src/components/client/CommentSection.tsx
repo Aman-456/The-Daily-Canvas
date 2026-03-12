@@ -2,12 +2,14 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { addComment, getComments } from "@/actions/comment";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CommentItem } from "./CommentItem";
 import { ChevronDown } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { cn } from "@/lib/utils";
 
 interface CommentSectionProps {
 	blogId: string;
@@ -146,7 +148,7 @@ export function CommentSection({
 
 	if (!isLoaded) {
 		return (
-			<div className="mt-12 space-y-8 max-w-3xl mx-auto px-4">
+			<div className="mt-12 space-y-8 max-w-3xl mx-auto">
 				<div className="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed rounded-2xl bg-muted/30 hover:bg-muted/50 transition-all duration-300 group">
 					<div className="bg-primary/10 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300">
 						<ChevronDown className="h-8 w-8 text-primary animate-bounce-slow" />
@@ -161,7 +163,10 @@ export function CommentSection({
 						onClick={handleInitialLoad}
 						disabled={isLoadingMore}
 						size="lg"
-						className="rounded-full px-8 shadow-lg hover:shadow-xl transition-all font-semibold"
+						className={cn(
+							"rounded-full px-8 shadow-lg hover:shadow-xl transition-all font-semibold",
+							!isLoadingMore && "cursor-pointer",
+						)}
 					>
 						{isLoadingMore ? "Loading conversation..." : "Show all responses"}
 					</Button>
@@ -171,7 +176,7 @@ export function CommentSection({
 	}
 
 	return (
-		<div className="mt-12 space-y-10 max-w-3xl mx-auto px-4" id="comments">
+		<div className="mt-12 space-y-10 max-w-3xl mx-auto" id="comments">
 			<div className="flex items-center justify-between border-b pb-6">
 				<h3 className="text-2xl font-black tracking-tight">
 					Responses{" "}
@@ -187,18 +192,19 @@ export function CommentSection({
 			{user ? (
 				<form
 					onSubmit={handleSubmit}
-					className="bg-card border rounded-2xl p-6 shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-800"
+					className="bg-card rounded-2xl p-6 ring-1 ring-zinc-200 dark:ring-zinc-800"
 				>
 					<div className="flex gap-4">
-						<div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary font-bold">
-							{user.name?.charAt(0).toUpperCase()}
-						</div>
+						<Avatar className="hidden sm:block h-10 w-10 border border-muted-foreground/20">
+							<AvatarImage src={user.image || ""} alt={user.name || "User"} />
+							<AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
+						</Avatar>
 						<div className="flex-1 space-y-4">
 							<Textarea
 								placeholder="What are your thoughts?"
 								value={content}
 								onChange={(e) => setContent(e.target.value)}
-								className="min-h-[120px] bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-primary/30 text-base resize-none"
+								className="min-h-[120px] bg-muted/20 border focus-visible:ring-1 focus-visible:ring-primary/30 text-base resize-none"
 							/>
 							<div className="flex justify-end pt-2">
 								<Button
@@ -253,7 +259,7 @@ export function CommentSection({
 									variant="outline"
 									onClick={handleLoadMore}
 									disabled={isLoadingMore}
-									className="rounded-full px-10 border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-bold"
+									className="rounded-full px-10 border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-bold cursor-pointer"
 								>
 									{isLoadingMore ? "Loading more..." : "Load deeper responses"}
 								</Button>
