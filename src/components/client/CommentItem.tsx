@@ -35,6 +35,7 @@ interface CommentItemProps {
 	depth?: number;
 	onDelete?: () => void;
 	onTotalChange?: (delta: number) => void;
+	blogAuthorId?: string;
 }
 
 export function CommentItem({
@@ -45,6 +46,7 @@ export function CommentItem({
 	depth = 0,
 	onDelete,
 	onTotalChange,
+	blogAuthorId,
 }: CommentItemProps) {
 	const [isReplying, setIsReplying] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
@@ -208,6 +210,11 @@ export function CommentItem({
 							<span className="font-bold text-sm">
 								{comment.isDeleted ? "[deleted]" : comment.userId?.name}
 							</span>
+							{comment.userId?._id === blogAuthorId && (
+								<span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+									Admin
+								</span>
+							)}
 							<span className="text-[10px] text-muted-foreground">•</span>
 							<span className="text-[10px] text-muted-foreground">
 								{new Date(comment.createdAt).toLocaleDateString()}
@@ -368,6 +375,7 @@ export function CommentItem({
 							depth={depth + 1}
 							onDelete={() => handleReplyDelete(reply._id)}
 							onTotalChange={onTotalChange}
+							blogAuthorId={blogAuthorId}
 						/>
 					))}
 

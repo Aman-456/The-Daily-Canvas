@@ -21,6 +21,7 @@ interface CommentSectionProps {
 	user: any;
 	limit?: number;
 	latestComment?: any;
+	blogAuthorId?: string;
 }
 
 export function CommentSection({
@@ -32,6 +33,7 @@ export function CommentSection({
 	user,
 	limit = 10,
 	latestComment,
+	blogAuthorId,
 }: CommentSectionProps) {
 	const [content, setContent] = useState("");
 	const [comments, setComments] = useState(initialComments);
@@ -278,6 +280,7 @@ export function CommentSection({
 									onTotalChange={(delta) =>
 										setLocalTotal((prev) => Math.max(0, prev + delta))
 									}
+									blogAuthorId={blogAuthorId}
 								/>
 							))}
 						</div>

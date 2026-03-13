@@ -120,7 +120,7 @@ export default async function SingleBlogPage({
 
 			{blog.coverImage && (
 				<figure className="space-y-3">
-					<div className="aspect-[16/9] md:aspect-[21/9] rounded-xl overflow-hidden bg-muted shadow-sm">
+					<div className="aspect-[16/9] rounded-xl overflow-hidden bg-muted shadow-sm">
 						<img
 							src={blog.coverImage}
 							alt={blog.title}
@@ -161,6 +161,7 @@ export default async function SingleBlogPage({
 			<CommentSection
 				blogId={blog._id}
 				slug={blog.slug}
+				blogAuthorId={blog.authorId?._id?.toString()}
 				initialComments={[]}
 				initialHasMore={totalComments > 0}
 				total={totalComments}
