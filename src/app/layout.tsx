@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toaster } from "@/components/ui/sonner";
+import NextTopLoader from "nextjs-toploader";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -35,6 +36,11 @@ export default function RootLayout({
 				className={`${outfit.className} antialiased min-h-screen bg-background font-sans`}
 			>
 				<AuthProvider>
+					<NextTopLoader
+						height={4}
+						showSpinner={true}
+						color="var(--sidebar-ring)"
+					/>
 					{children}
 					<Toaster />
 				</AuthProvider>
