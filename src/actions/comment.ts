@@ -7,7 +7,9 @@ import Blog from "@/models/Blog";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 
+import { isAdminOrSubAdmin } from "@/lib/utils";
 import { commentSchema } from "@/lib/validations/comment";
+import { getBlogComments, getCommentReplies } from "@/queries/comment";
 
 export async function addComment(formData: FormData) {
 	try {
@@ -241,9 +243,6 @@ export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
 		};
 	}
 }
-
-import { getBlogComments, getCommentReplies } from "@/queries/comment";
-import { isAdminOrSubAdmin } from "@/lib/utils";
 
 export async function getComments(
 	blogId: string,

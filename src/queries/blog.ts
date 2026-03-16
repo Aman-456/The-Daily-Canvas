@@ -3,8 +3,8 @@ import Blog, { IBlog } from "@/models/Blog";
 import "@/models/User"; // Import User model to register it for population
 import { unstable_cache } from "next/cache";
 
-const cacheTTL = 3600; // 1 hour
-const allBlogsCacheTTL = 86400; // 24 hours
+const cacheTTL = 86400; // 24 hours
+const allBlogsCacheTTL = 172800; // 48 hours
 
 export const getBlogsCached = async (
 	page: number,
