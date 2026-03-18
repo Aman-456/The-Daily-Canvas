@@ -108,7 +108,7 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 					return;
 				}
 			}
-			router.push(`/admin/blogs/${blogId}`);
+			router.push(`/admin/blogs/${result.data?._id || blogId}`);
 
 			router.refresh();
 		} catch (error: any) {
