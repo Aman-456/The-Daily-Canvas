@@ -108,7 +108,8 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 					return;
 				}
 			}
-			router.push("/admin/blogs");
+			router.push(`/admin/blogs/${blogId}`);
+
 			router.refresh();
 		} catch (error: any) {
 			toast.error("An unexpected error occurred while saving the blog");
@@ -134,6 +135,7 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 					<Button
 						type="button"
 						variant="ghost"
+						className="cursor-pointer"
 						onClick={() => router.back()}
 						disabled={loading}
 					>
@@ -143,7 +145,7 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 						type="submit"
 						size="lg"
 						disabled={loading || uploading}
-						className="px-8"
+						className="px-8 cursor-pointer"
 					>
 						{loading
 							? "Saving..."

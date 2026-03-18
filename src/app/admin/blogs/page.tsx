@@ -66,7 +66,7 @@ export default async function AdminBlogsPage({
 					</p>
 				</div>
 				<Link href="/admin/blogs/new">
-					<Button>Create Post</Button>
+					<Button className="cursor-pointer">Create Post</Button>
 				</Link>
 			</div>
 

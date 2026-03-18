@@ -2,7 +2,7 @@
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
- 
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -127,7 +127,15 @@
 
 	/* target the 'X' button in Webkit browsers (Chrome, Safari, Edge) */
 	input[type="search"]::-webkit-search-cancel-button {
-    cursor: pointer;
-}
-}
+		cursor: pointer;
+	}
 
+	.blog-content a {
+		color: oklch(55.598% 0.16924 267.133) !important;
+		text-decoration: none !important;
+	}
+	.blog-content a:hover {
+		text-decoration: underline !important;
+		color: oklch(49.169% 0.21125 264.952) !important;
+	}
+}
