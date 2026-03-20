@@ -43,7 +43,6 @@ export function SocialShare({
 		<div className="flex gap-2">
 			<Button
 				variant="outline"
-				className="cursor-pointer"
 				size={size}
 				onClick={handleCopy}
 				title="Copy Link"
@@ -56,7 +55,7 @@ export function SocialShare({
 				size={size}
 				onClick={() => handleShare("twitter")}
 				title="Share on Twitter"
-				className="text-blue-400  border-blue-100 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30"
+				className="text-blue-400  border-blue-100 hover:bg-blue-50 dark:hover:bg-blue-950/30"
 			>
 				<XIcon className="h-4 w-4" />
 			</Button>
@@ -65,7 +64,7 @@ export function SocialShare({
 				size={size}
 				onClick={() => handleShare("facebook")}
 				title="Share on Facebook"
-				className="text-blue-600 border-blue-100 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30"
+				className="text-blue-600 border-blue-100 hover:bg-blue-50 dark:hover:bg-blue-950/30"
 			>
 				<Facebook className="h-4 w-4" />
 			</Button>
@@ -74,7 +73,7 @@ export function SocialShare({
 				size={size}
 				onClick={() => handleShare("linkedin")}
 				title="Share on LinkedIn"
-				className="text-blue-700 border-blue-100 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30"
+				className="text-blue-700 border-blue-100 hover:bg-blue-50 dark:hover:bg-blue-950/30"
 			>
 				<Linkedin className="h-4 w-4" />
 			</Button>

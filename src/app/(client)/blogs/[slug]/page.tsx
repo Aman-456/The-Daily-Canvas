@@ -150,7 +150,7 @@ export default async function SingleBlogPage({
 					<Button
 						variant="outline"
 						size="lg"
-						className="rounded-full px-8 cursor-pointer"
+						className="rounded-full px-8"
 					>
 						Explore more stories
 					</Button>

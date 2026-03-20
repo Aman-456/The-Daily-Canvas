@@ -33,7 +33,7 @@ export function DeleteBlogButton({ blogId }: { blogId: string }) {
 			size="icon"
 			onClick={handleDelete}
 			disabled={loading}
-			className="h-8 w-8 cursor-pointer"
+			className="h-8 w-8"
 			title="Delete blog"
 		>
 			<Trash2 className="h-4 w-4" />

@@ -298,7 +298,7 @@ export function CommentItem({
 								<Button
 									variant="ghost"
 									size="sm"
-									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors cursor-pointer"
+									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
 									onClick={() => setIsReplying(!isReplying)}
 								>
 									<MessageSquare className="h-3 w-3 mr-1.5" />
@@ -310,7 +310,7 @@ export function CommentItem({
 								<Button
 									variant="ghost"
 									size="sm"
-									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors cursor-pointer"
+									className="h-7 px-2 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-full transition-colors"
 									onClick={toggleCollapse}
 								>
 									{isCollapsed ? (
@@ -386,7 +386,7 @@ export function CommentItem({
 								size="sm"
 								onClick={loadMoreReplies}
 								disabled={isLoadingReplies}
-								className="text-xs text-primary hover:bg-primary/5 h-7 rounded-full px-3 cursor-pointer"
+								className="text-xs text-primary hover:bg-primary/5 h-7 rounded-full px-3"
 							>
 								{isLoadingReplies ? "Loading..." : "Load more replies"}
 							</Button>

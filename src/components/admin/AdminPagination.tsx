@@ -43,7 +43,7 @@ export function AdminPagination({
 					<Button
 						variant="outline"
 						size="sm"
-						className="rounded-lg h-8 w-8 p-0 cursor-pointer"
+						className="rounded-lg h-8 w-8 p-0"
 						disabled={currentPage <= 1}
 					>
 						<ChevronLeft size={16} />
@@ -64,7 +64,7 @@ export function AdminPagination({
 							<Button
 								variant={currentPage === page ? "default" : "outline"}
 								size="sm"
-								className="rounded-lg h-8 w-8 p-0 cursor-pointer"
+								className="rounded-lg h-8 w-8 p-0"
 							>
 								{page}
 							</Button>
@@ -83,7 +83,7 @@ export function AdminPagination({
 					<Button
 						variant="outline"
 						size="sm"
-						className="rounded-lg h-8 w-8 p-0 cursor-pointer"
+						className="rounded-lg h-8 w-8 p-0"
 						disabled={currentPage >= totalPages}
 					>
 						<ChevronRight size={16} />

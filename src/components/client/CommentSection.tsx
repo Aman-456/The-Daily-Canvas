@@ -178,7 +178,7 @@ export function CommentSection({
 						disabled={isLoadingMore}
 						size="lg"
 						className={cn(
-							"rounded-full px-8 shadow-lg hover:shadow-xl transition-all font-semibold",
+							"rounded-full px-8 shadow-lg hover:shadow-xl transition-all font-semibold cursor-default",
 							!isLoadingMore && "cursor-pointer",
 						)}
 					>
@@ -215,7 +215,7 @@ export function CommentSection({
 							<Button
 								variant="ghost"
 								size="sm"
-								className="w-full justify-center gap-2 text-xs font-bold hover:bg-primary/5 hover:text-primary transition-all rounded-lg group/btn cursor-pointer"
+								className="w-full justify-center gap-2 text-xs font-bold hover:bg-primary/5 hover:text-primary transition-all rounded-lg group/btn"
 								onClick={async () => {
 									if (!isLoaded) await handleInitialLoad();
 									setTimeout(() => {
@@ -248,7 +248,7 @@ export function CommentSection({
 					<Button
 						variant="secondary"
 						size="sm"
-						className="rounded-full h-8 px-4 text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer"
+						className="rounded-full h-8 px-4 text-xs font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all"
 						onClick={() =>
 							document
 								.getElementById("comment-form")
@@ -291,7 +291,7 @@ export function CommentSection({
 									variant="outline"
 									onClick={handleLoadMore}
 									disabled={isLoadingMore}
-									className="rounded-full px-10 border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-bold cursor-pointer"
+									className="rounded-full px-10 border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-bold"
 								>
 									{isLoadingMore ? "Loading more..." : "Load deeper responses"}
 								</Button>

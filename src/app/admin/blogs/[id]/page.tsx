@@ -43,7 +43,7 @@ export default async function AdminBlogDetailsPage({
 						<Button
 							variant="outline"
 							size="sm"
-							className="gap-2 cursor-pointer"
+							className="gap-2"
 						>
 							<ExternalLink className="h-4 w-4" />
 							Live View
@@ -53,7 +53,7 @@ export default async function AdminBlogDetailsPage({
 						<Button
 							variant="outline"
 							size="sm"
-							className="gap-2 cursor-pointer"
+							className="gap-2"
 						>
 							<Edit2 className="h-4 w-4" />
 							Edit Post

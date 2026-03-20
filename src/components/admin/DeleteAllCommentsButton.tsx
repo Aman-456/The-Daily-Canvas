@@ -50,7 +50,7 @@ export function DeleteAllCommentsButton({
 		<Button
 			variant="destructive"
 			size="sm"
-			className="gap-2 cursor-pointer"
+			className="gap-2"
 			onClick={handleDeleteAll}
 			disabled={isPending}
 		>

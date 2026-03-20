@@ -135,7 +135,6 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 					<Button
 						type="button"
 						variant="ghost"
-						className="cursor-pointer"
 						onClick={() => router.back()}
 						disabled={loading}
 					>
@@ -145,7 +144,7 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 						type="submit"
 						size="lg"
 						disabled={loading || uploading}
-						className="px-8 cursor-pointer"
+						className="px-8"
 					>
 						{loading
 							? "Saving..."
@@ -188,13 +187,12 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 								<div className="flex justify-between items-center">
 									<Label htmlFor="metaTitle">Search Title (Optional)</Label>
 									<span
-										className={`text-[10px] font-medium ${
-											metaTitle.length >= 60
-												? "text-destructive font-bold"
-												: metaTitle.length > 50
-													? "text-amber-500"
-													: "text-muted-foreground"
-										}`}
+										className={`text-[10px] font-medium ${metaTitle.length >= 60
+											? "text-destructive font-bold"
+											: metaTitle.length > 50
+												? "text-amber-500"
+												: "text-muted-foreground"
+											}`}
 									>
 										{metaTitle.length}/60
 									</span>
@@ -217,13 +215,12 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 								<div className="flex justify-between items-center">
 									<Label htmlFor="metaDescription">Search Description</Label>
 									<span
-										className={`text-[10px] font-medium ${
-											metaDescription.length >= 160
-												? "text-destructive font-bold"
-												: metaDescription.length > 140
-													? "text-amber-500"
-													: "text-muted-foreground"
-										}`}
+										className={`text-[10px] font-medium ${metaDescription.length >= 160
+											? "text-destructive font-bold"
+											: metaDescription.length > 140
+												? "text-amber-500"
+												: "text-muted-foreground"
+											}`}
 									>
 										{metaDescription.length}/160
 									</span>
@@ -281,13 +278,12 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 								<div className="flex justify-between items-center">
 									<Label htmlFor="excerpt">Short Excerpt</Label>
 									<span
-										className={`text-[10px] font-medium ${
-											excerpt.length >= 220
-												? "text-destructive font-bold"
-												: excerpt.length > 180
-													? "text-amber-500"
-													: "text-muted-foreground"
-										}`}
+										className={`text-[10px] font-medium ${excerpt.length >= 220
+											? "text-destructive font-bold"
+											: excerpt.length > 180
+												? "text-amber-500"
+												: "text-muted-foreground"
+											}`}
 									>
 										{excerpt.length}/220
 									</span>

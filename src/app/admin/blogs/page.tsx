@@ -66,7 +66,7 @@ export default async function AdminBlogsPage({
 					</p>
 				</div>
 				<Link href="/admin/blogs/new">
-					<Button className="cursor-pointer">Create Post</Button>
+					<Button>Create Post</Button>
 				</Link>
 			</div>
 
@@ -111,7 +111,6 @@ export default async function AdminBlogsPage({
 										<Button
 											variant="outline"
 											size="sm"
-											className="cursor-pointer"
 										>
 											Details
 										</Button>
@@ -120,7 +119,6 @@ export default async function AdminBlogsPage({
 										<Button
 											variant="outline"
 											size="sm"
-											className="cursor-pointer"
 										>
 											Edit
 										</Button>
