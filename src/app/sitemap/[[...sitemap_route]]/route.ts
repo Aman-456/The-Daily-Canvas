@@ -68,8 +68,8 @@ export async function GET(
   <url>
     <loc>${APP_URL}/blogs/${blog.slug}</loc>
     <lastmod>${blog.updatedAt ? new Date(blog.updatedAt).toISOString() : new Date().toISOString()}</lastmod>
-    <changefreq>daily</changefreq>  <!-- adjusted from daily -->
-    <priority>0.9</priority>         <!-- slightly lower than homepage -->
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>`,
 			)
 			.join("");
