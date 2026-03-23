@@ -6,6 +6,10 @@ import { FadeIn } from "@/components/client/FadeIn";
 export const metadata = {
 	title: "About Daily Thoughts",
 	description: "A personal blog about life, art, and everything in between.",
+	keywords: ["about", "personal blog", "life", "art", "daily thoughts", "aman", "islamabad"],
+	alternates: {
+		canonical: "/about",
+	},
 };
 
 export default function About() {

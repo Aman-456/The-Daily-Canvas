@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { CommentSection } from "@/components/client/CommentSection";
 import { auth } from "@/auth";
+import Image from "next/image";
 
 export async function generateMetadata({
 	params,
@@ -24,7 +25,10 @@ export async function generateMetadata({
 	return {
 		title: blog.metaTitle || blog.title,
 		description: blog.metaDescription || blog.excerpt.substring(0, 150),
-		keywords: blog.keywords || blog.tags || [],
+		keywords: blog.keywords || blog.tags || ["blog", "daily thoughts", "article", blog.title],
+		alternates: {
+			canonical: `/blogs/${blog.slug}`,
+		},
 		openGraph: {
 			title: blog.metaTitle || blog.title,
 			description: blog.metaDescription || blog.excerpt.substring(0, 150),
@@ -120,11 +124,14 @@ export default async function SingleBlogPage({
 
 			{blog.coverImage && (
 				<figure className="space-y-3">
-					<div className="aspect-[16/9] rounded-xl overflow-hidden bg-muted shadow-sm">
-						<img
+					<div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-muted shadow-sm">
+						<Image
 							src={blog.coverImage}
 							alt={blog.title}
-							className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+							fill
+							priority
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
+							className="object-cover transition-transform duration-500 hover:scale-105"
 						/>
 					</div>
 				</figure>
@@ -173,26 +180,52 @@ export default async function SingleBlogPage({
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{
-					__html: JSON.stringify({
-						"@context": "https://schema.org",
-						"@type": "BlogPosting",
-						headline: blog.title,
-						description: blog.metaDescription || blog.excerpt,
-						image: blog.coverImage ? [blog.coverImage] : [],
-						datePublished: blog.createdAt,
-						dateModified: blog.updatedAt || blog.createdAt,
-						author: [
-							{
-								"@type": "Person",
-								name: blog.authorId?.name,
-								image: blog.authorId?.image,
+					__html: JSON.stringify([
+						{
+							"@context": "https://schema.org",
+							"@type": "BlogPosting",
+							headline: blog.title,
+							description: blog.metaDescription || blog.excerpt,
+							image: blog.coverImage ? [blog.coverImage] : [],
+							datePublished: blog.createdAt,
+							dateModified: blog.updatedAt || blog.createdAt,
+							author: [
+								{
+									"@type": "Person",
+									name: blog.authorId?.name,
+									image: blog.authorId?.image,
+								},
+							],
+							mainEntityOfPage: {
+								"@type": "WebPage",
+								"@id": `${process.env.NEXT_PUBLIC_APP_URL}/blogs/${blog.slug}`,
 							},
-						],
-						mainEntityOfPage: {
-							"@type": "WebPage",
-							"@id": `${process.env.NEXT_PUBLIC_APP_URL}/blogs/${blog.slug}`,
 						},
-					}),
+						{
+							"@context": "https://schema.org",
+							"@type": "BreadcrumbList",
+							itemListElement: [
+								{
+									"@type": "ListItem",
+									position: 1,
+									name: "Home",
+									item: `${process.env.NEXT_PUBLIC_APP_URL}`,
+								},
+								{
+									"@type": "ListItem",
+									position: 2,
+									name: "Blogs",
+									item: `${process.env.NEXT_PUBLIC_APP_URL}/`,
+								},
+								{
+									"@type": "ListItem",
+									position: 3,
+									name: blog.title,
+									item: `${process.env.NEXT_PUBLIC_APP_URL}/blogs/${blog.slug}`,
+								},
+							],
+						},
+					]),
 				}}
 			/>
 		</article>

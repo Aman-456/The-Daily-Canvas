@@ -8,9 +8,14 @@ import NextTopLoader from "nextjs-toploader";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL!),
 	title: "Daily Thoughts",
 	description:
 		"Discover daily inspiration, creative stories, and insightful articles on Daily Thoughts.",
+	keywords: ["blog", "daily thoughts", "inspiration", "stories", "articles", "writing"],
+	alternates: {
+		canonical: "/",
+	},
 	// Robots & verification
 	robots: {
 		index: true,

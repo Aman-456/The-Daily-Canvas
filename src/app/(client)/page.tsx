@@ -2,6 +2,17 @@ import Link from "next/link";
 import { getBlogsCached } from "@/queries/blog";
 import SearchInput from "@/components/client/SearchInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Metadata } from "next";
+import Image from "next/image";
+
+export const metadata: Metadata = {
+	title: "Explore Blogs | Daily Thoughts",
+	description: "Read the latest stories, blog posts, and insights.",
+	keywords: ["blog", "stories", "insights", "daily thoughts", "reading"],
+	alternates: {
+		canonical: "/",
+	},
+};
 
 // Ensure route is dynamic since it uses searchParams
 export const dynamic = "force-dynamic";
@@ -51,11 +62,12 @@ export default async function BlogsPage({
 								<article className="h-full group rounded-xl border border-border/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:border-border transition-all duration-300">
 									<div className="aspect-16/10 bg-muted relative overflow-hidden">
 										{blog.coverImage ? (
-											// eslint-disable-next-line @next/next/no-img-element
-											<img
+											<Image
 												src={blog.coverImage}
 												alt={blog.title}
-												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+												fill
+												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+												className="object-cover group-hover:scale-105 transition-transform duration-500"
 											/>
 										) : (
 											<div className="w-full h-full bg-linear-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 transition-transform duration-500 group-hover:scale-105" />
