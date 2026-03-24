@@ -16,7 +16,7 @@ export function SocialShare({
 	const fullUrl =
 		typeof window !== "undefined"
 			? `${window.location.origin}${url}`
-			: `https://thedailycanvas.com${url}`;
+			: `${process.env.NEXT_PUBLIC_APP_URL!}${url}`;
 
 	const handleCopy = () => {
 		navigator.clipboard.writeText(fullUrl);

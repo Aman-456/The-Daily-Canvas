@@ -12,8 +12,8 @@ const getCachedPage = unstable_cache(
 );
 
 export const metadata = {
-	title: "Privacy Policy | The Daily Canvas",
-	description: "Privacy Policy for The Daily Canvas",
+	title: "Privacy Policy | Daily Thoughts",
+	description: "Privacy Policy for Daily Thoughts",
 };
 
 export default async function PrivacyPolicyPage() {
@@ -26,7 +26,8 @@ export default async function PrivacyPolicyPage() {
 	const page = result.data;
 
 	return (
-		<div className="container max-w-4xl py-12 md:py-20">
+		<div className="container max-w-3xl mx-auto py-5 md:py-10 space-y-12">
+
 			<article className="prose prose-zinc dark:prose-invert mx-auto break-words prose-headings:font-bold prose-h1:text-4xl prose-a:text-primary">
 				<div dangerouslySetInnerHTML={{ __html: page.content }} />
 			</article>
