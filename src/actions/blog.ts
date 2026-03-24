@@ -10,6 +10,7 @@ import Comment from "@/models/Comment";
 
 import { blogSchema } from "@/lib/validations/blog";
 import { UploadService } from "@/lib/upload";
+import { pingIndexNow } from "@/lib/indexnow";
 
 export async function createBlog(formData: FormData) {
 	try {
@@ -67,6 +68,11 @@ export async function createBlog(formData: FormData) {
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
 
+		// Auto-ping IndexNow for SEO if it is published
+		if (isPublished) {
+			await pingIndexNow(slug);
+		}
+
 		return { success: true, data: JSON.parse(JSON.stringify(newBlog)) };
 	} catch (error: any) {
 		console.error("[createBlog] Error:", error);
@@ -105,11 +111,16 @@ export async function deleteBlog(id: string) {
 			await UploadService.delete(blog.coverImage);
 		}
 
+		const slugToPing = blog.slug;
+
 		await Blog.findByIdAndDelete(id);
 		await Comment.deleteMany({ blogId: id });
 
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
+
+		// Notify search engines that the URL is dead
+		await pingIndexNow(slugToPing);
 
 		return { success: true };
 	} catch (error: any) {
@@ -201,6 +212,11 @@ export async function updateBlog(id: string, formData: FormData) {
 		revalidatePath("/");
 		revalidatePath(`/blogs/${newSlug}`);
 		revalidatePath("/admin/blogs");
+
+		// Auto-ping IndexNow for SEO if it is published
+		if (isPublished) {
+			await pingIndexNow(newSlug);
+		}
 
 		return { success: true, data: JSON.parse(JSON.stringify(updatedBlog)) };
 	} catch (error: any) {
