@@ -10,15 +10,6 @@ export const isAdmin = (role?: string | null) => {
 	return role.toUpperCase() === "ADMIN";
 };
 
-export const isAdminOrSubAdmin = (user?: any) => {
-	if (!user) return false;
-	const role = user.role?.toUpperCase();
-	if (role === "ADMIN") return true;
-	if (role === "USER") {
-		return Object.values(user.permissions || {}).some((v) => v === true);
-	}
-	return false;
-};
 
 export const isUser = (role?: string | null) => {
 	if (!role) return false;

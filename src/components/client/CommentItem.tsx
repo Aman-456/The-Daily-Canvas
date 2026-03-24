@@ -25,7 +25,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isAdminOrSubAdmin } from "@/lib/utils";
+import { isAdmin } from "@/lib/utils";
 
 interface CommentItemProps {
 	comment: any;
@@ -64,7 +64,7 @@ export function CommentItem({
 
 	const isOwner =
 		user?.id === comment.userId?._id || user?.id === comment.userId;
-	const isAdmin = isAdminOrSubAdmin(user?.role);
+	const isAdminRole = isAdmin(user?.role);
 
 	const handleReplyDelete = (replyId: string) => {
 		setReplies((prev) => prev.filter((r) => r._id !== replyId));
@@ -225,7 +225,7 @@ export function CommentItem({
 								</span>
 							)}
 						</div>
-						{(isOwner || isAdmin) && !isEditing && !comment.isDeleted && (
+						{(isOwner || isAdminRole) && !isEditing && !comment.isDeleted && (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button

@@ -2,9 +2,9 @@
 
 import dbConnect from "@/lib/mongoose";
 import Page from "@/models/Page";
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { auth } from "@/auth";
-import { isAdminOrSubAdmin } from "@/lib/utils";
+import { hasPermission } from "@/lib/utils";
 
 const getCachedAdminPages = unstable_cache(
 	async () => {
@@ -42,7 +42,7 @@ export async function getPageBySlug(slug: string) {
 			// Auto-generate initial data if none exists
 			const title = slug === "privacy-policy" ? "Privacy Policy" : "Terms of Service";
 			const content = `<h1>${title}</h1><p>This is the default content for the ${title}. Please edit this page from the admin panel.</p>`;
-			
+
 			const newPage = await Page.create({
 				title,
 				slug,
@@ -50,8 +50,8 @@ export async function getPageBySlug(slug: string) {
 			});
 			page = JSON.parse(JSON.stringify(newPage));
 		} else {
-            page = JSON.parse(JSON.stringify(page));
-        }
+			page = JSON.parse(JSON.stringify(page));
+		}
 
 		return { success: true, data: page };
 	} catch (error: any) {
@@ -63,7 +63,7 @@ export async function getPageBySlug(slug: string) {
 export async function getAdminPages() {
 	try {
 		const session = await auth();
-		if (!session?.user || !isAdminOrSubAdmin(session.user.role)) {
+		if (!session?.user || !hasPermission(session.user, "canManagePages")) {
 			return { success: false, error: "Unauthorized" };
 		}
 
@@ -78,7 +78,7 @@ export async function getAdminPages() {
 export async function updateAdminPage(slug: string, content: string, title?: string) {
 	try {
 		const session = await auth();
-		if (!session?.user || !isAdminOrSubAdmin(session.user.role)) {
+		if (!session?.user || !hasPermission(session.user, "canManagePages")) {
 			return { success: false, error: "Unauthorized" };
 		}
 

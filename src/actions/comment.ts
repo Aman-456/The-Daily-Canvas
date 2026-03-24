@@ -7,7 +7,7 @@ import Blog from "@/models/Blog";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 
-import { isAdminOrSubAdmin, hasPermission, isAdmin } from "@/lib/utils";
+import { isAdmin } from "@/lib/utils";
 import { commentSchema } from "@/lib/validations/comment";
 import { getBlogComments, getCommentReplies, getAllComments } from "@/queries/comment";
 import Notification from "@/models/Notification";
@@ -20,7 +20,7 @@ const getCachedCommentsList = unstable_cache(
 
 export const getCachedComments = async (page: number, limit: number, search: string, userId?: string, role?: string, permissions?: any) => {
 	const isAdminLevel = role === "ADMIN";
-	
+
 	if (isAdminLevel) {
 		return getCachedCommentsList(page, limit, search, userId, role, permissions);
 	} else {
@@ -220,10 +220,10 @@ export async function deleteComment(
 		const comment = await Comment.findById(commentId);
 		if (!comment) return { success: false, error: "Comment not found" };
 
-		const isAdmin = isAdminOrSubAdmin(session.user);
+		const isAdminRole = isAdmin(session.user.role);
 		const isOwner = comment.userId.toString() === session.user.id;
 
-		if (!isAdmin && !isOwner) {
+		if (!isAdminRole && !isOwner) {
 			return {
 				success: false,
 				error: "Unauthorized: You can only delete your own comments",
