@@ -1,6 +1,10 @@
 import { getPageBySlug } from "@/actions/page";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+
 
 const getCachedPage = unstable_cache(
 	async (slug: string) => {
@@ -26,11 +30,15 @@ export default async function PrivacyPolicyPage() {
 	const page = result.data;
 
 	return (
-		<div className="container max-w-3xl mx-auto py-5 md:py-10 space-y-12">
-
-			<article className="prose prose-zinc dark:prose-invert mx-auto break-words prose-headings:font-bold prose-h1:text-4xl prose-a:text-primary">
-				<div dangerouslySetInnerHTML={{ __html: page.content }} />
-			</article>
-		</div>
+		<div className="prose prose-md dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-xl prose-pre:bg-zinc-900 prose-pre:shadow-lg leading-relaxed antialiased">
+			<div className="container max-w-3xl mx-auto py-5 md:py-10 space-y-12">
+				<h1 className="text-3xl sm:text-4xl md:text-4xl font-extrabold tracking-tight md:text-center">
+					{page.title}
+				</h1>
+				<ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+					{page.content}
+				</ReactMarkdown>
+			</div>
+		</div >
 	);
 }
