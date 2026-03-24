@@ -13,9 +13,10 @@ import {
 	Power,
 	ChevronLeft,
 	ChevronRight,
+	Database,
 } from "lucide-react";
 import { useState } from "react";
-import { isAdmin, isAdminOrSubAdmin, hasPermission, isUser } from "@/lib/utils";
+import { isAdmin, hasPermission, } from "@/lib/utils";
 import { PERMISSIONS } from "@/lib/constants";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/components/client/UserNav";
@@ -58,6 +59,12 @@ export function AdminSidebar({ user }: { user: any }) {
 			icon: Files,
 			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_PAGES)
 		},
+		{
+			name: "Caches",
+			href: "/admin/cache",
+			icon: Database,
+			show: isAdmin(role)
+		},
 	];
 
 	const DesktopNavLinks = () => (
@@ -74,8 +81,8 @@ export function AdminSidebar({ user }: { user: any }) {
 								href={item.href}
 								onClick={() => setOpen(false)}
 								className={`group relative flex items-center p-3 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
-										? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
-										: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
+									? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
+									: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
 									}`}
 							>
 								<Icon
@@ -128,8 +135,8 @@ export function AdminSidebar({ user }: { user: any }) {
 							href={item.href}
 							onClick={() => setOpen(false)}
 							className={`flex items-center p-3 text-base font-medium rounded-xl transition-all duration-200 ${isActive
-									? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
-									: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
+								? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
+								: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
 								}`}
 						>
 							<Icon size={20} className="mr-3 shrink-0" />

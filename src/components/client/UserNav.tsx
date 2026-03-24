@@ -1,9 +1,8 @@
 "use client";
 
-import { LogOut, LayoutDashboard, User } from "lucide-react";
+import { LogOut, LayoutDashboard, } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { isAdminOrSubAdmin } from "@/lib/utils";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import { isAdmin } from "@/lib/utils";
 
 interface UserNavProps {
 	user: {
@@ -51,19 +51,15 @@ export function UserNav({ user }: UserNavProps) {
 				<DropdownMenuSeparator />
 
 				<DropdownMenuGroup>
-					{isAdminOrSubAdmin(user) && (
-						<Link href="/admin">
-							<DropdownMenuItem className="cursor-pointer">
-								<LayoutDashboard className="mr-2 h-4 w-4" />
-								<span>Dashboard</span>
-							</DropdownMenuItem>
-						</Link>
-					)}
+					<Link href={isAdmin(user.role) ? "/admin" : "/admin/blogs"}>
+						<DropdownMenuItem className="cursor-pointer">
+							<LayoutDashboard className="mr-2 h-4 w-4" />
+							<span>Dashboard</span>
+						</DropdownMenuItem>
+					</Link>
 				</DropdownMenuGroup>
 
-				{isAdminOrSubAdmin(user) ? (
-					<DropdownMenuSeparator />
-				) : null}
+				<DropdownMenuSeparator />
 
 				<DropdownMenuItem
 					className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
