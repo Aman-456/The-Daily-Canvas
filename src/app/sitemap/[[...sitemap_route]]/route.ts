@@ -6,6 +6,35 @@ export const dynamic = "force-dynamic";
 const sitemapSize = 10000;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
+// static routs
+
+const staticRoutes = [
+	{
+		loc: APP_URL,
+		lastmod: new Date().toISOString(),
+		changefreq: "daily",
+		priority: 1.0,
+	},
+	{
+		loc: `${APP_URL}/about`,
+		lastmod: new Date().toISOString(),
+		changefreq: "weekly",
+		priority: 0.8,
+	},
+	{
+		loc: `${APP_URL}/terms-of-service`,
+		lastmod: new Date().toISOString(),
+		changefreq: "weekly",
+		priority: 0.8,
+	},
+	{
+		loc: `${APP_URL}/privacy-policy`,
+		lastmod: new Date().toISOString(),
+		changefreq: "weekly",
+		priority: 0.8,
+	},
+];
+
 export async function GET(
 	request: NextRequest,
 	{ params }: { params: Promise<{ sitemap_route?: string[] }> },
@@ -24,13 +53,13 @@ export async function GET(
 		const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   ${Array.from(
-		{ length: totalSitemaps },
-		(_, i) => `
+			{ length: totalSitemaps },
+			(_, i) => `
   <sitemap>
     <loc>${APP_URL}/sitemap/sitemap-${i}.xml</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
   </sitemap>`,
-	).join("")}
+		).join("")}
 </sitemapindex>`;
 
 		return new NextResponse(sitemapIndex, {
@@ -76,19 +105,17 @@ export async function GET(
 
 		let staticUrls = "";
 		if (id === 0) {
-			staticUrls = `
+			staticUrls = staticRoutes
+				.map(
+					(route) => `
   <url>
-    <loc>${APP_URL}/</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>${APP_URL}/about</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>`;
+    <loc>${route.loc}</loc>
+    <lastmod>${route.lastmod}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`,
+				)
+				.join("");
 		}
 
 		const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
