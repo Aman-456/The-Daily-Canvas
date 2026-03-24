@@ -8,6 +8,7 @@ import { CommentSection } from "@/components/client/CommentSection";
 import { auth } from "@/auth";
 import { DeleteAllCommentsButton } from "@/components/admin/DeleteAllCommentsButton";
 import { getLatestRootComment } from "@/queries/comment";
+import { getCachedAdminBlogDetails } from "@/actions/blog";
 import { Metadata } from "next";
 
 export default async function AdminBlogDetailsPage({
@@ -16,8 +17,7 @@ export default async function AdminBlogDetailsPage({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
-	await dbConnect();
-	const blog = await Blog.findById(id).populate("authorId", "name").lean();
+	const blog = await getCachedAdminBlogDetails(id);
 
 	if (!blog) {
 		notFound();

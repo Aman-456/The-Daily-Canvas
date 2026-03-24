@@ -1,7 +1,5 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
 import {
 	Table,
 	TableBody,
@@ -14,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserRoleSelect } from "@/components/admin/UserRoleSelect";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { isAdmin } from "@/lib/utils";
+import { getCachedUsers } from "@/actions/user";
 
 export default async function AdminUsersPage({
 	searchParams,
@@ -21,18 +21,13 @@ export default async function AdminUsersPage({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const session = await auth();
-
-	if (session?.user?.role !== "ADMIN") {
-		redirect("/admin");
-	}
+	// Session and Admin check handled by layout.tsx
 
 	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
 	const limit = 20;
 	const skip = (page - 1) * limit;
-
-	await dbConnect();
 
 	let query: any = {};
 	if (search) {
@@ -44,10 +39,7 @@ export default async function AdminUsersPage({
 		};
 	}
 
-	const [users, total] = await Promise.all([
-		User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-		User.countDocuments(query),
-	]);
+	const [users, total] = await getCachedUsers(query, skip, limit);
 
 	const totalPages = Math.ceil(total / limit);
 
@@ -98,7 +90,7 @@ export default async function AdminUsersPage({
 									<UserRoleSelect
 										userId={user._id.toString()}
 										currentRole={user.role}
-										disabled={user._id.toString() === session.user?.id}
+										disabled={user._id.toString() === session?.user?.id}
 									/>
 								</TableCell>
 								<TableCell>

@@ -1,7 +1,8 @@
-import dbConnect from "@/lib/mongoose";
 import Blog from "@/models/Blog";
 import { notFound } from "next/navigation";
 import { BlogForm } from "@/components/admin/BlogForm";
+import { auth } from "@/auth";
+import { getCachedAdminBlogEdit } from "@/actions/blog";
 
 export default async function EditBlogPage({
 	params,
@@ -9,8 +10,7 @@ export default async function EditBlogPage({
 	params: Promise<{ id: string }>;
 }) {
 	const { id } = await params;
-	await dbConnect();
-	const blog = await Blog.findById(id).lean();
+	const blog = await getCachedAdminBlogEdit(id);
 
 	if (!blog) {
 		notFound();

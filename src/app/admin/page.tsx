@@ -1,19 +1,11 @@
 import { auth } from "@/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import dbConnect from "@/lib/mongoose"
-import User from "@/models/User"
-import Blog from "@/models/Blog"
-import Comment from "@/models/Comment"
+import { getCachedStats } from "@/actions/dashboard"
 
 export default async function AdminDashboardPage() {
   const session = await auth()
-  await dbConnect()
 
-  const [usersCount, blogsCount, commentsCount] = await Promise.all([
-    User.countDocuments(),
-    Blog.countDocuments(),
-    Comment.countDocuments(),
-  ])
+  const [usersCount, blogsCount, commentsCount] = await getCachedStats()
 
   return (
     <div className="space-y-6">

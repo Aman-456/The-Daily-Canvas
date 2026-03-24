@@ -6,21 +6,19 @@ import { User, MessageSquare } from "lucide-react";
 import { CommentActionButtons } from "@/components/admin/CommentActionButtons";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminPagination } from "@/components/admin/AdminPagination";
+import { getCachedComments } from "@/actions/comment";
+import { use } from "react";
 
 export default async function AdminCommentsPage({
 	searchParams,
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const session = await auth();
-	if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUBADMIN") {
-		redirect("/");
-	}
-
-	const params = await searchParams;
+	// Auth protection handled by layout.tsx
+	const params = use(searchParams);
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
-	const { comments, totalPages, total } = await getAllComments(
+	const { comments, totalPages, total } = await getCachedComments(
 		page,
 		20,
 		search,

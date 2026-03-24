@@ -3,6 +3,7 @@
 import { LogOut, LayoutDashboard, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { isAdminOrSubAdmin } from "@/lib/utils";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -50,7 +51,7 @@ export function UserNav({ user }: UserNavProps) {
 				<DropdownMenuSeparator />
 
 				<DropdownMenuGroup>
-					{(user.role === "ADMIN" || user.role === "SUBADMIN") && (
+					{isAdminOrSubAdmin(user.role) && (
 						<Link href="/admin">
 							<DropdownMenuItem className="cursor-pointer">
 								<LayoutDashboard className="mr-2 h-4 w-4" />
@@ -60,7 +61,7 @@ export function UserNav({ user }: UserNavProps) {
 					)}
 				</DropdownMenuGroup>
 
-				{user.role === "ADMIN" || user.role === "SUBADMIN" ? (
+				{isAdminOrSubAdmin(user.role) ? (
 					<DropdownMenuSeparator />
 				) : null}
 

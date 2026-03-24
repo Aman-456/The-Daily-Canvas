@@ -3,10 +3,47 @@
 import dbConnect from "@/lib/mongoose";
 import Blog from "@/models/Blog";
 import { auth } from "@/auth";
+import { isAdminOrSubAdmin, isSubAdmin } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import slugify from "slugify";
+import { unstable_cache } from "next/cache";
 
 import Comment from "@/models/Comment";
+
+export const getCachedBlogs = unstable_cache(
+	async (query: any, skip: number, limit: number) => {
+		await dbConnect();
+		return Promise.all([
+			Blog.find(query)
+				.sort({ createdAt: -1 })
+				.populate("authorId", "name")
+				.skip(skip)
+				.limit(limit)
+				.lean(),
+			Blog.countDocuments(query),
+		]);
+	},
+	["admin-blogs-list"],
+	{ revalidate: 86400, tags: ["blogs"] } // 1 day
+);
+
+export const getCachedAdminBlogDetails = unstable_cache(
+	async (id: string) => {
+		await dbConnect();
+		return Blog.findById(id).populate("authorId", "name").lean();
+	},
+	["admin-blog-details-query"],
+	{ revalidate: 86400, tags: ["blogs"] }
+);
+
+export const getCachedAdminBlogEdit = unstable_cache(
+	async (id: string) => {
+		await dbConnect();
+		return Blog.findById(id).lean();
+	},
+	["admin-blog-edit-query"],
+	{ revalidate: 86400, tags: ["blogs"] }
+);
 
 import { blogSchema } from "@/lib/validations/blog";
 import { UploadService } from "@/lib/upload";
@@ -96,13 +133,13 @@ export async function deleteBlog(id: string) {
 		if (!blog) return { success: false, error: "Blog not found" };
 
 		// Sub-admins can only delete their own blogs, Admins can delete any
-		if (role === "SUBADMIN" && blog.authorId.toString() !== session.user.id) {
+		if (isSubAdmin(role) && blog.authorId.toString() !== session.user.id) {
 			return {
 				success: false,
 				error: "Forbidden: You can only delete your own blogs",
 			};
 		}
-		if (role !== "ADMIN" && role !== "SUBADMIN") {
+		if (!isAdminOrSubAdmin(role)) {
 			return { success: false, error: "Unauthorized" };
 		}
 
@@ -172,13 +209,13 @@ export async function updateBlog(id: string, formData: FormData) {
 
 		// Check permissions
 		const role = session.user.role as string;
-		if (role === "SUBADMIN" && blog.authorId.toString() !== session.user.id) {
+		if (isSubAdmin(role) && blog.authorId.toString() !== session.user.id) {
 			return {
 				success: false,
 				error: "Forbidden: You can only edit your own blogs",
 			};
 		}
-		if (role !== "ADMIN" && role !== "SUBADMIN") {
+		if (!isAdminOrSubAdmin(role)) {
 			return { success: false, error: "Unauthorized" };
 		}
 

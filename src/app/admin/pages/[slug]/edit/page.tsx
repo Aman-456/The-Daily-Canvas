@@ -1,0 +1,83 @@
+"use client";
+
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { getPageBySlug, updateAdminPage } from "@/actions/page";
+import { toast } from "sonner";
+import InitializedMDXEditor from "@/components/admin/Editor/InitializedMDXEditor";
+
+export default function EditPage({ params }: { params: Promise<{ slug: string }> }) {
+	const resolvedParams = use(params);
+	const router = useRouter();
+	const [title, setTitle] = useState("");
+	const [content, setContent] = useState("");
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
+
+	useEffect(() => {
+		async function load() {
+			const result = await getPageBySlug(resolvedParams.slug);
+			if (result.success && result.data) {
+				setTitle(result.data.title);
+				setContent(result.data.content);
+			} else {
+				toast.error("Failed to load page");
+				router.push("/admin/pages");
+			}
+			setLoading(false);
+		}
+		load();
+	}, [resolvedParams.slug, router]);
+
+	const handleSave = async () => {
+		setSaving(true);
+		const result = await updateAdminPage(resolvedParams.slug, content, title);
+		if (result.success) {
+			toast.success("Page updated successfully");
+			router.push("/admin/pages");
+			router.refresh();
+		} else {
+			toast.error(result.error || "Failed to update page");
+		}
+		setSaving(false);
+	};
+
+	if (loading) {
+		return <div>Loading...</div>;
+	}
+
+	return (
+		<div className="space-y-6 max-w-4xl">
+			<div className="flex items-center justify-between">
+				<h1 className="text-3xl font-bold tracking-tight">Edit {title}</h1>
+				<Button onClick={handleSave} disabled={saving}>
+					{saving ? "Saving..." : "Save Changes"}
+				</Button>
+			</div>
+
+			<div className="space-y-4">
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Title</label>
+					<Input
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder="Page Title"
+					/>
+				</div>
+
+				<div className="space-y-2">
+					<label className="text-sm font-medium">Content</label>
+					<div className="min-h-[500px] border rounded-md overflow-hidden bg-white dark:bg-zinc-950">
+						<InitializedMDXEditor
+							markdown={content}
+							onChange={setContent}
+							editorRef={null}
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
