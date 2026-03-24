@@ -5,22 +5,25 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export const isAdmin = (role: string) => {
-	return role === "admin" || role === "ADMIN";
-};
-
-export const isSubAdmin = (role: string) => {
-	return role === "subadmin" || role === "SUBADMIN";
-};
-
-export const isAdminOrSubAdmin = (role?: string) => {
+export const isAdmin = (role?: string | null) => {
 	if (!role) return false;
-	return isAdmin(role) || isSubAdmin(role);
+	return role.toUpperCase() === "ADMIN";
 };
 
-export const isUser = (role: string) => {
+export const isSubAdmin = (role?: string | null) => {
 	if (!role) return false;
-	return role === "user" || role === "USER";
+	return role.toUpperCase() === "SUBADMIN";
+};
+
+export const isAdminOrSubAdmin = (role?: string | null) => {
+	if (!role) return false;
+	const r = role.toUpperCase();
+	return r === "ADMIN" || r === "SUBADMIN";
+};
+
+export const isUser = (role?: string | null) => {
+	if (!role) return false;
+	return role.toUpperCase() === "USER";
 };
 
 export function formatRelativeTime(date: Date | string | number): string {

@@ -4,12 +4,21 @@ import mongoose from "mongoose";
 import dbConnect from "@/lib/mongoose";
 import Comment from "@/models/Comment";
 import Blog from "@/models/Blog";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 
 import { isAdminOrSubAdmin } from "@/lib/utils";
 import { commentSchema } from "@/lib/validations/comment";
-import { getBlogComments, getCommentReplies } from "@/queries/comment";
+import { getBlogComments, getCommentReplies, getAllComments } from "@/queries/comment";
+import Notification from "@/models/Notification";
+
+export const getCachedComments = unstable_cache(
+	async (page: number, limit: number, search: string) => {
+		return getAllComments(page, limit, search);
+	},
+	["admin-comments-list"],
+	{ revalidate: 86400, tags: ["comments"] }
+);
 
 export async function addComment(formData: FormData) {
 	try {
@@ -54,6 +63,22 @@ export async function addComment(formData: FormData) {
 
 		// Update blog aggregate count and await it for reliability
 		await updateBlogCommentCount(blogId);
+
+		// Create notification for admin
+		try {
+			const blog = await Blog.findById(blogId).select("title slug");
+			if (blog) {
+				await Notification.create({
+					message: `New comment on "${blog.title}"`,
+					link: `/admin/comments`,
+					blogLink: `/admin/blogs/${blog._id}#comment-${newComment._id}`,
+					type: "COMMENT",
+					userId: session.user.id
+				});
+			}
+		} catch (notifErr) {
+			console.error("[addComment] Failed to create notification:", notifErr);
+		}
 
 		// revalidatePath is more reliable in this version
 		if (slug) revalidatePath(`/blogs/${slug}`);

@@ -4,6 +4,20 @@ import dbConnect from "@/lib/mongoose";
 import User from "@/models/User";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { isAdmin } from "@/lib/utils";
+import { unstable_cache } from "next/cache";
+
+export const getCachedUsers = unstable_cache(
+	async (query: any, skip: number, limit: number) => {
+		await dbConnect();
+		return Promise.all([
+			User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+			User.countDocuments(query),
+		]);
+	},
+	["admin-users-list"],
+	{ revalidate: 86400, tags: ["users"] }
+);
 
 export async function toggleUserRole(
 	userId: string,
@@ -12,8 +26,7 @@ export async function toggleUserRole(
 	try {
 		const session = await auth();
 
-		// Only ADMIN can change roles
-		if (session?.user?.role !== "ADMIN") {
+		if (!session?.user || !isAdmin(session.user.role)) {
 			return {
 				success: false,
 				error: "Unauthorized: Only Admins can change user roles",

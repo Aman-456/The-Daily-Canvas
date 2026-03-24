@@ -14,9 +14,9 @@ export const metadata = {
 
 export default function About() {
 	return (
-		<div className="container max-w-3xl mx-auto py-16 md:py-20 px-4 space-y-12">
+		<div className="container max-w-3xl mx-auto py-5 md:py-10 space-y-12">
 			<FadeIn>
-				<h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-center">
+				<h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight md:text-center">
 					About <span className="text-primary">Daily Thoughts</span>
 				</h1>
 			</FadeIn>

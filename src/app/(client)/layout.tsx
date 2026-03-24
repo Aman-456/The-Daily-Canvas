@@ -49,8 +49,14 @@ export default async function ClientLayout({
 			<main className="flex-1 container mx-auto px-4 py-8">{children}</main>
 
 			<footer className="border-t py-8 mt-auto">
-				<div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-					&copy; {new Date().getFullYear()} Daily Thoughts. All rights reserved.
+				<div className="container mx-auto px-4 flex flex-col items-center gap-4">
+					<div className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
+						<Link href="/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+						<Link href="/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>
+					</div>
+					<div className="text-sm text-muted-foreground text-center">
+						&copy; {new Date().getFullYear()} Daily Thoughts. All rights reserved.
+					</div>
 				</div>
 			</footer>
 		</div>

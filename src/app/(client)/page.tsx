@@ -36,7 +36,7 @@ export default async function BlogsPage({
 	const { blogs, totalPages } = await getBlogsCached(page, 12, search);
 
 	return (
-		<div className="space-y-10 py-6">
+		<div className="space-y-10">
 			<div className="flex flex-col md:flex-row items-center justify-between gap-4">
 				<div>
 					<h1 className="text-4xl font-bold tracking-tight">Explore Blogs</h1>
@@ -161,11 +161,10 @@ export default async function BlogsPage({
 						<Link
 							key={i}
 							href={`/?page=${i + 1}${search ? `&search=${search}` : ""}`}
-							className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
-								page === i + 1
+							className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${page === i + 1
 									? "bg-primary text-primary-foreground font-bold"
 									: "bg-muted hover:bg-muted/80"
-							}`}
+								}`}
 						>
 							{i + 1}
 						</Link>
@@ -183,9 +182,8 @@ export default async function BlogsPage({
 						url: process.env.NEXT_PUBLIC_APP_URL,
 						potentialAction: {
 							"@type": "SearchAction",
-							target: `${
-								process.env.NEXT_PUBLIC_APP_URL
-							}/?search={search_term_string}`,
+							target: `${process.env.NEXT_PUBLIC_APP_URL
+								}/?search={search_term_string}`,
 							"query-input": "required name=search_term_string",
 						},
 					}),
