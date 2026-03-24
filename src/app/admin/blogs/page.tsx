@@ -1,8 +1,13 @@
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/auth";
 import dbConnect from "@/lib/mongoose";
 import Blog from "@/models/Blog";
 import User from "@/models/User";
-import { isSubAdmin } from "@/lib/utils";
+import { isAdmin } from "@/lib/utils";
+import { checkPermission, PERMISSIONS } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
+import { redirect } from "next/navigation";
 void User; // Ensure Mongoose schema is registered for .populate()
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -27,7 +32,12 @@ export default async function AdminBlogsPage({
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const session = await auth();
+	const { session, authorized } = await checkPermission(PERMISSIONS.MANAGE_BLOGS);
+	
+	if (!authorized) {
+		return <AccessDenied requiredPermission="canManageBlogs" />;
+	}
+
 	// Session exists because of layout.tsx protection
 	const role = session!.user!.role as string;
 	const params = await searchParams;
@@ -37,15 +47,19 @@ export default async function AdminBlogsPage({
 	const skip = (page - 1) * limit;
 
 	let query: any = {};
-	if (isSubAdmin(role)) {
-		query.authorId = session!.user!.id;
-	}
 
 	if (search) {
 		query.title = { $regex: search, $options: "i" };
 	}
 
-	const [blogs, total] = await getCachedBlogs(query, skip, limit);
+	const [blogs, total] = await getCachedBlogs(
+		query,
+		skip,
+		limit,
+		session?.user?.id,
+		session?.user?.role,
+		session?.user?.permissions,
+	);
 
 	const totalPages = Math.ceil(total / limit);
 	const view = (params.view as string) || "table";
@@ -99,7 +113,7 @@ export default async function AdminBlogsPage({
 							{blogs.map((blog: any) => (
 								<TableRow key={blog._id.toString()}>
 									<TableCell className="font-medium">{blog.title}</TableCell>
-									<TableCell>{blog.authorId?.name || "Unknown"}</TableCell>
+									<TableCell>{blog.authorId?.name || "Deleted User"}</TableCell>
 									<TableCell>
 										{blog.isPublished ? (
 											<Badge
@@ -171,7 +185,7 @@ export default async function AdminBlogsPage({
 											<div className="h-5 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
 												{blog.authorId?.name?.charAt(0) || "U"}
 											</div>
-											<span className="text-sm font-medium text-muted-foreground">{blog.authorId?.name || "Unknown"}</span>
+											<span className="text-sm font-medium text-muted-foreground">{blog.authorId?.name || "Deleted User"}</span>
 										</div>
 									</div>
 

@@ -15,7 +15,8 @@ import {
 	ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
-import { isAdmin, isAdminOrSubAdmin } from "@/lib/utils";
+import { isAdmin, isAdminOrSubAdmin, hasPermission, isUser } from "@/lib/utils";
+import { PERMISSIONS } from "@/lib/constants";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/components/client/UserNav";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
@@ -27,11 +28,36 @@ export function AdminSidebar({ user }: { user: any }) {
 	const pathname = usePathname();
 
 	const navItems = [
-		{ name: "Dashboard", href: "/admin", icon: LayoutDashboard, show: true },
-		{ name: "Blogs", href: "/admin/blogs", icon: FileText, show: true },
-		{ name: "Comments", href: "/admin/comments", icon: MessageSquare, show: true },
-		{ name: "Users", href: "/admin/users", icon: Users, show: isAdmin(role) },
-		{ name: "Pages", href: "/admin/pages", icon: Files, show: isAdminOrSubAdmin(role) },
+		{
+			name: "Dashboard",
+			href: "/admin",
+			icon: LayoutDashboard,
+			show: isAdmin(role) || hasPermission(user, PERMISSIONS.SEE_STATS)
+		},
+		{
+			name: "Blogs",
+			href: "/admin/blogs",
+			icon: FileText,
+			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_BLOGS)
+		},
+		{
+			name: "Comments",
+			href: "/admin/comments",
+			icon: MessageSquare,
+			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_COMMENTS)
+		},
+		{
+			name: "Users",
+			href: "/admin/users",
+			icon: Users,
+			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_USERS)
+		},
+		{
+			name: "Pages",
+			href: "/admin/pages",
+			icon: Files,
+			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_PAGES)
+		},
 	];
 
 	const DesktopNavLinks = () => (
@@ -47,11 +73,10 @@ export function AdminSidebar({ user }: { user: any }) {
 								key={item.href}
 								href={item.href}
 								onClick={() => setOpen(false)}
-								className={`group relative flex items-center p-3 text-sm font-medium rounded-xl transition-all duration-200 ${
-									isActive
+								className={`group relative flex items-center p-3 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
 										? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
 										: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
-								}`}
+									}`}
 							>
 								<Icon
 									size={20}
@@ -102,11 +127,10 @@ export function AdminSidebar({ user }: { user: any }) {
 							key={item.href}
 							href={item.href}
 							onClick={() => setOpen(false)}
-							className={`flex items-center p-3 text-base font-medium rounded-xl transition-all duration-200 ${
-								isActive
+							className={`flex items-center p-3 text-base font-medium rounded-xl transition-all duration-200 ${isActive
 									? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
 									: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
-							}`}
+								}`}
 						>
 							<Icon size={20} className="mr-3 shrink-0" />
 							<span>{item.name}</span>
@@ -154,9 +178,8 @@ export function AdminSidebar({ user }: { user: any }) {
 
 			{/* Desktop Sidebar */}
 			<aside
-				className={`hidden md:flex flex-col shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-zinc-800/50 p-4 shadow-sm min-h-screen relative transition-all duration-300 ease-in-out z-40 ${
-					isMinimized ? "w-[80px]" : "w-[260px]"
-				}`}
+				className={`hidden md:flex flex-col shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-zinc-800/50 p-4 shadow-sm min-h-screen relative transition-all duration-300 ease-in-out z-40 ${isMinimized ? "w-[80px]" : "w-[260px]"
+					}`}
 			>
 				{/* Toggle Switch */}
 				<button
@@ -167,9 +190,8 @@ export function AdminSidebar({ user }: { user: any }) {
 				</button>
 
 				<div
-					className={`flex items-center min-h-[40px] mb-8 mt-2 transition-all duration-300 ${
-						isMinimized ? "justify-center" : "px-2"
-					}`}
+					className={`flex items-center min-h-[40px] mb-8 mt-2 transition-all duration-300 ${isMinimized ? "justify-center" : "px-2"
+						}`}
 				>
 					{!isMinimized ? (
 						<h2 className="text-2xl font-black tracking-tighter bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">

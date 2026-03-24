@@ -9,19 +9,27 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { UserRoleSelect } from "@/components/admin/UserRoleSelect";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminPagination } from "@/components/admin/AdminPagination";
-import { isAdmin } from "@/lib/utils";
+import { isAdmin, hasExtraPermissions } from "@/lib/utils";
 import { getCachedUsers } from "@/actions/user";
+import { checkPermission, PERMISSIONS } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
+import { UserPermissionsModal } from "@/components/admin/UserPermissionsModal";
+import { DeleteUserButton } from "@/components/admin/DeleteUserButton";
 
 export default async function AdminUsersPage({
 	searchParams,
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const session = await auth();
-	// Session and Admin check handled by layout.tsx
+	const { session, authorized } = await checkPermission(PERMISSIONS.MANAGE_USERS);
+
+	if (!authorized) {
+		return <AccessDenied requiredPermission="canManageUsers" />;
+	}
 
 	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
@@ -70,7 +78,7 @@ export default async function AdminUsersPage({
 							<TableHead>User</TableHead>
 							<TableHead>Email</TableHead>
 							<TableHead>Role</TableHead>
-							<TableHead>Joined</TableHead>
+							<TableHead className="w-[100px]">Joined</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -83,15 +91,36 @@ export default async function AdminUsersPage({
 											{user.name?.charAt(0) || "U"}
 										</AvatarFallback>
 									</Avatar>
-									<span className="font-medium">{user.name}</span>
+									<div className="flex flex-col">
+										<span className="font-medium flex items-center gap-2">
+											{user.name}
+											{hasExtraPermissions(user) && (
+												<Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-amber-100 text-amber-700 hover:bg-amber-100 border-amber-200">
+													Extra Perms
+												</Badge>
+											)}
+										</span>
+									</div>
 								</TableCell>
 								<TableCell>{user.email}</TableCell>
 								<TableCell>
-									<UserRoleSelect
-										userId={user._id.toString()}
-										currentRole={user.role}
-										disabled={user._id.toString() === session?.user?.id}
-									/>
+									<div className="flex items-center gap-1">
+										{
+											isAdmin(session?.user?.role) && user.role !== "ADMIN" && (
+												<UserRoleSelect
+													userId={user._id.toString()}
+													currentRole={user.role}
+													disabled={user._id.toString() === session?.user?.id}
+												/>
+											)
+										}
+										{user.role === "USER" && isAdmin(session?.user?.role) && (
+											<UserPermissionsModal user={JSON.parse(JSON.stringify(user))} />
+										)}
+										{isAdmin(session?.user?.role) && (
+											<DeleteUserButton userId={user._id.toString()} userName={user.name} />
+										)}
+									</div>
 								</TableCell>
 								<TableCell>
 									{user.createdAt

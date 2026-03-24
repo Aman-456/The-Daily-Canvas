@@ -1,27 +1,43 @@
 import { getAllComments } from "@/queries/comment";
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { User, MessageSquare } from "lucide-react";
+import { User as UserIcon, MessageSquare } from "lucide-react";
 import { CommentActionButtons } from "@/components/admin/CommentActionButtons";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminPagination } from "@/components/admin/AdminPagination";
 import { getCachedComments } from "@/actions/comment";
-import { use } from "react";
+import { checkPermission, PERMISSIONS } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
+import User from "@/models/User";
+import Blog from "@/models/Blog";
+
+// Register models for population
+void User;
+void Blog;
 
 export default async function AdminCommentsPage({
 	searchParams,
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	// Auth protection handled by layout.tsx
-	const params = use(searchParams);
+	const { session, authorized } = await checkPermission(PERMISSIONS.MANAGE_COMMENTS);
+
+	if (!authorized) {
+		return <AccessDenied requiredPermission="canManageComments" />;
+	}
+	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
 	const { comments, totalPages, total } = await getCachedComments(
 		page,
 		20,
 		search,
+		session?.user?.id,
+		session?.user?.role,
+		session?.user?.permissions,
 	);
 
 	return (
@@ -89,7 +105,7 @@ export default async function AdminCommentsPage({
 										<td className="p-4 align-top">
 											<div className="flex items-center gap-3">
 												<div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-													<User size={14} />
+													<UserIcon size={14} />
 												</div>
 												<div>
 													<p className="text-sm font-semibold">
@@ -149,7 +165,7 @@ export default async function AdminCommentsPage({
 											<div className="opacity-0 group-hover:opacity-100 transition-opacity">
 												<CommentActionButtons
 													commentId={comment._id}
-													blogId={comment.blogId?._id}
+													blogId={comment.blogId?._id || ""}
 													isApproved={comment.isApproved}
 												/>
 											</div>

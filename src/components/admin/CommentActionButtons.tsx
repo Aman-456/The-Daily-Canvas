@@ -38,6 +38,10 @@ export function CommentActionButtons({
 	};
 
 	const handleDelete = async () => {
+		if (!blogId) {
+			toast.error("Cannot delete a comment without a valid blog association");
+			return;
+		}
 		if (!confirm("Are you sure you want to delete this comment permanently?"))
 			return;
 

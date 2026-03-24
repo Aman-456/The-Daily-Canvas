@@ -21,7 +21,7 @@ export const getCachedUsers = unstable_cache(
 
 export async function toggleUserRole(
 	userId: string,
-	newRole: "USER" | "ADMIN" | "SUBADMIN",
+	newRole: "USER" | "ADMIN",
 ) {
 	try {
 		const session = await auth();
@@ -75,3 +75,33 @@ export async function updateUserProfile(formData: FormData) {
 		};
 	}
 }
+export async function deleteUser(userId: string) {
+	try {
+		const session = await auth();
+
+		if (!session?.user || !isAdmin(session.user.role)) {
+			return {
+				success: false,
+				error: "Unauthorized: Only Admins can delete users",
+			};
+		}
+
+		if (userId === session.user.id) {
+			return { success: false, error: "Cannot delete yourself" };
+		}
+
+		await dbConnect();
+		await User.findByIdAndDelete(userId);
+
+		revalidatePath("/admin/users");
+
+		return { success: true };
+	} catch (error: any) {
+		console.error("[deleteUser] Error:", error);
+		return {
+			success: false,
+			error: error.message || "An unexpected error occurred",
+		};
+	}
+}
+

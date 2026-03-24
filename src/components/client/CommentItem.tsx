@@ -201,14 +201,14 @@ export function CommentItem({
 						src={comment.isDeleted ? undefined : comment.userId?.image}
 					/>
 					<AvatarFallback>
-						{comment.isDeleted ? "D" : comment.userId?.name?.charAt(0) || "U"}
+						{comment.isDeleted ? "D" : (comment.userId?.name?.charAt(0) || "D")}
 					</AvatarFallback>
 				</Avatar>
 				<div className="flex-1 space-y-1">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-2">
 							<span className="font-bold text-sm">
-								{comment.isDeleted ? "[deleted]" : comment.userId?.name}
+								{comment.isDeleted ? "[deleted]" : (comment.userId?.name || "Deleted User")}
 							</span>
 							{comment.userId?._id === blogAuthorId && (
 								<span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">

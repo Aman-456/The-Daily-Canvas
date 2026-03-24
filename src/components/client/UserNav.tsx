@@ -51,7 +51,7 @@ export function UserNav({ user }: UserNavProps) {
 				<DropdownMenuSeparator />
 
 				<DropdownMenuGroup>
-					{isAdminOrSubAdmin(user.role) && (
+					{isAdminOrSubAdmin(user) && (
 						<Link href="/admin">
 							<DropdownMenuItem className="cursor-pointer">
 								<LayoutDashboard className="mr-2 h-4 w-4" />
@@ -61,7 +61,7 @@ export function UserNav({ user }: UserNavProps) {
 					)}
 				</DropdownMenuGroup>
 
-				{isAdminOrSubAdmin(user.role) ? (
+				{isAdminOrSubAdmin(user) ? (
 					<DropdownMenuSeparator />
 				) : null}
 

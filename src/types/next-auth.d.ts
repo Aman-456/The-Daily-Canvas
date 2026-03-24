@@ -8,10 +8,24 @@ declare module "next-auth" {
 		user: {
 			/** The user's role. */
 			role?: string;
+			permissions?: {
+				canSeeStats: boolean;
+				canManageBlogs: boolean;
+				canManageComments: boolean;
+				canManagePages: boolean;
+				canManageUsers: boolean;
+			};
 		} & DefaultSession["user"];
 	}
 
 	interface User {
 		role?: string;
+		permissions?: {
+			canSeeStats: boolean;
+			canManageBlogs: boolean;
+			canManageComments: boolean;
+			canManagePages: boolean;
+			canManageUsers: boolean;
+		};
 	}
 }

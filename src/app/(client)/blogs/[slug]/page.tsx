@@ -93,11 +93,11 @@ export default async function SingleBlogPage({
 						<Avatar className="h-10 w-10 border shadow-sm">
 							<AvatarImage src={blog.authorId?.image} />
 							<AvatarFallback>
-								{blog.authorId?.name?.charAt(0) || "U"}
+								{blog.authorId?.name?.charAt(0) || "D"}
 							</AvatarFallback>
 						</Avatar>
 						<div className="text-sm">
-							<p className="font-bold text-foreground">{blog.authorId?.name}</p>
+							<p className="font-bold text-foreground">{blog.authorId?.name || "Deleted User"}</p>
 							<div className="flex items-center gap-2 text-muted-foreground">
 								<span>
 									{new Date(blog.createdAt).toLocaleDateString("en-US", {
@@ -192,7 +192,7 @@ export default async function SingleBlogPage({
 							author: [
 								{
 									"@type": "Person",
-									name: blog.authorId?.name,
+									name: blog.authorId?.name || "Deleted User",
 									image: blog.authorId?.image,
 								},
 							],
