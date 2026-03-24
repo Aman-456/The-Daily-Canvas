@@ -38,9 +38,9 @@ async function indexAll() {
     urlList: urlList,
   };
 
-  console.log("[IndexNow Batch] Submitting payload to Bing IndexNow API...");
+  console.log("[IndexNow Batch] Submitting payload to IndexNow API...");
   
-  const res = await fetch("https://www.bing.com/indexnow", {
+  const res = await fetch("https://api.indexnow.org/indexnow", {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
@@ -49,7 +49,10 @@ async function indexAll() {
   });
 
   if (res.ok) {
-    console.log("✅ [SUCCESS] Bulk submitted all URLs to IndexNow!");
+    console.log(`✅ [SUCCESS] Status: ${res.status}`);
+    const text = await res.text();
+    if (text) console.log("Response Body:", text);
+    console.log("Bulk submitted all URLs to IndexNow!");
   } else {
     console.error("❌ [FAILED] Status:", res.status);
     console.error(await res.text());
