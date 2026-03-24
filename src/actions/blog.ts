@@ -3,29 +3,49 @@
 import dbConnect from "@/lib/mongoose";
 import Blog from "@/models/Blog";
 import { auth } from "@/auth";
-import { isAdminOrSubAdmin, isSubAdmin } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import slugify from "slugify";
 import { unstable_cache } from "next/cache";
 
 import Comment from "@/models/Comment";
+import Notification from "@/models/Notification";
 
-export const getCachedBlogs = unstable_cache(
-	async (query: any, skip: number, limit: number) => {
-		await dbConnect();
-		return Promise.all([
-			Blog.find(query)
-				.sort({ createdAt: -1 })
-				.populate("authorId", "name")
-				.skip(skip)
-				.limit(limit)
-				.lean(),
-			Blog.countDocuments(query),
-		]);
-	},
+async function fetchBlogsList(query: any, skip: number, limit: number, userId?: string, role?: string, permissions?: any) {
+	await dbConnect();
+	let finalQuery = { ...query };
+
+	const isOwnerOnly = role === "USER";
+
+	if (isOwnerOnly && userId) {
+		finalQuery.authorId = userId;
+	}
+
+	return Promise.all([
+		Blog.find(finalQuery)
+			.sort({ createdAt: -1 })
+			.populate("authorId", "name")
+			.skip(skip)
+			.limit(limit)
+			.lean(),
+		Blog.countDocuments(finalQuery),
+	]);
+}
+
+const getCachedBlogsList = unstable_cache(
+	fetchBlogsList,
 	["admin-blogs-list"],
-	{ revalidate: 86400, tags: ["blogs"] } // 1 day
+	{ revalidate: 86400, tags: ["blogs"] }
 );
+
+export const getCachedBlogs = async (query: any, skip: number, limit: number, userId?: string, role?: string, permissions?: any) => {
+	const isAdminLevel = role === "ADMIN";
+	
+	if (isAdminLevel) {
+		return getCachedBlogsList(query, skip, limit, userId, role, permissions);
+	} else {
+		return fetchBlogsList(query, skip, limit, userId, role, permissions);
+	}
+};
 
 export const getCachedAdminBlogDetails = unstable_cache(
 	async (id: string) => {
@@ -110,6 +130,20 @@ export async function createBlog(formData: FormData) {
 			await pingIndexNow(slug);
 		}
 
+		// Notify admins of new blog
+		try {
+			await Notification.create({
+				message: `New blog created: "${title}"`,
+				link: `/admin/blogs/${newBlog._id}`,
+				blogLink: `/admin/blogs/${newBlog._id}`,
+				type: "BLOG_PUBLISHED", // Or a new NEW_BLOG type, but PUBLISHED fits if it's published
+				userId: session.user.id,
+				targetAuthorId: session.user.id
+			});
+		} catch (err) {
+			console.error("Failed to create notification for new blog:", err);
+		}
+
 		return { success: true, data: JSON.parse(JSON.stringify(newBlog)) };
 	} catch (error: any) {
 		console.error("[createBlog] Error:", error);
@@ -120,27 +154,26 @@ export async function createBlog(formData: FormData) {
 	}
 }
 
+import { hasPermission } from "@/lib/utils";
+
 export async function deleteBlog(id: string) {
 	try {
 		const session = await auth();
 		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
-
-		const role = session.user.role as string;
 
 		await dbConnect();
 		const blog = await Blog.findById(id);
 
 		if (!blog) return { success: false, error: "Blog not found" };
 
-		// Sub-admins can only delete their own blogs, Admins can delete any
-		if (isSubAdmin(role) && blog.authorId.toString() !== session.user.id) {
+		const isOwner = blog.authorId.toString() === session.user.id;
+		const canManageOtherBlogs = session.user.role === "ADMIN";
+
+		if (!isOwner && !canManageOtherBlogs) {
 			return {
 				success: false,
-				error: "Forbidden: You can only delete your own blogs",
+				error: "Forbidden: You don't have permission to delete this blog",
 			};
-		}
-		if (!isAdminOrSubAdmin(role)) {
-			return { success: false, error: "Unauthorized" };
 		}
 
 		// Delete old cover image from Vercel Blob if it exists
@@ -152,6 +185,22 @@ export async function deleteBlog(id: string) {
 
 		await Blog.findByIdAndDelete(id);
 		await Comment.deleteMany({ blogId: id });
+
+		// Notify author if deleted by someone else
+		if (!isOwner) {
+			try {
+				await Notification.create({
+					message: `Your blog "${blog.title}" was deleted by an administrator.`,
+					link: "/admin/blogs",
+					blogLink: "/admin/blogs",
+					type: "BLOG_DELETE",
+					userId: session.user.id,
+					targetAuthorId: blog.authorId
+				});
+			} catch (err) {
+				console.error("Failed to notify author of deletion:", err);
+			}
+		}
 
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
@@ -208,15 +257,14 @@ export async function updateBlog(id: string, formData: FormData) {
 		if (!blog) return { success: false, error: "Blog not found" };
 
 		// Check permissions
-		const role = session.user.role as string;
-		if (isSubAdmin(role) && blog.authorId.toString() !== session.user.id) {
+		const isOwner = blog.authorId.toString() === session.user.id;
+		const canManageOtherBlogs = session.user.role === "ADMIN";
+
+		if (!isOwner && !canManageOtherBlogs) {
 			return {
 				success: false,
-				error: "Forbidden: You can only edit your own blogs",
+				error: "Forbidden: You don't have permission to edit this blog",
 			};
-		}
-		if (!isAdminOrSubAdmin(role)) {
-			return { success: false, error: "Unauthorized" };
 		}
 
 		// If cover image changed, delete the old one from Vercel Blob
@@ -244,6 +292,30 @@ export async function updateBlog(id: string, formData: FormData) {
 			},
 			{ new: true },
 		);
+
+		// Notifications for admin-initiated actions on user's blog
+		if (!isOwner) {
+			try {
+				let notifType: any = "BLOG_UPDATE";
+				let msg = `Your blog "${title}" was updated by an administrator.`;
+
+				if (blog.isPublished !== isPublished) {
+					notifType = isPublished ? "BLOG_PUBLISHED" : "BLOG_UNPUBLISHED";
+					msg = `Your blog "${title}" was ${isPublished ? "published" : "unpublished"} by an administrator.`;
+				}
+
+				await Notification.create({
+					message: msg,
+					link: `/admin/blogs`,
+					blogLink: `/admin/blogs/${id}`,
+					type: notifType,
+					userId: session.user.id,
+					targetAuthorId: blog.authorId
+				});
+			} catch (err) {
+				console.error("Failed to notify author of update:", err);
+			}
+		}
 
 		// Invalidate natively
 		revalidatePath("/");

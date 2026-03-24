@@ -25,7 +25,7 @@ export function AdminNotifications() {
 			}
 		};
 		load();
-		const interval = setInterval(load, 30000);
+		const interval = setInterval(load, 30000); // 30 seconds
 		return () => clearInterval(interval);
 	}, []);
 

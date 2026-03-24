@@ -10,20 +10,34 @@ export const isAdmin = (role?: string | null) => {
 	return role.toUpperCase() === "ADMIN";
 };
 
-export const isSubAdmin = (role?: string | null) => {
-	if (!role) return false;
-	return role.toUpperCase() === "SUBADMIN";
-};
-
-export const isAdminOrSubAdmin = (role?: string | null) => {
-	if (!role) return false;
-	const r = role.toUpperCase();
-	return r === "ADMIN" || r === "SUBADMIN";
+export const isAdminOrSubAdmin = (user?: any) => {
+	if (!user) return false;
+	const role = user.role?.toUpperCase();
+	if (role === "ADMIN") return true;
+	if (role === "USER") {
+		return Object.values(user.permissions || {}).some((v) => v === true);
+	}
+	return false;
 };
 
 export const isUser = (role?: string | null) => {
 	if (!role) return false;
 	return role.toUpperCase() === "USER";
+};
+
+export const hasPermission = (user: any, permission: string): boolean => {
+	if (!user) return false;
+	if (isAdmin(user.role)) return true; // Admins have all permissions
+	// USER roles now rely on granular permissions
+	if (isUser(user.role)) {
+		return !!user.permissions?.[permission];
+	}
+	return false;
+};
+
+export const hasExtraPermissions = (user: any): boolean => {
+	if (!user || user.role === "ADMIN") return false;
+	return Object.values(user.permissions || {}).some((v) => v === true);
 };
 
 export function formatRelativeTime(date: Date | string | number): string {

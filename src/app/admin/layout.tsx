@@ -1,8 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { AdminSidebar } from "@/components/admin/AdminSidebar"
 import { AdminNavbar } from "@/components/admin/AdminNavbar"
-import { isAdminOrSubAdmin } from "@/lib/utils"
 
 export default async function AdminLayout({
   children,
@@ -10,14 +11,9 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
-  const role = session?.user?.role || "USER"
 
   if (!session?.user) {
     redirect("/api/auth/signin")
-  }
-
-  if (!isAdminOrSubAdmin(role)) {
-    redirect("/")
   }
 
   return (
@@ -29,7 +25,7 @@ export default async function AdminLayout({
         <div className="hidden md:block">
           <AdminNavbar user={session.user} />
         </div>
-        
+
         {/* Main Content */}
         <main className="flex-1 p-6 md:p-10 overflow-auto">
           {children}

@@ -13,14 +13,14 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
 	userId: string;
-	currentRole: "USER" | "ADMIN" | "SUBADMIN";
+	currentRole: "USER" | "ADMIN";
 	disabled?: boolean;
 }
 
 export function UserRoleSelect({ userId, currentRole, disabled }: Props) {
 	const [loading, setLoading] = useState(false);
 
-	const handleRoleChange = async (newRole: "USER" | "ADMIN" | "SUBADMIN") => {
+	const handleRoleChange = async (newRole: "USER" | "ADMIN") => {
 		if (newRole === currentRole) return;
 		setLoading(true);
 		try {
@@ -47,9 +47,6 @@ export function UserRoleSelect({ userId, currentRole, disabled }: Props) {
 			<DropdownMenuContent>
 				<DropdownMenuItem onClick={() => handleRoleChange("USER")}>
 					USER
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => handleRoleChange("SUBADMIN")}>
-					SUBADMIN
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={() => handleRoleChange("ADMIN")}>
 					ADMIN

@@ -3,8 +3,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAdminPages } from "@/actions/page";
+import { isAdmin } from "@/lib/utils";
+import { checkPermission, PERMISSIONS } from "@/lib/permissions";
+import { AccessDenied } from "@/components/admin/AccessDenied";
 
 export default async function AdminPagesPage() {
+	const { session, authorized } = await checkPermission(PERMISSIONS.MANAGE_PAGES);
+
+	if (!authorized) {
+		return <AccessDenied requiredPermission="canManagePages" />;
+	}
+
 	const result = await getAdminPages();
 	const pages = result.success ? result.data : [];
 

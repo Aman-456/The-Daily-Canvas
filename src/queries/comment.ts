@@ -143,10 +143,17 @@ export async function getCommentReplies(
 		hasMore,
 	};
 }
-export async function getAllComments(page = 1, limit = 20, search?: string) {
+export async function getAllComments(
+	page = 1,
+	limit = 20,
+	search?: string,
+	userId?: string,
+	role?: string,
+	permissions?: any,
+) {
 	await dbConnect();
 
-	let query = {};
+	let query: any = {};
 	if (search) {
 		const isObjectId = /^[0-9a-fA-F]{24}$/.test(search);
 		if (isObjectId) {
@@ -154,6 +161,13 @@ export async function getAllComments(page = 1, limit = 20, search?: string) {
 		} else {
 			query = { content: { $regex: search, $options: "i" } };
 		}
+	}
+
+	// Filter by ownership if not admin
+	if (role === "USER" && userId) {
+		const Blog = (await import("@/models/Blog")).default;
+		const userBlogIds = await Blog.find({ authorId: userId }).distinct("_id");
+		query.blogId = { $in: userBlogIds };
 	}
 
 	const total = await Comment.countDocuments(query);

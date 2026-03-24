@@ -5,8 +5,9 @@ export interface INotification extends Document {
 	link: string;
 	blogLink: string;
 	isRead: boolean;
-	type: "COMMENT" | "SYSTEM";
+	type: "COMMENT" | "SYSTEM" | "BLOG_PUBLISHED" | "BLOG_UNPUBLISHED" | "BLOG_UPDATE" | "BLOG_DELETE";
 	userId: mongoose.Types.ObjectId;
+	targetAuthorId?: mongoose.Types.ObjectId;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -17,8 +18,9 @@ const NotificationSchema = new Schema<INotification>(
 		link: { type: String, required: true },
 		blogLink: { type: String, required: true },
 		isRead: { type: Boolean, default: false },
-		type: { type: String, enum: ["COMMENT", "SYSTEM"], default: "COMMENT" },
+		type: { type: String, enum: ["COMMENT", "SYSTEM", "BLOG_PUBLISHED", "BLOG_UNPUBLISHED", "BLOG_UPDATE", "BLOG_DELETE"], default: "COMMENT" },
 		userId: { type: Schema.Types.ObjectId, ref: "User" },
+		targetAuthorId: { type: Schema.Types.ObjectId, ref: "User" },
 	},
 	{ timestamps: true }
 );

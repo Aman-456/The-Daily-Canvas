@@ -7,18 +7,26 @@ import Blog from "@/models/Blog";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 
-import { isAdminOrSubAdmin } from "@/lib/utils";
+import { isAdminOrSubAdmin, hasPermission, isAdmin } from "@/lib/utils";
 import { commentSchema } from "@/lib/validations/comment";
 import { getBlogComments, getCommentReplies, getAllComments } from "@/queries/comment";
 import Notification from "@/models/Notification";
 
-export const getCachedComments = unstable_cache(
-	async (page: number, limit: number, search: string) => {
-		return getAllComments(page, limit, search);
-	},
+const getCachedCommentsList = unstable_cache(
+	getAllComments,
 	["admin-comments-list"],
 	{ revalidate: 86400, tags: ["comments"] }
 );
+
+export const getCachedComments = async (page: number, limit: number, search: string, userId?: string, role?: string, permissions?: any) => {
+	const isAdminLevel = role === "ADMIN";
+	
+	if (isAdminLevel) {
+		return getCachedCommentsList(page, limit, search, userId, role, permissions);
+	} else {
+		return getAllComments(page, limit, search, userId, role, permissions);
+	}
+};
 
 export async function addComment(formData: FormData) {
 	try {
@@ -66,14 +74,15 @@ export async function addComment(formData: FormData) {
 
 		// Create notification for admin
 		try {
-			const blog = await Blog.findById(blogId).select("title slug");
+			const blog = await Blog.findById(blogId).select("title slug authorId");
 			if (blog) {
 				await Notification.create({
 					message: `New comment on "${blog.title}"`,
 					link: `/admin/comments`,
 					blogLink: `/admin/blogs/${blog._id}#comment-${newComment._id}`,
 					type: "COMMENT",
-					userId: session.user.id
+					userId: session.user.id,
+					targetAuthorId: blog.authorId
 				});
 			}
 		} catch (notifErr) {
@@ -110,8 +119,17 @@ async function updateBlogCommentCount(blogId: string) {
 export async function toggleCommentApproval(commentId: string) {
 	try {
 		const session = await auth();
-		if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUBADMIN") {
-			return { success: false, error: "Unauthorized" };
+		if (session?.user?.role !== "ADMIN") {
+			// If not an admin/moderator, check if they are the owner of the blog
+			await dbConnect();
+			const comment = await Comment.findById(commentId).populate("blogId", "authorId");
+			if (
+				!comment ||
+				!comment.blogId ||
+				(comment.blogId as any).authorId.toString() !== session?.user?.id
+			) {
+				return { success: false, error: "Unauthorized" };
+			}
 		}
 
 		await dbConnect();
@@ -202,7 +220,7 @@ export async function deleteComment(
 		const comment = await Comment.findById(commentId);
 		if (!comment) return { success: false, error: "Comment not found" };
 
-		const isAdmin = isAdminOrSubAdmin(session.user.role);
+		const isAdmin = isAdminOrSubAdmin(session.user);
 		const isOwner = comment.userId.toString() === session.user.id;
 
 		if (!isAdmin && !isOwner) {
@@ -245,8 +263,13 @@ export async function deleteComment(
 export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
 	try {
 		const session = await auth();
-		if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUBADMIN") {
-			return { success: false, error: "Unauthorized" };
+		if (session?.user?.role !== "ADMIN") {
+			// Check if they are the owner of the blog
+			await dbConnect();
+			const blog = await Blog.findById(blogId).select("authorId");
+			if (!blog || blog.authorId.toString() !== session?.user?.id) {
+				return { success: false, error: "Unauthorized" };
+			}
 		}
 
 		await dbConnect();
