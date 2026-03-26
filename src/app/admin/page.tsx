@@ -1,21 +1,16 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Blog from "@/models/Blog"
-import User from "@/models/User"
-import Comment from "@/models/Comment"
+
 import { getCachedStats } from "@/actions/dashboard"
 import { isAdmin } from "@/lib/utils"
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 
-// Ensure models are registered for any potential population or query
-void User;
-void Blog;
-void Comment;
+
 
 export default async function AdminDashboardPage() {
   const { session, authorized } = await checkPermission(PERMISSIONS.SEE_STATS)
-  
+
   if (!authorized) {
     redirect("/admin/blogs");
   }

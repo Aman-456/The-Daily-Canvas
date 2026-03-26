@@ -19,7 +19,8 @@ export const dynamic = "force-dynamic";
 
 function calculateReadTime(content: string) {
 	const wordsPerMinute = 200;
-	const words = content.trim().split(/\s+/).length;
+
+	const words = content?.trim().split(/\s+/).length;
 	const minutes = Math.ceil(words / wordsPerMinute);
 	return minutes;
 }
@@ -56,6 +57,7 @@ export default async function BlogsPage({
 			) : (
 				<div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
 					{blogs.map((blog: any) => {
+
 						const readTime = calculateReadTime(blog.content);
 						return (
 							<Link key={blog._id} href={`/blogs/${blog.slug}`}>
@@ -63,7 +65,7 @@ export default async function BlogsPage({
 									<div className="aspect-16/10 bg-muted relative overflow-hidden">
 										{blog.coverImage ? (
 											<Image
-												src={blog.coverImage}
+												src={blog.coverImage!}
 												alt={blog.title}
 												fill
 												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -100,7 +102,7 @@ export default async function BlogsPage({
 									<div className="px-4 pb-3.5 pt-1 flex items-center justify-between border-t border-border/40">
 										<div className="flex items-center gap-2">
 											<Avatar className="h-7 w-7 border">
-												<AvatarImage src={blog.authorId?.image} />
+												<AvatarImage src={blog.authorId?.image || undefined} />
 												<AvatarFallback className="text-[10px]">
 													{blog.authorId?.name?.charAt(0) || "U"}
 												</AvatarFallback>
@@ -162,8 +164,8 @@ export default async function BlogsPage({
 							key={i}
 							href={`/?page=${i + 1}${search ? `&search=${search}` : ""}`}
 							className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${page === i + 1
-									? "bg-primary text-primary-foreground font-bold"
-									: "bg-muted hover:bg-muted/80"
+								? "bg-primary text-primary-foreground font-bold"
+								: "bg-muted hover:bg-muted/80"
 								}`}
 						>
 							{i + 1}

@@ -1,7 +1,8 @@
 "use server";
 
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import { db } from "@/db/index";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
@@ -26,8 +27,7 @@ export async function updateUserPermissions(
 			};
 		}
 
-		await dbConnect();
-		await User.findByIdAndUpdate(userId, { permissions });
+		await db.update(users).set({ permissions }).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
 

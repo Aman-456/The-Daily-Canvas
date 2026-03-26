@@ -1,19 +1,33 @@
 "use server";
 
-import dbConnect from "@/lib/mongoose";
-import User from "@/models/User";
+import { db } from "@/db/index";
+import { users } from "@/db/schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/utils";
 import { unstable_cache } from "next/cache";
+import { eq, like, or, desc, sql } from "drizzle-orm";
 
 export const getCachedUsers = unstable_cache(
-	async (query: any, skip: number, limit: number) => {
-		await dbConnect();
-		return Promise.all([
-			User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-			User.countDocuments(query),
+	async (search: string, skip: number, limit: number) => {
+		let dbQuery = db.select().from(users);
+		let countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
+
+		if (search) {
+			const searchCondition = or(
+				like(users.name, `%${search}%`),
+				like(users.email, `%${search}%`)
+			);
+			dbQuery = dbQuery.where(searchCondition) as any;
+			countQuery = countQuery.where(searchCondition) as any;
+		}
+
+		const [userResults, userCount] = await Promise.all([
+			dbQuery.orderBy(desc(users.createdAt)).limit(limit).offset(skip),
+			countQuery,
 		]);
+
+		return [userResults, userCount[0].count];
 	},
 	["admin-users-list"],
 	{ revalidate: 86400, tags: ["users"] }
@@ -34,13 +48,11 @@ export async function toggleUserRole(
 		}
 
 		// Prevent admin from demoting themselves if they are the last admin
-		// (Simplified for this project)
 		if (userId === session.user.id && newRole !== "ADMIN") {
 			return { success: false, error: "Cannot demote yourself" };
 		}
 
-		await dbConnect();
-		await User.findByIdAndUpdate(userId, { role: newRole });
+		await db.update(users).set({ role: newRole }).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
 
@@ -61,8 +73,7 @@ export async function updateUserProfile(formData: FormData) {
 
 		const name = formData.get("name") as string;
 
-		await dbConnect();
-		await User.findByIdAndUpdate(session.user.id, { name });
+		await db.update(users).set({ name }).where(eq(users.id, session.user.id));
 
 		revalidatePath("/admin");
 
@@ -75,6 +86,7 @@ export async function updateUserProfile(formData: FormData) {
 		};
 	}
 }
+
 export async function deleteUser(userId: string) {
 	try {
 		const session = await auth();
@@ -90,8 +102,7 @@ export async function deleteUser(userId: string) {
 			return { success: false, error: "Cannot delete yourself" };
 		}
 
-		await dbConnect();
-		await User.findByIdAndDelete(userId);
+		await db.delete(users).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
 
@@ -104,4 +115,3 @@ export async function deleteUser(userId: string) {
 		};
 	}
 }
-

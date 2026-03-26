@@ -1,35 +1,89 @@
 "use server";
 
-import dbConnect from "@/lib/mongoose";
-import Blog from "@/models/Blog";
+import { db } from "@/db/index";
+import { blogs, users, comments, notifications, type Blog, type NewBlog } from "@/db/schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import slugify from "slugify";
 import { unstable_cache } from "next/cache";
+import { eq, desc, and, sql, ilike } from "drizzle-orm";
+import { blogSchema } from "@/lib/validations/blog";
+import { UploadService } from "@/lib/upload";
+import { pingIndexNow } from "@/lib/indexnow";
 
-import Comment from "@/models/Comment";
-import Notification from "@/models/Notification";
+interface BlogQuery {
+	authorId?: string;
+	isPublished?: boolean;
+	title?: { $regex?: string };
+}
 
-async function fetchBlogsList(query: any, skip: number, limit: number, userId?: string, role?: string, permissions?: any) {
-	await dbConnect();
-	let finalQuery = { ...query };
+async function fetchBlogsList(
+	query: BlogQuery,
+	skip: number,
+	limit: number,
+	userId?: string,
+	role?: string,
+	permissions?: any
+) {
 
-	const isOwnerOnly = role === "USER";
+	let dbQuery = db.select({
+		_id: blogs.id,
+		title: blogs.title,
+		slug: blogs.slug,
+		content: blogs.content,
+		excerpt: blogs.excerpt,
+		coverImage: blogs.coverImage,
+		isPublished: blogs.isPublished,
+		authorId: {
+			_id: users.id,
+			name: users.name
+		},
+		createdAt: blogs.createdAt,
+		updatedAt: blogs.updatedAt,
+		tags: blogs.tags,
+		commentsCount: blogs.commentsCount,
+		metaTitle: blogs.metaTitle,
+		metaDescription: blogs.metaDescription,
+		keywords: blogs.keywords,
+	})
+		.from(blogs)
+		.leftJoin(users, eq(blogs.authorId, users.id))
+		.$dynamic();
 
-	if (isOwnerOnly && userId) {
-		finalQuery.authorId = userId;
+	let countQuery = db.select({ count: sql<number>`count(*)` }).from(blogs).$dynamic();
+
+	const conditions = [];
+	if (role === "ADMIN") {
+		// ADMIN logic
+	} else if (role === "USER" && userId) {
+		conditions.push(eq(blogs.authorId, userId));
+	} else if (query.authorId) {
+		conditions.push(eq(blogs.authorId, query.authorId));
 	}
 
-	return Promise.all([
-		Blog.find(finalQuery)
-			.sort({ createdAt: -1 })
-			.populate("authorId", "name")
-			.skip(skip)
-			.limit(limit)
-			.lean(),
-		Blog.countDocuments(finalQuery),
+	if (query.isPublished !== undefined) {
+		conditions.push(eq(blogs.isPublished, query.isPublished));
+	}
+
+	if (query.title?.$regex) {
+		conditions.push(ilike(blogs.title, `%${query.title.$regex}%`));
+	}
+
+	let finalCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
+	if (finalCondition) {
+		dbQuery = dbQuery.where(finalCondition);
+		countQuery = countQuery.where(finalCondition);
+	}
+
+	const [blogsData, totalResult] = await Promise.all([
+		dbQuery.orderBy(desc(blogs.createdAt)).offset(skip).limit(limit),
+		countQuery,
 	]);
+
+	return [blogsData, Number(totalResult[0]?.count || 0)] as [any[], number];
 }
+
 
 const getCachedBlogsList = unstable_cache(
 	fetchBlogsList,
@@ -37,9 +91,16 @@ const getCachedBlogsList = unstable_cache(
 	{ revalidate: 86400, tags: ["blogs"] }
 );
 
-export const getCachedBlogs = async (query: any, skip: number, limit: number, userId?: string, role?: string, permissions?: any) => {
+export const getCachedBlogs = async (
+	query: BlogQuery,
+	skip: number,
+	limit: number,
+	userId?: string,
+	role?: string,
+	permissions?: any
+): Promise<[any[], number]> => {
 	const isAdminLevel = role === "ADMIN";
-	
+
 	if (isAdminLevel) {
 		return getCachedBlogsList(query, skip, limit, userId, role, permissions);
 	} else {
@@ -49,25 +110,47 @@ export const getCachedBlogs = async (query: any, skip: number, limit: number, us
 
 export const getCachedAdminBlogDetails = unstable_cache(
 	async (id: string) => {
-		await dbConnect();
-		return Blog.findById(id).populate("authorId", "name").lean();
+		const result = await db.select({
+			_id: blogs.id,
+			title: blogs.title,
+			slug: blogs.slug,
+			content: blogs.content,
+			excerpt: blogs.excerpt,
+			coverImage: blogs.coverImage,
+			isPublished: blogs.isPublished,
+			authorId: {
+				_id: users.id,
+				name: users.name
+			},
+			createdAt: blogs.createdAt,
+			updatedAt: blogs.updatedAt,
+			tags: blogs.tags,
+			commentsCount: blogs.commentsCount,
+			metaTitle: blogs.metaTitle,
+			metaDescription: blogs.metaDescription,
+			keywords: blogs.keywords,
+		})
+			.from(blogs)
+			.leftJoin(users, eq(blogs.authorId, users.id))
+			.where(eq(blogs.id, id));
+
+		return result[0] || null;
 	},
 	["admin-blog-details-query"],
-	{ revalidate: 86400, tags: ["blogs"] }
+	{ revalidate: 1, tags: ["blogs"] }
 );
 
 export const getCachedAdminBlogEdit = unstable_cache(
 	async (id: string) => {
-		await dbConnect();
-		return Blog.findById(id).lean();
+		const result = await db.select().from(blogs).where(eq(blogs.id, id));
+		if (result[0]) {
+			return { ...result[0], _id: result[0].id };
+		}
+		return null;
 	},
 	["admin-blog-edit-query"],
 	{ revalidate: 86400, tags: ["blogs"] }
 );
-
-import { blogSchema } from "@/lib/validations/blog";
-import { UploadService } from "@/lib/upload";
-import { pingIndexNow } from "@/lib/indexnow";
 
 export async function createBlog(formData: FormData) {
 	try {
@@ -82,7 +165,7 @@ export async function createBlog(formData: FormData) {
 			isPublished: formData.get("isPublished") === "true",
 			metaTitle: formData.get("metaTitle"),
 			metaDescription: formData.get("metaDescription"),
-			keywords: formData.get("keywords"),
+			keywords: formData.get("keywords") ? (formData.get("keywords") as string).split(",") : [],
 		};
 
 		const parsed = blogSchema.safeParse(rawData);
@@ -90,7 +173,7 @@ export async function createBlog(formData: FormData) {
 			return { success: false, error: parsed.error.issues[0].message };
 		}
 
-		const {
+		let {
 			title,
 			content,
 			excerpt,
@@ -101,50 +184,52 @@ export async function createBlog(formData: FormData) {
 			keywords,
 		} = parsed.data;
 
+		const keywordsArr = Array.isArray(keywords) ? keywords : typeof keywords === 'string' ? JSON.parse(keywords || '[]') : [];
+
 		const slug =
 			slugify(title, { lower: true, strict: true }) +
 			"-" +
 			Date.now().toString().slice(-4);
 
-		await dbConnect();
+		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+		const userId = session.user.id;
 
-		const newBlog = await Blog.create({
+		const insertResult = await db.insert(blogs).values({
 			title,
 			slug,
 			content,
 			excerpt,
 			coverImage,
 			isPublished,
-			authorId: session.user.id,
+			authorId: userId,
 			metaTitle,
 			metaDescription,
-			keywords,
-		});
+			keywords: keywordsArr,
+		}).returning();
 
-		// Invalidate cache natively
+		const newBlog = insertResult[0];
+
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
 
-		// Auto-ping IndexNow for SEO if it is published
 		if (isPublished) {
 			await pingIndexNow(slug);
 		}
 
-		// Notify admins of new blog
 		try {
-			await Notification.create({
+			await db.insert(notifications).values({
 				message: `New blog created: "${title}"`,
-				link: `/admin/blogs/${newBlog._id}`,
-				blogLink: `/admin/blogs/${newBlog._id}`,
-				type: "BLOG_PUBLISHED", // Or a new NEW_BLOG type, but PUBLISHED fits if it's published
-				userId: session.user.id,
-				targetAuthorId: session.user.id
+				link: `/admin/blogs/${newBlog.id}`,
+				blogLink: `/admin/blogs/${newBlog.id}`,
+				type: "BLOG_PUBLISHED",
+				userId: userId,
+				targetAuthorId: userId
 			});
 		} catch (err) {
 			console.error("Failed to create notification for new blog:", err);
 		}
 
-		return { success: true, data: JSON.parse(JSON.stringify(newBlog)) };
+		return { success: true, data: { ...newBlog, _id: newBlog.id } };
 	} catch (error: any) {
 		console.error("[createBlog] Error:", error);
 		return {
@@ -154,19 +239,17 @@ export async function createBlog(formData: FormData) {
 	}
 }
 
-import { hasPermission } from "@/lib/utils";
-
 export async function deleteBlog(id: string) {
 	try {
 		const session = await auth();
 		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-		await dbConnect();
-		const blog = await Blog.findById(id);
+		const blogResult = await db.select().from(blogs).where(eq(blogs.id, id));
+		const blog = blogResult[0];
 
 		if (!blog) return { success: false, error: "Blog not found" };
 
-		const isOwner = blog.authorId.toString() === session.user.id;
+		const isOwner = blog.authorId === session.user.id;
 		const canManageOtherBlogs = session.user.role === "ADMIN";
 
 		if (!isOwner && !canManageOtherBlogs) {
@@ -176,20 +259,18 @@ export async function deleteBlog(id: string) {
 			};
 		}
 
-		// Delete old cover image from Vercel Blob if it exists
 		if (blog.coverImage) {
 			await UploadService.delete(blog.coverImage);
 		}
 
 		const slugToPing = blog.slug;
 
-		await Blog.findByIdAndDelete(id);
-		await Comment.deleteMany({ blogId: id });
+		await db.delete(blogs).where(eq(blogs.id, id));
+		await db.delete(comments).where(eq(comments.blogId, id));
 
-		// Notify author if deleted by someone else
 		if (!isOwner) {
 			try {
-				await Notification.create({
+				await db.insert(notifications).values({
 					message: `Your blog "${blog.title}" was deleted by an administrator.`,
 					link: "/admin/blogs",
 					blogLink: "/admin/blogs",
@@ -205,7 +286,6 @@ export async function deleteBlog(id: string) {
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
 
-		// Notify search engines that the URL is dead
 		await pingIndexNow(slugToPing);
 
 		return { success: true };
@@ -231,7 +311,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			isPublished: formData.get("isPublished") === "true",
 			metaTitle: formData.get("metaTitle"),
 			metaDescription: formData.get("metaDescription"),
-			keywords: formData.get("keywords"),
+			keywords: formData.get("keywords") ? (formData.get("keywords") as string).split(",") : [],
 		};
 
 		const oldCoverImage = formData.get("oldCoverImage") as string | null;
@@ -252,12 +332,11 @@ export async function updateBlog(id: string, formData: FormData) {
 			keywords,
 		} = parsed.data;
 
-		await dbConnect();
-		const blog = await Blog.findById(id);
+		const blogResult = await db.select().from(blogs).where(eq(blogs.id, id));
+		const blog = blogResult[0];
 		if (!blog) return { success: false, error: "Blog not found" };
 
-		// Check permissions
-		const isOwner = blog.authorId.toString() === session.user.id;
+		const isOwner = blog.authorId === session.user.id;
 		const canManageOtherBlogs = session.user.role === "ADMIN";
 
 		if (!isOwner && !canManageOtherBlogs) {
@@ -267,7 +346,6 @@ export async function updateBlog(id: string, formData: FormData) {
 			};
 		}
 
-		// If cover image changed, delete the old one from Vercel Blob
 		if (oldCoverImage && oldCoverImage !== coverImage) {
 			await UploadService.delete(oldCoverImage);
 		}
@@ -277,23 +355,23 @@ export async function updateBlog(id: string, formData: FormData) {
 			"-" +
 			id.toString().slice(-4);
 
-		const updatedBlog = await Blog.findByIdAndUpdate(
-			id,
-			{
-				title,
-				slug: newSlug,
-				content,
-				excerpt,
-				coverImage,
-				isPublished,
-				metaTitle,
-				metaDescription,
-				keywords,
-			},
-			{ new: true },
-		);
+		const keywordsArr = Array.isArray(keywords) ? keywords : typeof keywords === 'string' ? JSON.parse(keywords || '[]') : [];
 
-		// Notifications for admin-initiated actions on user's blog
+		const updateResult = await db.update(blogs).set({
+			title,
+			slug: newSlug,
+			content,
+			excerpt,
+			coverImage,
+			isPublished,
+			metaTitle,
+			metaDescription,
+			keywords: keywordsArr,
+			updatedAt: new Date(),
+		}).where(eq(blogs.id, id)).returning();
+
+		const updatedBlog = updateResult[0];
+
 		if (!isOwner) {
 			try {
 				let notifType: any = "BLOG_UPDATE";
@@ -304,7 +382,7 @@ export async function updateBlog(id: string, formData: FormData) {
 					msg = `Your blog "${title}" was ${isPublished ? "published" : "unpublished"} by an administrator.`;
 				}
 
-				await Notification.create({
+				await db.insert(notifications).values({
 					message: msg,
 					link: `/admin/blogs`,
 					blogLink: `/admin/blogs/${id}`,
@@ -317,17 +395,15 @@ export async function updateBlog(id: string, formData: FormData) {
 			}
 		}
 
-		// Invalidate natively
 		revalidatePath("/");
 		revalidatePath(`/blogs/${newSlug}`);
 		revalidatePath("/admin/blogs");
 
-		// Auto-ping IndexNow for SEO if it is published
 		if (isPublished) {
 			await pingIndexNow(newSlug);
 		}
 
-		return { success: true, data: JSON.parse(JSON.stringify(updatedBlog)) };
+		return { success: true, data: { ...updatedBlog, _id: updatedBlog.id } };
 	} catch (error: any) {
 		console.error("[updateBlog] Error:", error);
 		return {

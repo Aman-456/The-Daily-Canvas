@@ -1,14 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import { auth } from "@/auth";
-import dbConnect from "@/lib/mongoose";
-import Blog from "@/models/Blog";
-import User from "@/models/User";
+
 import { isAdmin } from "@/lib/utils";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
 import { redirect } from "next/navigation";
-void User; // Ensure Mongoose schema is registered for .populate()
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,13 +31,12 @@ export default async function AdminBlogsPage({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const { session, authorized } = await checkPermission(PERMISSIONS.MANAGE_BLOGS);
-	
+
 	if (!authorized) {
 		return <AccessDenied requiredPermission="canManageBlogs" />;
 	}
 
 	// Session exists because of layout.tsx protection
-	const role = session!.user!.role as string;
 	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
@@ -61,7 +58,7 @@ export default async function AdminBlogsPage({
 		session?.user?.permissions,
 	);
 
-	const totalPages = Math.ceil(total / limit);
+	const totalPages = Math.ceil((total as any) / limit);
 	const view = (params.view as string) || "table";
 
 	return (
