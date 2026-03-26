@@ -1,5 +1,4 @@
-import dbConnect from "@/lib/mongoose";
-import Blog from "@/models/Blog";
+
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

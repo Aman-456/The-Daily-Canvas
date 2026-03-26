@@ -11,12 +11,6 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { getCachedComments } from "@/actions/comment";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
-import User from "@/models/User";
-import Blog from "@/models/Blog";
-
-// Register models for population
-void User;
-void Blog;
 
 export default async function AdminCommentsPage({
 	searchParams,

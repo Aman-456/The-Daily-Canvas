@@ -36,18 +36,7 @@ export default async function AdminUsersPage({
 	const search = (params.search as string) || "";
 	const limit = 20;
 	const skip = (page - 1) * limit;
-
-	let query: any = {};
-	if (search) {
-		query = {
-			$or: [
-				{ name: { $regex: search, $options: "i" } },
-				{ email: { $regex: search, $options: "i" } },
-			],
-		};
-	}
-
-	const [users, total] = await getCachedUsers(query, skip, limit);
+	const [users, total] = (await getCachedUsers(search, skip, limit)) as [any[], number];
 
 	const totalPages = Math.ceil(total / limit);
 
@@ -83,7 +72,7 @@ export default async function AdminUsersPage({
 					</TableHeader>
 					<TableBody>
 						{users.map((user: any) => (
-							<TableRow key={user._id.toString()}>
+							<TableRow key={user.id.toString()}>
 								<TableCell className="flex items-center gap-3">
 									<Avatar>
 										<AvatarImage src={user.image} />
@@ -108,9 +97,9 @@ export default async function AdminUsersPage({
 										{
 											isAdmin(session?.user?.role) && user.role !== "ADMIN" && (
 												<UserRoleSelect
-													userId={user._id.toString()}
+													userId={user.id.toString()}
 													currentRole={user.role}
-													disabled={user._id.toString() === session?.user?.id}
+													disabled={user.id.toString() === session?.user?.id}
 												/>
 											)
 										}
@@ -118,7 +107,7 @@ export default async function AdminUsersPage({
 											<UserPermissionsModal user={JSON.parse(JSON.stringify(user))} />
 										)}
 										{isAdmin(session?.user?.role) && (
-											<DeleteUserButton userId={user._id.toString()} userName={user.name} />
+											<DeleteUserButton userId={user.id.toString()} userName={user.name} />
 										)}
 									</div>
 								</TableCell>

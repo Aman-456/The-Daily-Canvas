@@ -1,6 +1,7 @@
-import dbConnect from "@/lib/mongoose";
-import Comment from "@/models/Comment";
+import { db } from "@/db/index";
+import { comments, users, blogs } from "@/db/schema";
 import { unstable_cache } from "next/cache";
+import { eq, and, desc, asc, isNull, inArray, sql, like } from "drizzle-orm";
 
 export async function getBlogComments(
 	blogId: string,
@@ -8,65 +9,76 @@ export async function getBlogComments(
 	limit = 10,
 	lastTimestamp?: string,
 ) {
-	await dbConnect();
-
-	const query: any = {
-		blogId,
-		parentId: null,
-		isApproved: true,
-	};
-
-	if (lastTimestamp) {
-		query.createdAt = { $lt: new Date(lastTimestamp) };
-	}
-
 	const skip = lastTimestamp ? 0 : (page - 1) * limit;
 
-	// Fetch root comments (limit + 1 to check hasMore)
-	const rootComments = await Comment.find(query)
-		.populate("userId", "name image")
-		.sort({ createdAt: -1 })
-		.skip(skip)
+	let rootConditions = [
+		eq(comments.blogId, blogId),
+		isNull(comments.parentId),
+		eq(comments.isApproved, true)
+	];
+
+	if (lastTimestamp) {
+		rootConditions.push(sql`${comments.createdAt} < ${new Date(lastTimestamp)}`);
+	}
+
+	const rootQuery = db.select({
+			id: comments.id,
+			content: comments.content,
+			blogId: comments.blogId,
+			parentId: comments.parentId,
+			isApproved: comments.isApproved,
+			isEdited: comments.isEdited,
+			isDeleted: comments.isDeleted,
+			createdAt: comments.createdAt,
+			updatedAt: comments.updatedAt,
+			_id: comments.id,
+			userId: {
+				_id: users.id,
+				name: users.name,
+				image: users.image
+			}
+		})
+		.from(comments)
+		.leftJoin(users, eq(comments.userId, users.id))
+		.where(and(...rootConditions))
+		.orderBy(desc(comments.createdAt))
 		.limit(limit + 1)
-		.lean();
+		.offset(skip);
+
+	const rootComments = await rootQuery;
 
 	const hasMore = rootComments.length > limit;
 	const results = hasMore ? rootComments.slice(0, limit) : rootComments;
 
-	const totalRoots = await Comment.countDocuments({
-		blogId,
-		parentId: null,
-		isApproved: true,
-	});
+	const totalResult = await db.select({ count: sql<number>`count(*)` })
+		.from(comments)
+		.where(and(eq(comments.blogId, blogId), isNull(comments.parentId), eq(comments.isApproved, true)));
 
-	// Get reply counts for these root comments
-	const rootIds = results.map((c) => c._id);
-	const replyCounts = await Comment.aggregate([
-		{
-			$match: {
-				parentId: { $in: rootIds },
-				isApproved: true,
-			},
-		},
-		{
-			$group: {
-				_id: "$parentId",
-				count: { $sum: 1 },
-			},
-		},
-	]);
+	const totalRoots = totalResult[0].count;
 
-	const replyCountMap = new Map(
-		replyCounts.map((rc) => [rc._id.toString(), rc.count]),
-	);
+	const rootIds = results.map((c: any) => c._id);
+	let replyCountMap = new Map<string, number>();
 
-	// Root comments don't fetch replies here anymore
-	// Transition flat list to nested tree structure (now just roots)
-	const roots = JSON.parse(JSON.stringify(results)).map((c: any) => ({
+	if (rootIds.length > 0) {
+		const replyCounts = await db.select({
+				parentId: comments.parentId,
+				count: sql<number>`count(*)`
+			})
+			.from(comments)
+			.where(and(inArray(comments.parentId, rootIds as string[]), eq(comments.isApproved, true)))
+			.groupBy(comments.parentId);
+
+		for (const rc of replyCounts) {
+			if (rc.parentId) replyCountMap.set(rc.parentId, Number(rc.count));
+		}
+	}
+
+	const roots = results.map((c: any) => ({
 		...c,
 		replies: [],
-		replyCount: replyCountMap.get(c._id.toString()) || 0,
+		replyCount: replyCountMap.get(c._id) || 0,
 	}));
+
 	return {
 		comments: roots,
 		total: totalRoots,
@@ -80,60 +92,72 @@ export async function getCommentReplies(
 	limit = 10,
 	lastTimestamp?: string,
 ) {
-	await dbConnect();
-
-	const query: any = {
-		parentId,
-		isApproved: true,
-	};
-
-	if (lastTimestamp) {
-		query.createdAt = { $gt: new Date(lastTimestamp) };
-	}
-
 	const skip = lastTimestamp ? 0 : (page - 1) * limit;
 
-	const total = await Comment.countDocuments({
-		parentId,
-		isApproved: true,
-	});
+	let replyConditions = [
+		eq(comments.parentId, parentId),
+		eq(comments.isApproved, true)
+	];
 
-	const replies = await Comment.find(query)
-		.populate("userId", "name image")
-		.sort({ createdAt: 1 })
-		.skip(skip)
+	if (lastTimestamp) {
+		replyConditions.push(sql`${comments.createdAt} > ${new Date(lastTimestamp)}`);
+	}
+
+	const totalResult = await db.select({ count: sql<number>`count(*)` })
+		.from(comments)
+		.where(and(eq(comments.parentId, parentId), eq(comments.isApproved, true)));
+
+	const total = totalResult[0].count;
+
+	const fetchedReplies = await db.select({
+			id: comments.id,
+			content: comments.content,
+			blogId: comments.blogId,
+			parentId: comments.parentId,
+			isApproved: comments.isApproved,
+			isEdited: comments.isEdited,
+			isDeleted: comments.isDeleted,
+			createdAt: comments.createdAt,
+			updatedAt: comments.updatedAt,
+			_id: comments.id,
+			userId: {
+				_id: users.id,
+				name: users.name,
+				image: users.image
+			}
+		})
+		.from(comments)
+		.leftJoin(users, eq(comments.userId, users.id))
+		.where(and(...replyConditions))
+		.orderBy(asc(comments.createdAt))
 		.limit(limit + 1)
-		.lean();
+		.offset(skip);
 
-	const hasMore = replies.length > limit;
-	const results = hasMore ? replies.slice(0, limit) : replies;
+	const hasMore = fetchedReplies.length > limit;
+	const results = hasMore ? fetchedReplies.slice(0, limit) : fetchedReplies;
 
-	// Fetch reply counts for these replies
 	const replyIds = results.map((c: any) => c._id);
-	const subReplyCounts = await Comment.aggregate([
-		{
-			$match: {
-				parentId: { $in: replyIds },
-				isApproved: true,
-			},
-		},
-		{
-			$group: {
-				_id: "$parentId",
-				count: { $sum: 1 },
-			},
-		},
-	]);
+	let subReplyCountMap = new Map<string, number>();
 
-	const subReplyCountMap = new Map(
-		subReplyCounts.map((rc) => [rc._id.toString(), rc.count]),
-	);
+	if (replyIds.length > 0) {
+		const subReplyCounts = await db.select({
+				parentId: comments.parentId,
+				count: sql<number>`count(*)`
+			})
+			.from(comments)
+			.where(and(inArray(comments.parentId, replyIds as string[]), eq(comments.isApproved, true)))
+			.groupBy(comments.parentId);
 
-	const populatedReplies = JSON.parse(JSON.stringify(results)).map(
+		for (const rc of subReplyCounts) {
+			if (rc.parentId) subReplyCountMap.set(rc.parentId, Number(rc.count));
+		}
+	}
+
+	const populatedReplies = results.map(
 		(c: any) => ({
 			...c,
 			replies: [],
-			replyCount: subReplyCountMap.get(c._id.toString()) || 0,
+			replyCount: subReplyCountMap.get(c._id) || 0,
 		}),
 	);
 
@@ -143,6 +167,7 @@ export async function getCommentReplies(
 		hasMore,
 	};
 }
+
 export async function getAllComments(
 	page = 1,
 	limit = 20,
@@ -151,36 +176,68 @@ export async function getAllComments(
 	role?: string,
 	permissions?: any,
 ) {
-	await dbConnect();
+	let queryConditions: any[] = [];
 
-	let query: any = {};
 	if (search) {
-		const isObjectId = /^[0-9a-fA-F]{24}$/.test(search);
+		const isObjectId = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(search) || /^[0-9a-fA-F]{24}$/.test(search);
 		if (isObjectId) {
-			query = { blogId: search };
+			queryConditions.push(eq(comments.blogId, search));
 		} else {
-			query = { content: { $regex: search, $options: "i" } };
+			queryConditions.push(like(comments.content, `%${search}%`));
 		}
 	}
 
-	// Filter by ownership if not admin
 	if (role === "USER" && userId) {
-		const Blog = (await import("@/models/Blog")).default;
-		const userBlogIds = await Blog.find({ authorId: userId }).distinct("_id");
-		query.blogId = { $in: userBlogIds };
+		const userBlogs = await db.select({ id: blogs.id }).from(blogs).where(eq(blogs.authorId, userId));
+		const userBlogIds = userBlogs.map(b => b.id);
+		if (userBlogIds.length > 0) {
+			queryConditions.push(inArray(comments.blogId, userBlogIds));
+		} else {
+			return { comments: [], total: 0, totalPages: 0 };
+		}
 	}
 
-	const total = await Comment.countDocuments(query);
-	const comments = await Comment.find(query)
-		.populate("userId", "name email")
-		.populate("blogId", "title slug")
-		.sort({ createdAt: -1 })
-		.skip((page - 1) * limit)
-		.limit(limit)
-		.lean();
+	const finalCondition = queryConditions.length > 0 ? and(...queryConditions) : undefined;
+
+	let countQuery = db.select({ count: sql<number>`count(*)` }).from(comments);
+	if (finalCondition) { countQuery = countQuery.where(finalCondition) as any; }
+	const totalResult = await countQuery;
+	const total = totalResult[0].count;
+
+	let dbQuery = db.select({
+			id: comments.id,
+			content: comments.content,
+			parentId: comments.parentId,
+			isApproved: comments.isApproved,
+			isEdited: comments.isEdited,
+			isDeleted: comments.isDeleted,
+			createdAt: comments.createdAt,
+			updatedAt: comments.updatedAt,
+			_id: comments.id,
+			userId: {
+				_id: users.id,
+				name: users.name,
+				email: users.email
+			},
+			blogId: {
+				_id: blogs.id,
+				title: blogs.title,
+				slug: blogs.slug
+			}
+		})
+		.from(comments)
+		.leftJoin(users, eq(comments.userId, users.id))
+		.leftJoin(blogs, eq(comments.blogId, blogs.id))
+		.orderBy(desc(comments.createdAt))
+		.offset((page - 1) * limit)
+		.limit(limit);
+
+	if (finalCondition) { dbQuery = dbQuery.where(finalCondition) as any; }
+
+	const fetchedComments = await dbQuery;
 
 	return {
-		comments: JSON.parse(JSON.stringify(comments)),
+		comments: fetchedComments,
 		total,
 		totalPages: Math.ceil(total / limit),
 	};
@@ -189,17 +246,30 @@ export async function getAllComments(
 export const getLatestRootComment = async (blogId: string) => {
 	const fetchWithCache = unstable_cache(
 		async () => {
-			await dbConnect();
-			const comment = await Comment.findOne({
-				blogId,
-				parentId: null,
-				isApproved: true,
+			const fetched = await db.select({
+				id: comments.id,
+				content: comments.content,
+				blogId: comments.blogId,
+				parentId: comments.parentId,
+				isApproved: comments.isApproved,
+				isEdited: comments.isEdited,
+				isDeleted: comments.isDeleted,
+				createdAt: comments.createdAt,
+				updatedAt: comments.updatedAt,
+				_id: comments.id,
+				userId: {
+					_id: users.id,
+					name: users.name,
+					image: users.image
+				}
 			})
-				.populate("userId", "name image")
-				.sort({ createdAt: -1 })
-				.lean();
+			.from(comments)
+			.leftJoin(users, eq(comments.userId, users.id))
+			.where(and(eq(comments.blogId, blogId), isNull(comments.parentId), eq(comments.isApproved, true)))
+			.orderBy(desc(comments.createdAt))
+			.limit(1);
 
-			return comment ? JSON.parse(JSON.stringify(comment)) : null;
+			return fetched[0] || null;
 		},
 		["latest-comment", blogId],
 		{ revalidate: 3600, tags: ["blogs"] },

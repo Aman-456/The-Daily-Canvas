@@ -13,7 +13,7 @@ export default async function AdminPagesPage() {
 	}
 
 	const result = await getAdminPages();
-	const pages = result.success ? result.data : [];
+	const pages = result.success && result.data ? result.data : [];
 
 	return (
 		<div className="space-y-6">

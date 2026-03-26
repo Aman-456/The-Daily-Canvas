@@ -22,16 +22,18 @@ export async function generateMetadata({
 	const blog = await getBlogBySlugCached(slug);
 	if (!blog) return { title: "Blog Not Found" };
 
+	const description = blog.metaDescription || (blog.excerpt ? blog.excerpt.substring(0, 150) : blog.title);
+
 	return {
 		title: blog.metaTitle || blog.title,
-		description: blog.metaDescription || blog.excerpt.substring(0, 150),
-		keywords: blog.keywords || blog.tags || ["blog", "daily thoughts", "article", blog.title],
+		description,
+		keywords: (blog.keywords?.length ? blog.keywords : null) || (blog.tags?.length ? blog.tags : null) || ["blog", "daily thoughts", "article", blog.title],
 		alternates: {
 			canonical: `/blogs/${blog.slug}`,
 		},
 		openGraph: {
 			title: blog.metaTitle || blog.title,
-			description: blog.metaDescription || blog.excerpt.substring(0, 150),
+			description,
 			images: blog.coverImage ? [blog.coverImage] : [],
 		},
 	};
@@ -39,7 +41,7 @@ export async function generateMetadata({
 
 function calculateReadTime(content: string) {
 	const wordsPerMinute = 200;
-	const words = content.trim().split(/\s+/).length;
+	const words = content?.trim()?.split(/\s+/).length;
 	const minutes = Math.ceil(words / wordsPerMinute);
 	return minutes;
 }
@@ -91,7 +93,7 @@ export default async function SingleBlogPage({
 				<div className="flex items-center justify-between mt-6">
 					<div className="flex items-center gap-3">
 						<Avatar className="h-10 w-10 border shadow-sm">
-							<AvatarImage src={blog.authorId?.image} />
+							<AvatarImage src={blog.authorId?.image || undefined} />
 							<AvatarFallback>
 								{blog.authorId?.name?.charAt(0) || "D"}
 							</AvatarFallback>
@@ -126,7 +128,7 @@ export default async function SingleBlogPage({
 				<figure className="space-y-3">
 					<div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-muted shadow-sm">
 						<Image
-							src={blog.coverImage}
+							src={blog.coverImage!}
 							alt={blog.title}
 							fill
 							priority
@@ -168,7 +170,7 @@ export default async function SingleBlogPage({
 			<CommentSection
 				blogId={blog._id}
 				slug={blog.slug}
-				blogAuthorId={blog.authorId?._id?.toString()}
+				blogAuthorId={blog.authorId?._id}
 				initialComments={[]}
 				initialHasMore={totalComments > 0}
 				total={totalComments}
@@ -185,7 +187,7 @@ export default async function SingleBlogPage({
 							"@context": "https://schema.org",
 							"@type": "BlogPosting",
 							headline: blog.title,
-							description: blog.metaDescription || blog.excerpt,
+							description: blog.metaDescription || (blog.excerpt || blog.title),
 							image: blog.coverImage ? [blog.coverImage] : [],
 							datePublished: blog.createdAt,
 							dateModified: blog.updatedAt || blog.createdAt,

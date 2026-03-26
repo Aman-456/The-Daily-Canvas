@@ -36,6 +36,13 @@ yarn-error.log*
 # vercel
 .vercel
 
+# data and utility scripts
+blog.blogs.json
+scripts/populate-blogs.ts
+scripts/list-users.ts
+scripts/verify-blogs.ts
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
