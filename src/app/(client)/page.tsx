@@ -56,11 +56,11 @@ export default async function BlogsPage({
 				</div>
 			) : (
 				<div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-					{blogs.map((blog: any) => {
+					{blogs.map((blog) => {
 
 						const readTime = calculateReadTime(blog.content);
 						return (
-							<Link key={blog._id} href={`/blogs/${blog.slug}`}>
+							<Link key={blog.slug} href={`/blogs/${blog.slug}`}>
 								<article className="h-full group rounded-xl border border-border/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:border-border transition-all duration-300">
 									<div className="aspect-16/10 bg-muted relative overflow-hidden">
 										{blog.coverImage ? (
@@ -77,9 +77,9 @@ export default async function BlogsPage({
 									</div>
 
 									<div className="p-4 space-y-2.5">
-										{blog.tags?.length > 0 && (
+										{(blog.tags?.length ?? 0) > 0 && (
 											<div className="flex flex-wrap gap-1.5">
-												{blog.tags.slice(0, 2).map((tag: string) => (
+												{(blog.tags ?? []).slice(0, 2).map((tag: string) => (
 													<span
 														key={tag}
 														className="text-[11px] font-medium text-primary/80 bg-primary/8 px-2 py-0.5 rounded-full"

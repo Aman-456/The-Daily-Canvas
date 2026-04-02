@@ -10,21 +10,36 @@ import { commentSchema } from "@/lib/validations/comment";
 import { getBlogComments, getCommentReplies, getAllComments } from "@/queries/comment";
 import { eq, sql } from "drizzle-orm";
 
-const getCachedCommentsList = unstable_cache(
-	getAllComments,
+const _getCachedAdminCommentsList = unstable_cache(
+	async (
+		page: number,
+		limit: number,
+		search?: string,
+		userId?: string,
+		role?: string,
+		permissions?: any
+	) => getAllComments(page, limit, search, userId, role, permissions),
 	["admin-comments-list"],
 	{ revalidate: 86400, tags: ["comments"] }
 );
 
-export const getCachedComments = async (page: number, limit: number, search: string, userId?: string, role?: string, permissions?: any) => {
+export const getCachedComments = async (
+	page: number,
+	limit: number,
+	search: string,
+	userId?: string,
+	role?: string,
+	permissions?: any
+) => {
 	const isAdminLevel = role === "ADMIN";
 
 	if (isAdminLevel) {
-		return getCachedCommentsList(page, limit, search, userId, role, permissions);
+		return _getCachedAdminCommentsList(page, limit, search, userId, role, permissions);
 	} else {
 		return getAllComments(page, limit, search, userId, role, permissions);
 	}
 };
+
 
 export async function addComment(formData: FormData) {
 	try {
@@ -102,6 +117,7 @@ export async function addComment(formData: FormData) {
 		if (slug) revalidatePath(`/blogs/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
+		revalidateTag("comments", "max");
 
 		return { success: true, data: { ...populated, _id: populated.id } };
 	} catch (error: any) {
@@ -156,6 +172,7 @@ export async function toggleCommentApproval(commentId: string) {
 
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
+		revalidateTag("comments", "max");
 		return { success: true };
 	} catch (error: any) {
 		console.error("[toggleCommentApproval] Error:", error);
@@ -201,6 +218,7 @@ export async function updateComment(
 		if (slug) revalidatePath(`/blogs/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
+		revalidateTag("comments", "max");
 
 		return { success: true };
 	} catch (error: any) {
@@ -255,6 +273,7 @@ export async function deleteComment(
 		if (slug) revalidatePath(`/blogs/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
+		revalidateTag("comments", "max");
 
 		await updateBlogCommentCount(blogId);
 
@@ -286,6 +305,7 @@ export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
 		if (slug) revalidatePath(`/blogs/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
+		revalidateTag("comments", "max");
 
 		return { success: true };
 	} catch (error: any) {
