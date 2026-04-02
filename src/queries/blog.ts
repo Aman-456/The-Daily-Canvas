@@ -73,17 +73,26 @@ export const getBlogsCached = async (
 };
 
 const _getBlogSingleShared = async (idOrSlug: string, onlyPublished = true) => {
-	const isUuid = idOrSlug.length === 36;
-	const condition = isUuid ? eq(blogs.id, idOrSlug) : eq(blogs.slug, idOrSlug);
-
-	const whereClause = onlyPublished ? and(condition, eq(blogs.isPublished, true)) : condition;
-
-	const result = await db.select(blogFullSelector)
+	// Some legacy data uses non-UUID ids (e.g. 24-char hex). To be resilient, try `id` first,
+	// then fall back to `slug` if no row is found.
+	const baseQuery = db
+		.select(blogFullSelector)
 		.from(blogs)
-		.leftJoin(users, eq(blogs.authorId, users.id))
-		.where(whereClause);
+		.leftJoin(users, eq(blogs.authorId, users.id));
 
-	return result[0] || null;
+	const byIdWhere = onlyPublished
+		? and(eq(blogs.id, idOrSlug), eq(blogs.isPublished, true))
+		: eq(blogs.id, idOrSlug);
+
+	const byId = await baseQuery.where(byIdWhere);
+	if (byId[0]) return byId[0];
+
+	const bySlugWhere = onlyPublished
+		? and(eq(blogs.slug, idOrSlug), eq(blogs.isPublished, true))
+		: eq(blogs.slug, idOrSlug);
+
+	const bySlug = await baseQuery.where(bySlugWhere);
+	return bySlug[0] || null;
 };
 
 const _getBlogBySlugCached = unstable_cache(
