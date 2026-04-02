@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CommentItem } from "./CommentItem";
 import { ChevronDown } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { MessageSquarePlus } from "lucide-react";
 
@@ -18,7 +18,6 @@ interface CommentSectionProps {
 	initialComments: any[];
 	initialHasMore: boolean;
 	total: number;
-	user: any;
 	limit?: number;
 	latestComment?: any;
 	blogAuthorId?: string;
@@ -30,11 +29,13 @@ export function CommentSection({
 	initialComments,
 	initialHasMore,
 	total,
-	user,
 	limit = 10,
 	latestComment,
 	blogAuthorId,
 }: CommentSectionProps) {
+	const { data: session } = useSession();
+	const user = session?.user;
+
 	const [content, setContent] = useState("");
 	const [comments, setComments] = useState(initialComments);
 	const [page, setPage] = useState(1);

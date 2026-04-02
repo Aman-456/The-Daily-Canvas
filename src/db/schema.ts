@@ -95,10 +95,10 @@ export const blogs = pgTable("blog", {
   coverImage: text("coverImage"),
   authorId: text("authorId").notNull().references(() => users.id, { onDelete: "cascade" }),
   isPublished: boolean("isPublished").default(false).notNull(),
-  tags: text("tags").array(), 
+  tags: text("tags").array().default([]),
   metaTitle: text("metaTitle"),
   metaDescription: text("metaDescription"),
-  keywords: text("keywords").array(),
+  keywords: text("keywords").array().default([]),
   commentsCount: integer("commentsCount").default(0).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
@@ -147,6 +147,9 @@ export type NewUser = InferInsertModel<typeof users>;
 
 export type Blog = InferSelectModel<typeof blogs>;
 export type NewBlog = InferInsertModel<typeof blogs>;
+export type BlogWithAuthor = Blog & {
+  authorId: InferSelectModel<typeof users>;
+};
 
 export type Comment = InferSelectModel<typeof comments>;
 export type NewComment = InferInsertModel<typeof comments>;

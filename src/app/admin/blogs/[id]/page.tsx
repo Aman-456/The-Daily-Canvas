@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Edit2, ExternalLink, Eye } from "lucide-react";
 import { CommentSection } from "@/components/client/CommentSection";
-import { auth } from "@/auth";
 import { DeleteAllCommentsButton } from "@/components/admin/DeleteAllCommentsButton";
 import { getLatestRootComment } from "@/queries/comment";
 import { getCachedAdminBlogDetails } from "@/actions/blog";
-import { Metadata } from "next";
 
 export default async function AdminBlogDetailsPage({
 	params,
@@ -22,7 +20,6 @@ export default async function AdminBlogDetailsPage({
 		notFound();
 	}
 
-	const session = await auth();
 	const totalComments = (blog as any).commentsCount || 0;
 	const latestComment =
 		totalComments > 0 ? await getLatestRootComment((blog as any)._id) : null;
@@ -107,7 +104,6 @@ export default async function AdminBlogDetailsPage({
 							initialComments={[]}
 							initialHasMore={totalComments > 0}
 							total={totalComments}
-							user={session?.user}
 							limit={10}
 							latestComment={latestComment}
 						/>
