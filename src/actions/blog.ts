@@ -3,10 +3,12 @@
 import { db } from "@/db/index";
 import { blogs, users, comments, notifications, type Blog, type NewBlog } from "@/db/schema";
 import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import slugify from "slugify";
 import { unstable_cache } from "next/cache";
 import { eq, desc, and, sql, ilike } from "drizzle-orm";
+import { blogFullSelector } from "@/db/selectors";
+import { getBlogByIdCached } from "@/queries/blog";
 import { blogSchema } from "@/lib/validations/blog";
 import { UploadService } from "@/lib/upload";
 import { pingIndexNow } from "@/lib/indexnow";
@@ -26,26 +28,7 @@ async function fetchBlogsList(
 	permissions?: any
 ) {
 
-	let dbQuery = db.select({
-		_id: blogs.id,
-		title: blogs.title,
-		slug: blogs.slug,
-		content: blogs.content,
-		excerpt: blogs.excerpt,
-		coverImage: blogs.coverImage,
-		isPublished: blogs.isPublished,
-		authorId: {
-			_id: users.id,
-			name: users.name
-		},
-		createdAt: blogs.createdAt,
-		updatedAt: blogs.updatedAt,
-		tags: blogs.tags,
-		commentsCount: blogs.commentsCount,
-		metaTitle: blogs.metaTitle,
-		metaDescription: blogs.metaDescription,
-		keywords: blogs.keywords,
-	})
+	let dbQuery = db.select(blogFullSelector)
 		.from(blogs)
 		.leftJoin(users, eq(blogs.authorId, users.id))
 		.$dynamic();
@@ -85,8 +68,15 @@ async function fetchBlogsList(
 }
 
 
-const getCachedBlogsList = unstable_cache(
-	fetchBlogsList,
+const _getCachedAdminBlogsList = unstable_cache(
+	async (
+		query: BlogQuery,
+		skip: number,
+		limit: number,
+		userId?: string,
+		role?: string,
+		permissions?: any
+	) => fetchBlogsList(query, skip, limit, userId, role, permissions),
 	["admin-blogs-list"],
 	{ revalidate: 86400, tags: ["blogs"] }
 );
@@ -102,55 +92,16 @@ export const getCachedBlogs = async (
 	const isAdminLevel = role === "ADMIN";
 
 	if (isAdminLevel) {
-		return getCachedBlogsList(query, skip, limit, userId, role, permissions);
+		return _getCachedAdminBlogsList(query, skip, limit, userId, role, permissions);
 	} else {
 		return fetchBlogsList(query, skip, limit, userId, role, permissions);
 	}
 };
 
-export const getCachedAdminBlogDetails = unstable_cache(
-	async (id: string) => {
-		const result = await db.select({
-			_id: blogs.id,
-			title: blogs.title,
-			slug: blogs.slug,
-			content: blogs.content,
-			excerpt: blogs.excerpt,
-			coverImage: blogs.coverImage,
-			isPublished: blogs.isPublished,
-			authorId: {
-				_id: users.id,
-				name: users.name
-			},
-			createdAt: blogs.createdAt,
-			updatedAt: blogs.updatedAt,
-			tags: blogs.tags,
-			commentsCount: blogs.commentsCount,
-			metaTitle: blogs.metaTitle,
-			metaDescription: blogs.metaDescription,
-			keywords: blogs.keywords,
-		})
-			.from(blogs)
-			.leftJoin(users, eq(blogs.authorId, users.id))
-			.where(eq(blogs.id, id));
+export const getCachedAdminBlogDetails = getBlogByIdCached;
 
-		return result[0] || null;
-	},
-	["admin-blog-details-query"],
-	{ revalidate: 1, tags: ["blogs"] }
-);
 
-export const getCachedAdminBlogEdit = unstable_cache(
-	async (id: string) => {
-		const result = await db.select().from(blogs).where(eq(blogs.id, id));
-		if (result[0]) {
-			return { ...result[0], _id: result[0].id };
-		}
-		return null;
-	},
-	["admin-blog-edit-query"],
-	{ revalidate: 86400, tags: ["blogs"] }
-);
+export const getCachedAdminBlogEdit = getBlogByIdCached;
 
 export async function createBlog(formData: FormData) {
 	try {
@@ -211,6 +162,7 @@ export async function createBlog(formData: FormData) {
 
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
+		revalidateTag("blogs", "max");
 
 		if (isPublished) {
 			await pingIndexNow(slug);
@@ -285,6 +237,7 @@ export async function deleteBlog(id: string) {
 
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
+		revalidateTag("blogs", "max");
 
 		await pingIndexNow(slugToPing);
 
@@ -398,6 +351,7 @@ export async function updateBlog(id: string, formData: FormData) {
 		revalidatePath("/");
 		revalidatePath(`/blogs/${newSlug}`);
 		revalidatePath("/admin/blogs");
+		revalidateTag("blogs", "max");
 
 		if (isPublished) {
 			await pingIndexNow(newSlug);

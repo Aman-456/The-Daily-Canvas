@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import Link from "next/link";
-import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/actions/notification";
+import {
+	getNotifications,
+	getUnreadNotificationsCount,
+	markNotificationAsRead,
+	markAllNotificationsAsRead,
+} from "@/actions/notification";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -12,36 +17,86 @@ import {
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Notification } from "@/db/schema";
 
 export function AdminNotifications() {
-	const [notifications, setNotifications] = useState<any[]>([]);
-	const unreadCount = notifications.filter(n => !n.isRead).length;
+	const [notifications, setNotifications] = useState<Notification[]>([]);
+	const [unreadCount, setUnreadCount] = useState(0);
+	const [open, setOpen] = useState(false);
+	const hasLoadedListRef = useRef(false);
 
 	useEffect(() => {
-		const load = async () => {
-			const res = await getNotifications();
-			if (res.success && res.data) {
-				setNotifications(res.data);
+		let alive = true;
+
+		const loadCount = async () => {
+			const res = await getUnreadNotificationsCount();
+			if (!alive) return;
+			if (res.success) setUnreadCount(res.data ?? 0);
+		};
+
+		// Load a cheap unread count on mount
+		loadCount();
+
+		// Refresh count on tab focus (no background polling)
+		const onVisibility = () => {
+			if (document.visibilityState === "visible") {
+				loadCount();
 			}
 		};
-		load();
-		const interval = setInterval(load, 30000); // 30 seconds
-		return () => clearInterval(interval);
+		document.addEventListener("visibilitychange", onVisibility);
+
+		return () => {
+			alive = false;
+			document.removeEventListener("visibilitychange", onVisibility);
+		};
 	}, []);
+
+	useEffect(() => {
+		if (!open) return;
+
+		let alive = true;
+		const loadList = async () => {
+			const res = await getNotifications();
+			if (!alive) return;
+			if (res.success && res.data) {
+				setNotifications(res.data);
+				setUnreadCount(res.data.filter((n) => !n.isRead).length);
+				hasLoadedListRef.current = true;
+			}
+		};
+
+		// Load list only when dropdown is opened
+		loadList();
+
+		// While open, poll occasionally (keeps it fresh without constant background load)
+		const interval = setInterval(() => {
+			if (document.visibilityState !== "visible") return;
+			loadList();
+		}, 30000);
+
+		return () => {
+			alive = false;
+			clearInterval(interval);
+		};
+	}, [open]);
 
 	const handleRead = async (id: string, isRead: boolean) => {
 		if (isRead) return;
-		await markNotificationAsRead(id);
-		setNotifications((prev) => prev.map((n) => n._id === id ? { ...n, isRead: true } : n));
+		const res = await markNotificationAsRead(id);
+		if (!res.success) return;
+		setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
+		setUnreadCount((c) => Math.max(0, c - 1));
 	};
 
 	const handleReadAll = async () => {
-		await markAllNotificationsAsRead();
+		const res = await markAllNotificationsAsRead();
+		if (!res.success) return;
 		setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+		setUnreadCount(0);
 	};
 
 	return (
-		<DropdownMenu>
+		<DropdownMenu open={open} onOpenChange={setOpen}>
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" size="icon" className="relative text-foreground shrink-0">
 					<Bell className="h-5 w-5" />
@@ -61,18 +116,20 @@ export function AdminNotifications() {
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				{notifications.length === 0 ? (
-					<div className="p-4 text-center text-sm text-muted-foreground">No new notifications</div>
+					<div className="p-4 text-center text-sm text-muted-foreground">
+						{hasLoadedListRef.current ? "No new notifications" : "Open to load notifications"}
+					</div>
 				) : (
 					<div className="max-h-80 overflow-y-auto w-full">
 						{notifications.map((n) => (
-							<div key={n._id} className={`p-4 border-b last:border-0 transition-colors ${n.isRead ? "bg-white dark:bg-zinc-950 opacity-80" : "bg-blue-50/50 dark:bg-blue-900/10"}`}>
+							<div key={n.id} className={`p-4 border-b last:border-0 transition-colors ${n.isRead ? "bg-white dark:bg-zinc-950 opacity-80" : "bg-blue-50/50 dark:bg-blue-900/10"}`}>
 								<p className={`text-sm mb-3 ${n.isRead ? "text-muted-foreground" : "text-foreground font-semibold"}`}>{n.message}</p>
 								<div className="flex gap-3 text-xs font-bold">
-									<Link href={n.link} onClick={() => handleRead(n._id, n.isRead)} className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}>
+									<Link href={n.link} onClick={() => handleRead(n.id, n.isRead)} className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}>
 										View in Comments
 									</Link>
 									<span className="text-muted-foreground/40">•</span>
-									<Link href={n.blogLink} onClick={() => handleRead(n._id, n.isRead)} className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}>
+									<Link href={n.blogLink} onClick={() => handleRead(n.id, n.isRead)} className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}>
 										Go to Blog
 									</Link>
 								</div>

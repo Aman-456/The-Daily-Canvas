@@ -24,6 +24,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { CopyIcon, Grid, List as ListIcon } from "lucide-react";
 import { getCachedBlogs } from "@/actions/blog";
 import Image from "next/image";
+import { Blog, BlogWithAuthor } from "@/db/schema";
 
 export default async function AdminBlogsPage({
 	searchParams,
@@ -107,10 +108,10 @@ export default async function AdminBlogsPage({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{blogs.map((blog: any) => (
-								<TableRow key={blog._id.toString()}>
+							{blogs.map((blog: BlogWithAuthor) => (
+								<TableRow key={blog.slug}>
 									<TableCell className="font-medium">{blog.title}</TableCell>
-									<TableCell>{blog.authorId?.name || "Deleted User"}</TableCell>
+									<TableCell>{blog.authorId.name || "Deleted User"}</TableCell>
 									<TableCell>
 										{blog.isPublished ? (
 											<Badge
@@ -127,7 +128,7 @@ export default async function AdminBlogsPage({
 										{new Date(blog.createdAt).toLocaleDateString()}
 									</TableCell>
 									<TableCell className="text-right space-x-2">
-										<Link href={`/admin/blogs/${blog._id}`}>
+										<Link href={`/admin/blogs/${blog.slug}`}>
 											<Button
 												variant="outline"
 												size="sm"
@@ -135,7 +136,7 @@ export default async function AdminBlogsPage({
 												Details
 											</Button>
 										</Link>
-										<Link href={`/admin/blogs/${blog._id}/edit`}>
+										<Link href={`/admin/blogs/${blog.slug}/edit`}>
 											<Button
 												variant="outline"
 												size="sm"
@@ -143,7 +144,7 @@ export default async function AdminBlogsPage({
 												Edit
 											</Button>
 										</Link>
-										<DeleteBlogButton blogId={blog._id.toString()} />
+										<DeleteBlogButton blogId={blog.id} />
 									</TableCell>
 								</TableRow>
 							))}

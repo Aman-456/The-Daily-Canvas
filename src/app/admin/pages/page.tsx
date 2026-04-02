@@ -38,7 +38,7 @@ export default async function AdminPagesPage() {
 					</TableHeader>
 					<TableBody>
 						{pages.map((page: any) => (
-							<TableRow key={page._id.toString()}>
+							<TableRow key={page.id.toString()}>
 								<TableCell className="font-medium">{page.title}</TableCell>
 								<TableCell className="text-muted-foreground">{page.slug}</TableCell>
 								<TableCell>
