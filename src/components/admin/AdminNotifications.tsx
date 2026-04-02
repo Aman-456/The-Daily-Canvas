@@ -31,7 +31,7 @@ export function AdminNotifications() {
 		const loadCount = async () => {
 			const res = await getUnreadNotificationsCount();
 			if (!alive) return;
-			if (res.success) setUnreadCount(res.data);
+			if (res.success) setUnreadCount(res.data ?? 0);
 		};
 
 		// Load a cheap unread count on mount
