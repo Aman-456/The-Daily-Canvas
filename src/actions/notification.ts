@@ -3,7 +3,7 @@
 import { db } from "@/db/index";
 import { notifications } from "@/db/schema";
 import { auth } from "@/auth";
-import { eq, or, inArray, and, desc, asc } from "drizzle-orm";
+import { eq, inArray, and, desc, asc, sql } from "drizzle-orm";
 
 export async function getNotifications(limit = 20) {
 	try {
@@ -30,6 +30,30 @@ export async function getNotifications(limit = 20) {
 	}
 }
 
+export async function getUnreadNotificationsCount() {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) {
+			return { success: false, error: "Unauthorized" as const };
+		}
+
+		const { role, id: userId } = session.user;
+		const whereClause =
+			role === "ADMIN"
+				? eq(notifications.isRead, false)
+				: and(eq(notifications.isRead, false), eq(notifications.targetAuthorId, userId));
+
+		const result = await db
+			.select({ count: sql<number>`count(*)` })
+			.from(notifications)
+			.where(whereClause);
+
+		return { success: true, data: Number(result[0]?.count ?? 0) };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
 export async function markNotificationAsRead(id: string) {
 	try {
 		const session = await auth();
@@ -37,7 +61,22 @@ export async function markNotificationAsRead(id: string) {
 			return { success: false, error: "Unauthorized" };
 		}
 
-		await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+		const { role, id: userId } = session.user;
+
+		const whereClause =
+			role === "ADMIN"
+				? eq(notifications.id, id)
+				: and(eq(notifications.id, id), eq(notifications.targetAuthorId, userId));
+
+		const updated = await db
+			.update(notifications)
+			.set({ isRead: true })
+			.where(whereClause)
+			.returning({ id: notifications.id });
+
+		if (updated.length === 0) {
+			return { success: false, error: "Not found" };
+		}
 
 		return { success: true };
 	} catch (error: any) {
@@ -63,15 +102,19 @@ export async function markAllNotificationsAsRead() {
 				allowedTypes.push("BLOG_PUBLISHED", "BLOG_UNPUBLISHED", "BLOG_UPDATE", "BLOG_DELETE");
 			}
 
-			const conditions = [];
-			conditions.push(eq(notifications.targetAuthorId, userId));
-			if (allowedTypes.length > 0) {
-				conditions.push(inArray(notifications.type, allowedTypes));
-			}
+			const whereClause =
+				allowedTypes.length > 0
+					? and(
+							eq(notifications.isRead, false),
+							eq(notifications.targetAuthorId, userId),
+							inArray(notifications.type, allowedTypes),
+						)
+					: and(
+							eq(notifications.isRead, false),
+							eq(notifications.targetAuthorId, userId),
+						);
 
-			await db.update(notifications)
-				.set({ isRead: true })
-				.where(and(eq(notifications.isRead, false), or(...conditions)));
+			await db.update(notifications).set({ isRead: true }).where(whereClause);
 		}
 
 		return { success: true };

@@ -10,8 +10,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { CommentSection } from "@/components/client/CommentSection";
-import { auth } from "@/auth";
 import Image from "next/image";
+
+export const revalidate = 3600;
 
 export async function generateMetadata({
 	params,
@@ -54,11 +55,7 @@ export default async function SingleBlogPage({
 	const { slug } = await params;
 	const blog = await getBlogBySlugCached(slug);
 
-	if (!blog) {
-		notFound();
-	}
-
-	const session = await auth();
+	if (!blog) notFound();
 
 	// Use aggregated count for deferred loading
 	const commentLimit = 10;
@@ -68,7 +65,7 @@ export default async function SingleBlogPage({
 
 	// Fetch latest comment for preview
 	const latestComment =
-		totalComments > 0 ? await getLatestRootComment(blog._id) : null;
+		totalComments > 0 ? await getLatestRootComment(blog.id) : null;
 
 	return (
 		<article className="max-w-3xl mx-auto pb-12 px-2 md:px-0 space-y-10">
@@ -168,13 +165,12 @@ export default async function SingleBlogPage({
 
 			{/* Comments Section */}
 			<CommentSection
-				blogId={blog._id}
+				blogId={blog.id}
 				slug={blog.slug}
-				blogAuthorId={blog.authorId?._id}
+				blogAuthorId={blog.authorId?.id}
 				initialComments={[]}
 				initialHasMore={totalComments > 0}
 				total={totalComments}
-				user={session?.user}
 				limit={commentLimit}
 				latestComment={latestComment}
 			/>
