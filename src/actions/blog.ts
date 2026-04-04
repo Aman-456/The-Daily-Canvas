@@ -285,9 +285,20 @@ export async function updateBlog(id: string, formData: FormData) {
 			keywords,
 		} = parsed.data;
 
-		const blogResult = await db.select().from(blogs).where(eq(blogs.id, id));
-		const blog = blogResult[0];
+		// Admin routes may pass either DB id (UUID) or slug (table view used slug in URL).
+		const byId = await db.select().from(blogs).where(eq(blogs.id, id)).limit(1);
+		const blog =
+			byId[0] ??
+			(
+				await db
+					.select()
+					.from(blogs)
+					.where(eq(blogs.slug, id))
+					.limit(1)
+			)[0];
 		if (!blog) return { success: false, error: "Blog not found" };
+
+		const blogId = blog.id;
 
 		const isOwner = blog.authorId === session.user.id;
 		const canManageOtherBlogs = session.user.role === "ADMIN";
@@ -306,7 +317,7 @@ export async function updateBlog(id: string, formData: FormData) {
 		const newSlug =
 			slugify(title, { lower: true, strict: true }) +
 			"-" +
-			id.toString().slice(-4);
+			blogId.slice(-4);
 
 		const keywordsArr = keywords;
 
@@ -321,7 +332,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			metaDescription,
 			keywords: keywordsArr,
 			updatedAt: new Date(),
-		}).where(eq(blogs.id, id)).returning();
+		}).where(eq(blogs.id, blogId)).returning();
 
 		const updatedBlog = updateResult[0];
 
@@ -338,7 +349,7 @@ export async function updateBlog(id: string, formData: FormData) {
 				await db.insert(notifications).values({
 					message: msg,
 					link: `/admin/blogs`,
-					blogLink: `/admin/blogs/${id}`,
+					blogLink: `/admin/blogs/${blogId}`,
 					type: notifType,
 					userId: session.user.id,
 					targetAuthorId: blog.authorId
