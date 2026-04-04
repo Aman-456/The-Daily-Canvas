@@ -11,6 +11,11 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { CommentSection } from "@/components/client/CommentSection";
 import Image from "next/image";
+import {
+	blogTagFilterHref,
+	blogTagLabel,
+	blogTagSlugForLink,
+} from "@/lib/blog-tags";
 
 export const revalidate = 3600;
 
@@ -85,6 +90,33 @@ export default async function SingleBlogPage({
 					<p className="text-[17px] md:text-[19px] text-muted-foreground font-normal m-0">
 						{blog.excerpt}
 					</p>
+				)}
+
+				{(blog.tags?.length ?? 0) > 0 && (
+					<div className="flex flex-wrap gap-2 pt-2">
+						{(blog.tags ?? []).map((tag: string) => {
+							const label = blogTagLabel(tag);
+							const slug = blogTagSlugForLink(tag);
+							const className =
+								"text-xs font-medium px-2.5 py-1 rounded-full transition-colors " +
+								(slug
+									? "text-primary/90 bg-primary/10 hover:bg-primary/20"
+									: "text-muted-foreground bg-muted/60");
+							return slug ? (
+								<Link
+									key={tag}
+									href={blogTagFilterHref(slug)}
+									className={className + " cursor-pointer underline-offset-2 hover:underline"}
+								>
+									{label}
+								</Link>
+							) : (
+								<span key={tag} className={className}>
+									{label}
+								</span>
+							);
+						})}
+					</div>
 				)}
 
 				<div className="flex items-center justify-between mt-6">

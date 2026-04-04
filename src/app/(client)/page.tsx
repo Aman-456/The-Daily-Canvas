@@ -1,6 +1,18 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { getBlogsCached } from "@/queries/blog";
 import SearchInput from "@/components/client/SearchInput";
+import {
+	TopicFilterChips,
+	TopicFilterChipsFallback,
+} from "@/components/client/TopicFilterChips";
+import {
+	blogListingHref,
+	blogTagFilterHref,
+	blogTagLabel,
+	blogTagSlugForLink,
+	parseTagSlugsFromSearchParams,
+} from "@/lib/blog-tags";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Metadata } from "next";
 import Image from "next/image";
@@ -33,8 +45,16 @@ export default async function BlogsPage({
 	const params = await searchParams;
 	const page = typeof params.page === "string" ? Number(params.page) : 1;
 	const search = typeof params.search === "string" ? params.search : "";
+	const activeTags = parseTagSlugsFromSearchParams(params);
 
-	const { blogs, totalPages } = await getBlogsCached(page, 12, search);
+	const { blogs, totalPages } = await getBlogsCached(page, 12, search, activeTags);
+
+	const pageHref = (n: number) =>
+		blogListingHref({
+			page: n,
+			search,
+			tags: activeTags,
+		});
 
 	return (
 		<div className="space-y-10">
@@ -50,6 +70,26 @@ export default async function BlogsPage({
 				<SearchInput defaultValue={search} />
 			</div>
 
+			<Suspense fallback={<TopicFilterChipsFallback />}>
+				<TopicFilterChips />
+			</Suspense>
+
+			{activeTags.length > 0 && (
+				<p className="text-sm text-muted-foreground">
+					Showing posts that include{" "}
+					<span className="font-medium text-foreground">
+						{activeTags.map((s) => blogTagLabel(s)).join(", ")}
+					</span>{" "}
+					{activeTags.length > 1 ? "(all selected topics). " : ". "}
+					<Link
+						href={blogListingHref({ search })}
+						className="text-primary underline-offset-4 hover:underline"
+					>
+						Clear topics
+					</Link>
+				</p>
+			)}
+
 			{blogs.length === 0 ? (
 				<div className="text-center py-20 text-muted-foreground">
 					No blogs found matching your criteria.
@@ -60,8 +100,11 @@ export default async function BlogsPage({
 
 						const readTime = calculateReadTime(blog.content);
 						return (
-							<Link key={blog.slug} href={`/blogs/${blog.slug}`}>
-								<article className="h-full group rounded-xl border border-border/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:border-border transition-all duration-300">
+							<article
+								key={blog.slug}
+								className="h-full group rounded-xl border border-border/50 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:shadow-lg hover:border-border transition-all duration-300 flex flex-col"
+							>
+								<Link href={`/blogs/${blog.slug}`} className="block flex-1">
 									<div className="aspect-16/10 bg-muted relative overflow-hidden">
 										{blog.coverImage ? (
 											<Image
@@ -77,19 +120,6 @@ export default async function BlogsPage({
 									</div>
 
 									<div className="p-4 space-y-2.5">
-										{(blog.tags?.length ?? 0) > 0 && (
-											<div className="flex flex-wrap gap-1.5">
-												{(blog.tags ?? []).slice(0, 2).map((tag: string) => (
-													<span
-														key={tag}
-														className="text-[11px] font-medium text-primary/80 bg-primary/8 px-2 py-0.5 rounded-full"
-													>
-														{tag}
-													</span>
-												))}
-											</div>
-										)}
-
 										<h3 className="font-semibold text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors">
 											{blog.title}
 										</h3>
@@ -98,8 +128,37 @@ export default async function BlogsPage({
 											{blog.excerpt || blog.content.substring(0, 120) + "..."}
 										</p>
 									</div>
+								</Link>
 
-									<div className="px-4 pb-3.5 pt-1 flex items-center justify-between border-t border-border/40">
+								{(blog.tags?.length ?? 0) > 0 && (
+									<div className="px-4 pb-2 flex flex-wrap gap-1.5">
+										{(blog.tags ?? []).slice(0, 4).map((tag: string) => {
+											const label = blogTagLabel(tag);
+											const slugForFilter = blogTagSlugForLink(tag);
+											if (slugForFilter) {
+												return (
+													<Link
+														key={tag}
+														href={blogTagFilterHref(slugForFilter)}
+														className="text-[11px] font-medium text-primary/80 bg-primary/8 px-2 py-0.5 rounded-full hover:bg-primary/15 transition-colors"
+													>
+														{label}
+													</Link>
+												);
+											}
+											return (
+												<span
+													key={tag}
+													className="text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full"
+												>
+													{label}
+												</span>
+											);
+										})}
+									</div>
+								)}
+
+								<div className="px-4 pb-3.5 pt-1 flex items-center justify-between border-t border-border/40 mt-auto">
 										<div className="flex items-center gap-2">
 											<Avatar className="h-7 w-7 border">
 												<AvatarImage src={blog.authorId?.image || undefined} />
@@ -149,8 +208,7 @@ export default async function BlogsPage({
 											</span>
 										</div>
 									</div>
-								</article>
-							</Link>
+							</article>
 						);
 					})}
 				</div>
@@ -162,7 +220,7 @@ export default async function BlogsPage({
 					{Array.from({ length: totalPages }).map((_, i) => (
 						<Link
 							key={i}
-							href={`/?page=${i + 1}${search ? `&search=${search}` : ""}`}
+							href={pageHref(i + 1)}
 							className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${page === i + 1
 								? "bg-primary text-primary-foreground font-bold"
 								: "bg-muted hover:bg-muted/80"

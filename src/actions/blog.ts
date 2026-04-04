@@ -9,7 +9,11 @@ import { unstable_cache } from "next/cache";
 import { eq, desc, and, sql, ilike } from "drizzle-orm";
 import { blogFullSelector } from "@/db/selectors";
 import { getBlogByIdCached } from "@/queries/blog";
-import { blogSchema, keywordsFromFormData } from "@/lib/validations/blog";
+import {
+	blogSchema,
+	keywordsFromFormData,
+	tagsFromFormData,
+} from "@/lib/validations/blog";
 import { UploadService } from "@/lib/upload";
 import { pingIndexNow } from "@/lib/indexnow";
 
@@ -117,6 +121,7 @@ export async function createBlog(formData: FormData) {
 			metaTitle: formData.get("metaTitle"),
 			metaDescription: formData.get("metaDescription"),
 			keywords: keywordsFromFormData(formData),
+			tags: tagsFromFormData(formData),
 		};
 
 		const parsed = blogSchema.safeParse(rawData);
@@ -133,9 +138,11 @@ export async function createBlog(formData: FormData) {
 			metaTitle,
 			metaDescription,
 			keywords,
+			tags,
 		} = parsed.data;
 
 		const keywordsArr = keywords;
+		const tagsArr = tags;
 
 		const slug =
 			slugify(title, { lower: true, strict: true }) +
@@ -156,6 +163,7 @@ export async function createBlog(formData: FormData) {
 			metaTitle,
 			metaDescription,
 			keywords: keywordsArr,
+			tags: tagsArr,
 		}).returning();
 
 		const newBlog = insertResult[0];
@@ -265,6 +273,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			metaTitle: formData.get("metaTitle"),
 			metaDescription: formData.get("metaDescription"),
 			keywords: keywordsFromFormData(formData),
+			tags: tagsFromFormData(formData),
 		};
 
 		const oldCoverImage = formData.get("oldCoverImage") as string | null;
@@ -283,6 +292,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			metaTitle,
 			metaDescription,
 			keywords,
+			tags,
 		} = parsed.data;
 
 		// Admin routes may pass either DB id (UUID) or slug (table view used slug in URL).
@@ -320,6 +330,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			blogId.slice(-4);
 
 		const keywordsArr = keywords;
+		const tagsArr = tags;
 
 		const updateResult = await db.update(blogs).set({
 			title,
@@ -331,6 +342,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			metaTitle,
 			metaDescription,
 			keywords: keywordsArr,
+			tags: tagsArr,
 			updatedAt: new Date(),
 		}).where(eq(blogs.id, blogId)).returning();
 

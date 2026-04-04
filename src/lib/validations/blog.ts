@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeBlogTagSlugs } from "@/lib/blog-tags";
 
 export const getKeywordsArray = (keywordsString: string | null | undefined) => {
 	if (!keywordsString) return [];
@@ -12,6 +13,16 @@ export const getKeywordsArray = (keywordsString: string | null | undefined) => {
 export function keywordsFromFormData(formData: FormData): string | string[] {
 	const entries = formData
 		.getAll("keywords")
+		.filter((v): v is string => typeof v === "string");
+	if (entries.length === 0) return "";
+	if (entries.length === 1) return entries[0];
+	return entries;
+}
+
+/** Same shape as keywords; used for `name="tags"`. */
+export function tagsFromFormData(formData: FormData): string | string[] {
+	const entries = formData
+		.getAll("tags")
 		.filter((v): v is string => typeof v === "string");
 	if (entries.length === 0) return "";
 	if (entries.length === 1) return entries[0];
@@ -45,6 +56,10 @@ export const blogSchema = z.object({
 		.union([z.string(), z.array(z.string())])
 		.optional()
 		.transform((val) => normalizeKeywordsInput(val)),
+	tags: z
+		.union([z.string(), z.array(z.string())])
+		.optional()
+		.transform((val) => normalizeBlogTagSlugs(val)),
 });
 
 export type BlogInput = z.infer<typeof blogSchema>;

@@ -17,6 +17,17 @@ const getCachedPage = unstable_cache(
 export const metadata = {
 	title: "Terms of Service | Daily Thoughts",
 	description: "Terms of Service for Daily Thoughts",
+	keywords: ["terms of service", "daily thoughts", "Blog"],
+	alternates: {
+		canonical: "/terms-of-service",
+	},
+	openGraph: {
+		title: "Terms of Service | Daily Thoughts",
+		description: "Terms of Service for Daily Thoughts",
+		images: [
+			{ url: "/favicon.ico" },
+		],
+	},
 };
 
 export default async function TermsOfServicePage() {

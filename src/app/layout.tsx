@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 	metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL!),
 	title: "Daily Thoughts",
 	description:
-		"Discover daily inspiration, creative stories, and insightful articles on Daily Thoughts.",
+		"Daily Thoughts - Explore thought-provoking blogs, inspirational stories, and creative writing on life, art, and personal growth. Stay inspired with fresh daily articles designed to spark curiosity and reflection.",
 	keywords: ["blog", "daily thoughts", "inspiration", "stories", "articles", "writing"],
 	alternates: {
 		canonical: "/",

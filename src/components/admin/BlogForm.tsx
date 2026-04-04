@@ -12,6 +12,7 @@ import { ImagePlus, X, Loader2 } from "lucide-react";
 import { type MDXEditorMethods } from "@mdxeditor/editor";
 import { ForwardRefEditor } from "@/components/admin/Editor/ForwardRefEditor";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { BLOG_TAGS, resolveToBlogTagSlug } from "@/lib/blog-tags";
 
 interface BlogFormProps {
 	initialData?: any;
@@ -239,6 +240,35 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 								</p>
 							</div>
 
+							<div className="space-y-3">
+								<Label>Topics</Label>
+								<p className="text-[11px] text-muted-foreground px-0.5 -mt-1">
+									Choose shared topics. These appear on the site and power topic filters.
+								</p>
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto rounded-md border border-muted/60 bg-muted/5 p-3">
+									{BLOG_TAGS.map(({ slug, label }) => (
+										<label
+											key={slug}
+											className="flex items-center gap-2.5 text-sm cursor-pointer select-none"
+										>
+											<input
+												type="checkbox"
+												name="tags"
+												value={slug}
+												defaultChecked={Boolean(
+													initialData?.tags?.some(
+														(t: string) =>
+															t === slug || resolveToBlogTagSlug(t) === slug,
+													),
+												)}
+												className="size-4 rounded border-input accent-primary shrink-0"
+											/>
+											<span>{label}</span>
+										</label>
+									))}
+								</div>
+							</div>
+
 							<div className="space-y-2">
 								<Label htmlFor="keywords">Keywords</Label>
 								<Input
@@ -248,6 +278,9 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 									placeholder="e.g. tech, design, lifestyle"
 									className="bg-muted/10 h-10"
 								/>
+								<p className="text-[11px] text-muted-foreground px-1">
+									SEO meta keywords; not shown as pills on the site.
+								</p>
 							</div>
 						</CardContent>
 					</Card>

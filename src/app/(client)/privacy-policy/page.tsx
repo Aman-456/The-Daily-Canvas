@@ -18,6 +18,17 @@ const getCachedPage = unstable_cache(
 export const metadata = {
 	title: "Privacy Policy | Daily Thoughts",
 	description: "Privacy Policy for Daily Thoughts",
+	keywords: ["privacy policy", "daily thoughts", "Blog"],
+	alternates: {
+		canonical: "/privacy-policy",
+	},
+	openGraph: {
+		title: "Privacy Policy | Daily Thoughts",
+		description: "Privacy Policy for Daily Thoughts",
+		images: [
+			{ url: "/favicon.ico" },
+		],
+	},
 };
 
 export default async function PrivacyPolicyPage() {

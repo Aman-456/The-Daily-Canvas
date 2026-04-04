@@ -44,7 +44,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "pakistan-petrol-prices-2026-ogra-imf",
 		excerpt:
 			"At midnight the notification drops, and by dawn every household has a theory. The truth is a chain of crude benchmarks, rupee translation, OGRA’s arithmetic, and fiscal choices that absorb or pass through global shocks. Here is how Pakistan’s pump price machine actually works—and what to watch next.",
-		tags: ["Pakistan", "Energy", "Economy"],
+		tags: ["pakistan", "energy", "economics"],
 		metaTitle: "Pakistan petrol prices 2026: OGRA, taxes, and global oil",
 		metaDescription:
 			"Long read: OGRA’s role, exchange-rate pass-through, petroleum levies, IMF fiscal context, and reference sources for Pakistan’s fuel pricing debate.",
@@ -62,7 +62,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "ram-dram-prices-falling-2026-pc-builders",
 		excerpt:
 			"DDR5 kits that once felt like a luxury tax are quietly normalizing. Behind the sticker sits the DRAM inventory cycle, AI’s hunger for HBM, and a few practical lessons for anyone upgrading a rig in 2026.",
-		tags: ["Technology", "Hardware", "Semiconductors"],
+		tags: ["technology", "hardware", "semiconductors"],
 		metaTitle: "Why RAM prices are falling: DRAM cycle explained (2026)",
 		metaDescription:
 			"Long read: DRAM/NAND cycles, DDR5 adoption, HBM vs desktop memory, buying advice, and authoritative industry references.",
@@ -74,7 +74,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "pakistan-solar-net-metering-rooftop-2026",
 		excerpt:
 			"Panels spread across Punjab and Sindh faster than some disco engineers expected. Net metering made the math sing—until fixed costs, voltage protection, and tariff design collided. This is the long view on fairness, reliability, and what policy will argue about next.",
-		tags: ["Pakistan", "Energy", "Climate"],
+		tags: ["pakistan", "energy", "climate"],
 		metaTitle: "Pakistan rooftop solar & net metering: long read",
 		metaDescription:
 			"Net metering, distribution utilities, NEPRA, grid integration, and international parallels— with references.",
@@ -91,7 +91,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "ai-data-center-energy-demand-2026",
 		excerpt:
 			"Chatbots feel weightless; substations do not. Training spikes and inference forever are reshaping grid forecasts, water use, and the politics of who pays for new transmission. A full tour of the load—and the levers that actually matter.",
-		tags: ["AI", "Energy", "Technology"],
+		tags: ["ai", "energy", "technology"],
 		metaTitle: "AI & data-center electricity: the 2026 grid story",
 		metaDescription:
 			"Long read: AI power demand, PUE and cooling, PPAs, interconnection queues, chip vs datacenter energy, and primary sources.",
@@ -103,7 +103,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "south-asia-smog-season-air-quality-2026",
 		excerpt:
 			"When the AQI app turns maroon, the same blame game returns: farmers, trucks, kilns, power plants. The chemistry is real; the solutions are slow. Here is a systems-level read—with health evidence, cross-border dynamics, and references worth bookmarking.",
-		tags: ["Health", "Environment", "South Asia"],
+		tags: ["health", "environment", "south-asia"],
 		metaTitle: "South Asia smog season: causes, policy, references",
 		metaDescription:
 			"Long read: PM2.5, stubble burning, transport and industry, indoor air, satellites, and WHO-backed context.",
