@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function SearchInput({
 	defaultValue,
@@ -8,6 +8,7 @@ export default function SearchInput({
 	defaultValue: string;
 }) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
 	const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -15,20 +16,22 @@ export default function SearchInput({
 		const formData = new FormData(e.currentTarget);
 		const query = formData.get("search") as string;
 
-		// Create a new URLSearchParams object based on current params
 		const params = new URLSearchParams(searchParams.toString());
 
 		if (query && query.trim().length > 0) {
 			params.set("search", query);
 		} else {
-			params.delete("search"); // This removes the key entirely
+			params.delete("search");
 		}
 
-		// Reset to page 1 on new search (tag and other params stay via searchParams)
 		params.delete("page");
 
-		// Push the new URL
-		router.push(`/?${params.toString()}`);
+		const qs = params.toString();
+		const base =
+			pathname.startsWith("/topics/") && pathname.length > "/topics/".length
+				? pathname
+				: "/";
+		router.push(qs ? `${base}?${qs}` : base);
 	};
 
 	return (

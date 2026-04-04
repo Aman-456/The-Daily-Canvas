@@ -263,33 +263,79 @@ export function normalizeBlogTagSlugs(val: unknown): string[] {
 	return out;
 }
 
-/** Browse home with a single-topic filter (replaces any multi-tag selection). */
-export function blogTagFilterHref(slug: string): string {
-	return blogListingHref({ tags: [slug] });
+/** Canonical path for a single topic (SEO-friendly). */
+export function topicPath(slug: string): string {
+	if (!isBlogTagSlug(slug)) return "/";
+	return `/topics/${slug}`;
 }
 
-/** Home listing URL: multiple `tag` params = AND filter. Page 1 omits `page`. */
+/** Topic listing with optional `search` and `page` (query only; slug is in the path). */
+export function topicListingHref(opts: {
+	slug: string;
+	search?: string;
+	page?: number;
+}): string {
+	if (!isBlogTagSlug(opts.slug)) return "/";
+	const p = new URLSearchParams();
+	if (opts.page && opts.page > 1) p.set("page", String(opts.page));
+	if (opts.search?.trim()) p.set("search", opts.search.trim());
+	const qs = p.toString();
+	return qs ? `/topics/${opts.slug}?${qs}` : `/topics/${opts.slug}`;
+}
+
+/** Link from a post to that topic’s browse page. */
+export function blogTagFilterHref(slug: string): string {
+	return topicListingHref({ slug });
+}
+
+/**
+ * Home `/`: no topic, multi-topic (`?tag=a&tag=b`), or search/pagination only.
+ * Single-topic views use `/topics/[slug]` (see `topicListingHref`).
+ */
 export function blogListingHref(opts: {
 	tags?: string[];
-	/** @deprecated use `tags: [slug]` */
+	/** @deprecated use `tags: [slug]` or `topicListingHref` */
 	tag?: string;
 	search?: string;
 	page?: number;
 }): string {
-	const p = new URLSearchParams();
-	if (opts.page && opts.page > 1) p.set("page", String(opts.page));
-	if (opts.search?.trim()) p.set("search", opts.search.trim());
 	const fromOpts = opts.tags?.length
 		? opts.tags
 		: opts.tag && isBlogTagSlug(opts.tag)
 			? [opts.tag]
 			: [];
 	const unique = [...new Set(fromOpts.filter(isBlogTagSlug))].sort();
+	const search = opts.search ?? "";
+	const page = opts.page ?? 1;
+
+	if (unique.length === 1) {
+		return topicListingHref({
+			slug: unique[0],
+			search,
+			page,
+		});
+	}
+
+	const p = new URLSearchParams();
+	if (page > 1) p.set("page", String(page));
+	if (search.trim()) p.set("search", search.trim());
 	for (const t of unique) {
 		p.append("tag", t);
 	}
 	const qs = p.toString();
 	return qs ? `/?${qs}` : "/";
+}
+
+/** Chip navigation: 0 tags → home; 1 → `/topics/slug`; 2+ → `/?tag=…`. */
+export function hrefForActiveTags(tags: string[], search: string): string {
+	const unique = [...new Set(tags.filter(isBlogTagSlug))].sort();
+	if (unique.length === 0) {
+		return blogListingHref({ search });
+	}
+	if (unique.length === 1) {
+		return topicListingHref({ slug: unique[0], search });
+	}
+	return blogListingHref({ tags: unique, search });
 }
 
 /** Validated tag slugs from Next.js `searchParams` (supports repeated `tag`). */

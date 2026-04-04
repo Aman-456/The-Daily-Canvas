@@ -1,27 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
 	BLOG_TAGS,
 	blogListingHref,
+	hrefForActiveTags,
 	isBlogTagSlug,
 } from "@/lib/blog-tags";
 
 export function TopicFilterChips() {
+	const pathname = usePathname();
 	const sp = useSearchParams();
 	const search = sp.get("search") ?? "";
+
+	const topicSeg = pathname.match(/^\/topics\/([^/]+)$/);
+	const slugFromPath =
+		topicSeg && isBlogTagSlug(topicSeg[1]) ? topicSeg[1] : null;
+
 	const rawTags = sp.getAll("tag");
-	const activeTags = [...new Set(rawTags.filter(isBlogTagSlug))].sort();
+	const activeTags = slugFromPath
+		? [slugFromPath]
+		: [...new Set(rawTags.filter(isBlogTagSlug))].sort();
 
 	const hrefToggle = (slug: string) => {
 		const next = new Set<string>(activeTags);
 		if (next.has(slug)) next.delete(slug);
 		else next.add(slug);
-		return blogListingHref({
-			search,
-			tags: [...next].sort(),
-		});
+		return hrefForActiveTags([...next].sort(), search);
 	};
 
 	return (
