@@ -1,7 +1,8 @@
 import { db } from "@/db/index";
 import { blogs, users } from "@/db/schema";
 import { unstable_cache } from "next/cache";
-import { eq, desc, sql, ilike, and } from "drizzle-orm";
+import { eq, desc, sql, ilike, and, arrayContains } from "drizzle-orm";
+import { isBlogTagSlug } from "@/lib/blog-tags";
 
 import { blogSummarySelector, blogFullSelector } from "@/db/selectors";
 
@@ -41,13 +42,22 @@ export const getBlogsCached = async (
 	page: number,
 	limit: number,
 	search?: string,
+	tagSlugs?: string[],
 ) => {
-	if (search) {
+	const hasSearch = Boolean(search?.trim());
+	const validTags = [...new Set((tagSlugs ?? []).filter(isBlogTagSlug))].sort();
+	const hasTagFilter = validTags.length > 0;
+
+	if (hasSearch || hasTagFilter) {
 		const offset = (page - 1) * limit;
-		const whereClause = and(
-			eq(blogs.isPublished, true),
-			ilike(blogs.title, `%${search}%`)
-		);
+		const conditions = [eq(blogs.isPublished, true)];
+		if (hasSearch) {
+			conditions.push(ilike(blogs.title, `%${search!.trim()}%`));
+		}
+		for (const t of validTags) {
+			conditions.push(arrayContains(blogs.tags, [t]));
+		}
+		const whereClause = and(...conditions);
 
 		const [totalResult, blogsData] = await Promise.all([
 			db.select({ count: sql<number>`count(*)` })
@@ -59,7 +69,7 @@ export const getBlogsCached = async (
 				.where(whereClause)
 				.orderBy(desc(blogs.createdAt))
 				.limit(limit)
-				.offset(offset)
+				.offset(offset),
 		]);
 
 		return {

@@ -7,6 +7,7 @@ import { CommentSection } from "@/components/client/CommentSection";
 import { DeleteAllCommentsButton } from "@/components/admin/DeleteAllCommentsButton";
 import { getLatestRootComment } from "@/queries/comment";
 import { getCachedAdminBlogDetails } from "@/actions/blog";
+import { blogTagLabel } from "@/lib/blog-tags";
 
 export default async function AdminBlogDetailsPage({
 	params,
@@ -74,6 +75,25 @@ export default async function AdminBlogDetailsPage({
 									Excerpt
 								</h3>
 								<p className="mt-1 text-sm">{blog.excerpt || "No excerpt."}</p>
+							</div>
+							<div>
+								<h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+									Tags
+								</h3>
+								{blog.tags?.length ? (
+									<div className="mt-2 flex flex-wrap gap-1.5">
+										{blog.tags.map((tag) => (
+											<span
+												key={tag}
+												className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+											>
+												{blogTagLabel(tag)}
+											</span>
+										))}
+									</div>
+								) : (
+									<p className="mt-1 text-sm text-muted-foreground">No tags.</p>
+								)}
 							</div>
 							<div className="grid grid-cols-2 gap-4">
 								<div>

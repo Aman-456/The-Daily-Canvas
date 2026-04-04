@@ -24,7 +24,7 @@ export default function SearchInput({
 			params.delete("search"); // This removes the key entirely
 		}
 
-		// Reset to page 1 on new search
+		// Reset to page 1 on new search (tag and other params stay via searchParams)
 		params.delete("page");
 
 		// Push the new URL

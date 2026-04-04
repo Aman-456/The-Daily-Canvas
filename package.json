@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed-blogs": "tsx scripts/seed-new-blogs.ts",
-    "db:seed-blogs:update": "tsx scripts/seed-new-blogs.ts --update"
+    "db:seed-blogs:update": "tsx scripts/seed-new-blogs.ts --update",
+    "db:backfill-blog-tags": "tsx scripts/backfill-blog-tags.ts",
+    "db:migrate-blog-tags": "tsx scripts/migrate-blog-tags-to-catalog.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

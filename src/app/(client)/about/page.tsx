@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/client/FadeIn";
 
 export const metadata = {
-	title: "About Daily Thoughts",
-	description: "A personal blog about life, art, and everything in between.",
-	keywords: ["about", "personal blog", "life", "art", "daily thoughts", "aman", "islamabad"],
+	title: "About | Daily Thoughts",
+	description: "About Daily Thoughts - A personal blog about life, art, and everything in between.",
+	keywords: ["about", "personal blog", "life", "art", "daily thoughts", "Blog"],
 	alternates: {
 		canonical: "/about",
 	},
