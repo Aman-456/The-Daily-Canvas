@@ -9,7 +9,7 @@ import { unstable_cache } from "next/cache";
 import { eq, desc, and, sql, ilike } from "drizzle-orm";
 import { blogFullSelector } from "@/db/selectors";
 import { getBlogByIdCached } from "@/queries/blog";
-import { blogSchema } from "@/lib/validations/blog";
+import { blogSchema, keywordsFromFormData } from "@/lib/validations/blog";
 import { UploadService } from "@/lib/upload";
 import { pingIndexNow } from "@/lib/indexnow";
 
@@ -116,7 +116,7 @@ export async function createBlog(formData: FormData) {
 			isPublished: formData.get("isPublished") === "true",
 			metaTitle: formData.get("metaTitle"),
 			metaDescription: formData.get("metaDescription"),
-			keywords: formData.get("keywords") ? (formData.get("keywords") as string).split(",") : [],
+			keywords: keywordsFromFormData(formData),
 		};
 
 		const parsed = blogSchema.safeParse(rawData);
@@ -135,7 +135,7 @@ export async function createBlog(formData: FormData) {
 			keywords,
 		} = parsed.data;
 
-		const keywordsArr = Array.isArray(keywords) ? keywords : typeof keywords === 'string' ? JSON.parse(keywords || '[]') : [];
+		const keywordsArr = keywords;
 
 		const slug =
 			slugify(title, { lower: true, strict: true }) +
@@ -264,7 +264,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			isPublished: formData.get("isPublished") === "true",
 			metaTitle: formData.get("metaTitle"),
 			metaDescription: formData.get("metaDescription"),
-			keywords: formData.get("keywords") ? (formData.get("keywords") as string).split(",") : [],
+			keywords: keywordsFromFormData(formData),
 		};
 
 		const oldCoverImage = formData.get("oldCoverImage") as string | null;
@@ -308,7 +308,7 @@ export async function updateBlog(id: string, formData: FormData) {
 			"-" +
 			id.toString().slice(-4);
 
-		const keywordsArr = Array.isArray(keywords) ? keywords : typeof keywords === 'string' ? JSON.parse(keywords || '[]') : [];
+		const keywordsArr = keywords;
 
 		const updateResult = await db.update(blogs).set({
 			title,
