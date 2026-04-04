@@ -1,4 +1,5 @@
 import { getAllBlogSlugs } from "@/queries/blog";
+import { BLOG_TAGS } from "@/lib/blog-tags";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,12 @@ const staticRoutes = [
 		changefreq: "weekly",
 		priority: 0.8,
 	},
+	...BLOG_TAGS.map((t) => ({
+		loc: `${APP_URL}/topics/${t.slug}`,
+		lastmod: new Date().toISOString(),
+		changefreq: "weekly" as const,
+		priority: 0.75,
+	})),
 ];
 
 export async function GET(
