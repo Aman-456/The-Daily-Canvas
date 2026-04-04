@@ -109,7 +109,7 @@ export default async function AdminBlogsPage({
 						</TableHeader>
 						<TableBody>
 							{blogs.map((blog: BlogWithAuthor) => (
-								<TableRow key={blog.slug}>
+								<TableRow key={blog.id}>
 									<TableCell className="font-medium">{blog.title}</TableCell>
 									<TableCell>{blog.authorId.name || "Deleted User"}</TableCell>
 									<TableCell>
@@ -128,7 +128,7 @@ export default async function AdminBlogsPage({
 										{new Date(blog.createdAt).toLocaleDateString()}
 									</TableCell>
 									<TableCell className="text-right space-x-2">
-										<Link href={`/admin/blogs/${blog.slug}`}>
+										<Link href={`/admin/blogs/${blog.id}`}>
 											<Button
 												variant="outline"
 												size="sm"
@@ -136,7 +136,7 @@ export default async function AdminBlogsPage({
 												Details
 											</Button>
 										</Link>
-										<Link href={`/admin/blogs/${blog.slug}/edit`}>
+										<Link href={`/admin/blogs/${blog.id}/edit`}>
 											<Button
 												variant="outline"
 												size="sm"
@@ -164,7 +164,7 @@ export default async function AdminBlogsPage({
 			) : (
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-stretch">
 					{blogs.map((blog: any) => (
-						<div key={blog._id.toString()} className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-lg dark:hover:shadow-[0_2px_20px_rgba(0,0,0,0.2)] flex flex-col justify-between transition-all duration-300">
+						<div key={blog.id} className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-lg dark:hover:shadow-[0_2px_20px_rgba(0,0,0,0.2)] flex flex-col justify-between transition-all duration-300">
 							<div className="flex-1 flex flex-col">
 								{blog.coverImage ? (
 									<Image src={blog.coverImage} alt={blog.title} width={500} height={300} className="w-full h-48 object-cover rounded-t-xl shrink-0" />
@@ -198,13 +198,13 @@ export default async function AdminBlogsPage({
 								</div>
 							</div>
 							<div className="flex items-center gap-2 p-4 bg-gray-50/50 dark:bg-zinc-800/30 border-t border-gray-100 dark:border-zinc-800/50 rounded-b-xl">
-								<Link href={`/admin/blogs/${blog._id}`} className="flex-1">
+								<Link href={`/admin/blogs/${blog.id}`} className="flex-1">
 									<Button variant="outline" size="sm" className="w-full bg-white dark:bg-zinc-900 shadow-sm font-medium">Details</Button>
 								</Link>
-								<Link href={`/admin/blogs/${blog._id}/edit`} className="flex-1">
+								<Link href={`/admin/blogs/${blog.id}/edit`} className="flex-1">
 									<Button variant="outline" size="sm" className="w-full bg-white dark:bg-zinc-900 shadow-sm font-medium">Edit</Button>
 								</Link>
-								<DeleteBlogButton blogId={blog._id.toString()} />
+								<DeleteBlogButton blogId={blog.id} />
 							</div>
 						</div>
 					))}
