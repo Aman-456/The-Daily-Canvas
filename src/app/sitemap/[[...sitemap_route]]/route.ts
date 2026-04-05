@@ -29,6 +29,12 @@ const staticRoutes = [
 		priority: 0.9,
 	},
 	{
+		loc: `${APP_URL}/search`,
+		lastmod: new Date().toISOString(),
+		changefreq: "weekly",
+		priority: 0.65,
+	},
+	{
 		loc: `${APP_URL}/terms-of-service`,
 		lastmod: new Date().toISOString(),
 		changefreq: "weekly",

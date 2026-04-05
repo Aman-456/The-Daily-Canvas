@@ -19,6 +19,12 @@ import {
 import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
 import { homeBlogGridPageSize } from "@/lib/home-blog-grid";
 import { ListingSortBar } from "@/components/client/ListingSortBar";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	breadcrumbListJsonLd,
+	jsonLdGraph,
+	webPageJsonLd,
+} from "@/lib/json-ld";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -173,6 +179,22 @@ export default async function ArchivePage({
 				page={page}
 				totalPages={totalPages}
 				pageHref={pageHref}
+			/>
+
+			<JsonLd
+				data={jsonLdGraph([
+					webPageJsonLd({
+						name: "Journal archive | Daily Thoughts",
+						description:
+							"Browse every story — filter by topic or search the full collection.",
+						path: "/archive",
+						type: "CollectionPage",
+					}),
+					breadcrumbListJsonLd([
+						{ name: "Home", item: "/" },
+						{ name: "Archive", item: "/archive" },
+					]),
+				])}
 			/>
 		</div>
 	);

@@ -18,6 +18,13 @@ import {
 import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
 import { ListingSortBar } from "@/components/client/ListingSortBar";
 import SearchInput from "@/components/client/SearchInput";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	breadcrumbListJsonLd,
+	jsonLdGraph,
+	searchActionJsonLd,
+	webPageJsonLd,
+} from "@/lib/json-ld";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -36,6 +43,8 @@ export async function generateMetadata({
 		? `Title search results for “${q}” on Daily Thoughts.`
 		: "Search stories by title and narrow with topics.";
 
+	const hasTitleQuery = Boolean(parseListingQueryParamOnly(params).trim());
+
 	return {
 		title,
 		description,
@@ -48,7 +57,9 @@ export async function generateMetadata({
 			description,
 			url: `${baseUrl}/search`,
 		},
-		robots: { index: false, follow: true },
+		robots: hasTitleQuery
+			? { index: false, follow: true }
+			: { index: true, follow: true },
 	};
 }
 
@@ -137,6 +148,22 @@ export default async function SearchPage({
 						</p>
 					)}
 				</section>
+
+				<JsonLd
+					data={jsonLdGraph([
+						webPageJsonLd({
+							name: "Search the archive | Daily Thoughts",
+							description:
+								"Search stories by title and narrow results with topics or sort.",
+							path: "/search",
+							potentialAction: searchActionJsonLd(),
+						}),
+						breadcrumbListJsonLd([
+							{ name: "Home", item: "/" },
+							{ name: "Search", item: "/search" },
+						]),
+					])}
+				/>
 			</div>
 		);
 	}
@@ -167,6 +194,7 @@ export default async function SearchPage({
 				: `${total} articles found in the archive`;
 
 	const clearSearchHref = searchListingHref({ tags: activeTags, sort });
+	const queryPath = `/search?query=${encodeURIComponent(titleQuery)}`;
 
 	return (
 		<div className="space-y-12 pb-16 sm:space-y-14 sm:pb-24">
@@ -258,6 +286,25 @@ export default async function SearchPage({
 				page={page}
 				totalPages={totalPages}
 				pageHref={pageHref}
+			/>
+
+			<JsonLd
+				data={jsonLdGraph([
+					webPageJsonLd({
+						name: `Search: ${titleQuery} | Daily Thoughts`,
+						description: `Title search results for “${titleQuery}” on Daily Thoughts.`,
+						path: queryPath,
+						type: "SearchResultsPage",
+					}),
+					breadcrumbListJsonLd([
+						{ name: "Home", item: "/" },
+						{ name: "Search", item: "/search" },
+						{
+							name: `“${titleQuery}”`,
+							item: queryPath,
+						},
+					]),
+				])}
 			/>
 		</div>
 	);

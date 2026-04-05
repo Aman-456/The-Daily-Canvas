@@ -4,6 +4,12 @@ import { unstable_cache } from "next/cache";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	breadcrumbListJsonLd,
+	jsonLdGraph,
+	webPageJsonLd,
+} from "@/lib/json-ld";
 
 
 const getCachedPage = unstable_cache(
@@ -50,6 +56,20 @@ export default async function PrivacyPolicyPage() {
 					{page.content}
 				</ReactMarkdown>
 			</div>
-		</div >
+
+			<JsonLd
+				data={jsonLdGraph([
+					webPageJsonLd({
+						name: page.title,
+						description: "Privacy Policy for Daily Thoughts.",
+						path: "/privacy-policy",
+					}),
+					breadcrumbListJsonLd([
+						{ name: "Home", item: "/" },
+						{ name: "Privacy", item: "/privacy-policy" },
+					]),
+				])}
+			/>
+		</div>
 	);
 }

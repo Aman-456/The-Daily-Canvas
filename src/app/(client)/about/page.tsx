@@ -2,6 +2,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/client/FadeIn";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	breadcrumbListJsonLd,
+	jsonLdGraph,
+	webPageJsonLd,
+} from "@/lib/json-ld";
 
 export const metadata = {
 	title: "About | Daily Thoughts",
@@ -64,6 +70,22 @@ export default function About() {
 					</Link>
 				</div>
 			</FadeIn>
+
+			<JsonLd
+				data={jsonLdGraph([
+					webPageJsonLd({
+						name: "About | Daily Thoughts",
+						description:
+							"About Daily Thoughts — a personal blog about life, art, and everything in between.",
+						path: "/about",
+						type: "AboutPage",
+					}),
+					breadcrumbListJsonLd([
+						{ name: "Home", item: "/" },
+						{ name: "About", item: "/about" },
+					]),
+				])}
+			/>
 		</div>
 	);
 }

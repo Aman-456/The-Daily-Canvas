@@ -4,6 +4,12 @@ import { unstable_cache } from "next/cache";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	breadcrumbListJsonLd,
+	jsonLdGraph,
+	webPageJsonLd,
+} from "@/lib/json-ld";
 
 const getCachedPage = unstable_cache(
 	async (slug: string) => {
@@ -49,6 +55,20 @@ export default async function TermsOfServicePage() {
 					{page.content}
 				</ReactMarkdown>
 			</div>
+
+			<JsonLd
+				data={jsonLdGraph([
+					webPageJsonLd({
+						name: page.title,
+						description: "Terms of Service for Daily Thoughts.",
+						path: "/terms-of-service",
+					}),
+					breadcrumbListJsonLd([
+						{ name: "Home", item: "/" },
+						{ name: "Terms", item: "/terms-of-service" },
+					]),
+				])}
+			/>
 		</div>
 	);
 }
