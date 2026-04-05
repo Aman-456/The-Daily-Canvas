@@ -27,6 +27,9 @@ export const metadata: Metadata = {
 	keywords: ["blog", "daily thoughts", "inspiration", "stories", "articles", "writing"],
 	alternates: {
 		canonical: "/",
+		types: {
+			"application/rss+xml": "/feed.xml",
+		},
 	},
 	// Robots & verification
 	robots: {

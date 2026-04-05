@@ -21,7 +21,7 @@ export default async function AdminPagesPage() {
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">Manage Pages</h1>
 					<p className="text-muted-foreground">
-						Edit dynamic pages like Privacy Policy and Terms of Service.
+						Edit Privacy, Terms, FAQ, Changelog, and other CMS-backed pages.
 					</p>
 				</div>
 			</div>

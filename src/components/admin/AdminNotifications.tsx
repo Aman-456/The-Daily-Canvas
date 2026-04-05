@@ -29,6 +29,7 @@ function NotificationActions({
 	const singleLinkTypes = new Set([
 		"NEWSLETTER_SUBSCRIBE",
 		"USER_SIGNUP",
+		"CONTACT_FORM",
 		"SYSTEM",
 	]);
 

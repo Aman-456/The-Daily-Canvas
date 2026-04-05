@@ -5,8 +5,8 @@ export function SiteFooter() {
 	return (
 		<footer className="mt-auto border-t border-border/40 bg-muted/30 py-14 max-md:pb-24 dark:bg-muted/10">
 			<div className="mx-auto max-w-screen-2xl px-4 sm:px-8">
-				<div className="mb-12 grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
-					<div className="lg:col-span-2">
+				<div className="mb-12 grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
+					<div className="md:col-span-2 lg:col-span-2">
 						<span className="font-headline text-lg font-bold text-foreground">
 							Daily Thoughts
 						</span>
@@ -50,6 +50,45 @@ export function SiteFooter() {
 									className="transition-colors hover:text-primary"
 								>
 									About
+								</Link>
+							</li>
+						</ul>
+					</div>
+					<div>
+						<h4 className="font-headline mb-4 text-sm font-bold text-foreground">
+							Community
+						</h4>
+						<ul className="space-y-3 text-sm text-muted-foreground">
+							<li>
+								<Link
+									href="/changelog"
+									className="transition-colors hover:text-primary"
+								>
+									Changelog
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/faq"
+									className="transition-colors hover:text-primary"
+								>
+									FAQ
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/contact"
+									className="transition-colors hover:text-primary"
+								>
+									Contact
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/community-guidelines"
+									className="transition-colors hover:text-primary"
+								>
+									Community guidelines
 								</Link>
 							</li>
 						</ul>

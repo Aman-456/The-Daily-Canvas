@@ -13,7 +13,7 @@ export async function getAnyAdminUserId(): Promise<string | null> {
 
 /** Admin-only rows: `targetAuthorId` null so non-admins never see them in filtered queries. */
 export async function insertAdminOnlyNotification(params: {
-	type: "NEWSLETTER_SUBSCRIBE" | "USER_SIGNUP";
+	type: "NEWSLETTER_SUBSCRIBE" | "USER_SIGNUP" | "CONTACT_FORM";
 	message: string;
 	link: string;
 	blogLink: string;

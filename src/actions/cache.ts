@@ -28,6 +28,8 @@ export async function clearAppCache(type: 'blogs' | 'comments' | 'users' | 'page
                 revalidateTag('pages', 'max');
                 revalidateTag('page-privacy-policy', 'max');
                 revalidateTag('page-terms-of-service', 'max');
+                revalidateTag('page-faq', 'max');
+                revalidateTag('page-changelog', 'max');
                 revalidatePath('/admin/pages');
                 break;
             case 'newsletter':
@@ -48,6 +50,8 @@ export async function clearAppCache(type: 'blogs' | 'comments' | 'users' | 'page
                 revalidateTag('pages', 'max');
                 revalidateTag('page-privacy-policy', 'max');
                 revalidateTag('page-terms-of-service', 'max');
+                revalidateTag('page-faq', 'max');
+                revalidateTag('page-changelog', 'max');
                 revalidateTag('newsletter-subscribers', 'max');
                 revalidateTag('stats', 'max');
                 revalidatePath('/');
