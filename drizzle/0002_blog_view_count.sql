@@ -1,0 +1,1 @@
+ALTER TABLE "blog" ADD COLUMN IF NOT EXISTS "viewCount" integer DEFAULT 0 NOT NULL;

@@ -31,6 +31,21 @@ export const hasExtraPermissions = (user: any): boolean => {
 	return Object.values(user.permissions || {}).some((v) => v === true);
 };
 
+/**
+ * Compact counts for UI via `Intl` (k, m, b, t for en-US compact notation, lowercased).
+ * Safe for view counts; very large values hit `Number` precision limits, not a real concern here.
+ * Prefer `title` / `aria-label` with `toLocaleString()` for the exact figure.
+ */
+export function formatCompactNumber(value: number): string {
+	if (!Number.isFinite(value) || value < 0) return "0";
+	const s = new Intl.NumberFormat("en-US", {
+		notation: "compact",
+		compactDisplay: "short",
+		maximumFractionDigits: 1,
+	}).format(Math.floor(value));
+	return s.toLowerCase();
+}
+
 export function formatRelativeTime(date: Date | string | number): string {
 	const d = new Date(date);
 	if (isNaN(d.getTime())) return "recently";

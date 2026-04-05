@@ -180,6 +180,7 @@ async function main() {
 			metaDescription: blog.metaDescription,
 			keywords: blog.keywords,
 			commentsCount: 0,
+			viewCount: 0,
 		});
 
 		console.log(`Inserted: ${blog.title}`);

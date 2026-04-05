@@ -100,6 +100,8 @@ export const blogs = pgTable("blog", {
   metaDescription: text("metaDescription"),
   keywords: text("keywords").array().default([]),
   commentsCount: integer("commentsCount").default(0).notNull(),
+  /** Page views; updated outside `unstable_cache` blog payload so post body stays cacheable. */
+  viewCount: integer("viewCount").default(0).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
 })
