@@ -38,6 +38,14 @@ export function SiteFooter() {
 							</li>
 							<li>
 								<Link
+									href="/search"
+									className="transition-colors hover:text-primary"
+								>
+									Search
+								</Link>
+							</li>
+							<li>
+								<Link
 									href="/about"
 									className="transition-colors hover:text-primary"
 								>

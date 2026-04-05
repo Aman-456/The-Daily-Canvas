@@ -12,9 +12,13 @@ import {
 	archiveListingHref,
 	blogListingHref,
 	blogTagLabel,
+	parseListingTitleQuery,
 	parseTagSlugsFromSearchParams,
+	searchListingHref,
 	topicListingHref,
 } from "@/lib/blog-tags";
+import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
+import { ListingSortBar } from "@/components/client/ListingSortBar";
 import { homeArchiveTeaserCount } from "@/lib/home-blog-grid";
 import type { Metadata } from "next";
 
@@ -29,9 +33,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const params = await searchParams;
 	const tags = parseTagSlugsFromSearchParams(params);
-	const search =
-		typeof params.search === "string" ? params.search : "";
-	const messy = tags.length > 1 || Boolean(search.trim());
+	const messy = tags.length > 1;
 
 	const title = "Explore Blogs | Daily Thoughts";
 	const description =
@@ -62,24 +64,36 @@ export default async function BlogsPage({
 }) {
 	const params = await searchParams;
 	const page = typeof params.page === "string" ? Number(params.page) : 1;
-	const search = typeof params.search === "string" ? params.search : "";
+	const titleQuery = parseListingTitleQuery(params);
 	const activeTags = parseTagSlugsFromSearchParams(params);
+	const sort = parseSortFromSearchParams(params);
+
+	if (titleQuery) {
+		redirect(
+			searchListingHref({
+				tags: activeTags,
+				search: titleQuery,
+				page,
+				sort,
+			}),
+		);
+	}
 
 	if (activeTags.length === 1) {
-		redirect(topicListingHref({ slug: activeTags[0], search, page }));
+		redirect(topicListingHref({ slug: activeTags[0], page, sort }));
 	}
 
 	if (page > 1) {
 		redirect(
 			archiveListingHref({
 				page,
-				search,
 				tags: activeTags,
+				sort,
 			}),
 		);
 	}
 
-	const isCleanHome = activeTags.length === 0 && !search.trim();
+	const isCleanHome = activeTags.length === 0;
 	const spotlightStrip = isCleanHome ? await getSpotlightStrip() : null;
 	const teaserLimit = homeArchiveTeaserCount();
 	/** Only exclude posts shown in the featured mosaic (4), not the full spotlight strip (8). */
@@ -92,14 +106,17 @@ export default async function BlogsPage({
 	const { blogs, total } = await getBlogsCached(
 		1,
 		teaserLimit,
-		search,
+		"",
 		activeTags,
-		excludeSpotlightSlugs
-			? { excludeSlugs: excludeSpotlightSlugs }
-			: undefined,
+		{
+			...(excludeSpotlightSlugs
+				? { excludeSlugs: excludeSpotlightSlugs }
+				: {}),
+			sort,
+		},
 	);
 
-	const archiveMoreHref = archiveListingHref({ search, tags: activeTags });
+	const archiveMoreHref = archiveListingHref({ tags: activeTags, sort });
 	const hasMoreInArchive = total > blogs.length;
 
 	const featuredSlice =
@@ -148,9 +165,27 @@ export default async function BlogsPage({
 					</div>
 				</div>
 
-				<Suspense fallback={<TopicFilterChipsFallback />}>
-					<TopicFilterChips variant="editorial" />
-				</Suspense>
+				{isCleanHome ? (
+					<Suspense fallback={<TopicFilterChipsFallback />}>
+						<TopicFilterChips variant="editorial" />
+					</Suspense>
+				) : (
+					<Suspense
+						fallback={
+							<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+								<TopicFilterChipsFallback />
+								<div className="h-10 w-44 animate-pulse rounded-xl bg-muted/70" />
+							</div>
+						}
+					>
+						<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+							<div className="min-w-0 flex-1">
+								<TopicFilterChips variant="editorial" />
+							</div>
+							<ListingSortBar />
+						</div>
+					</Suspense>
+				)}
 
 				{activeTags.length > 0 && (
 					<p className="text-sm text-muted-foreground">
@@ -160,7 +195,7 @@ export default async function BlogsPage({
 						</span>
 						.{" "}
 						<Link
-							href={blogListingHref({ search })}
+							href={blogListingHref({ sort })}
 							className="font-medium text-primary underline-offset-4 hover:underline"
 						>
 							Clear topics
@@ -204,7 +239,7 @@ export default async function BlogsPage({
 						potentialAction: {
 							"@type": "SearchAction",
 							target: `${process.env.NEXT_PUBLIC_APP_URL
-								}/?search={search_term_string}`,
+								}/search?query={search_term_string}`,
 							"query-input": "required name=search_term_string",
 						},
 					}),

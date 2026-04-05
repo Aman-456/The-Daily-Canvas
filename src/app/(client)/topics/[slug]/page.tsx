@@ -10,9 +10,13 @@ import { EditorialArchiveGrid } from "@/components/client/EditorialArchiveGrid";
 import { EditorialPagination } from "@/components/client/EditorialPagination";
 import {
 	blogTagLabel,
+	parseListingTitleQuery,
 	resolveTopicSlugForPath,
+	searchListingHref,
 	topicListingHref,
 } from "@/lib/blog-tags";
+import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
+import { ListingSortBar } from "@/components/client/ListingSortBar";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -26,18 +30,14 @@ type PageProps = {
 
 export async function generateMetadata({
 	params,
-	searchParams,
-}: PageProps): Promise<Metadata> {
+}: {
+	params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
 	const raw = (await params).slug;
 	const slug = resolveTopicSlugForPath(raw);
 	if (!slug) {
 		return { title: "Topic Not Found" };
 	}
-
-	const sp = await searchParams;
-	const search =
-		typeof sp.search === "string" ? sp.search : "";
-	const hasSearch = Boolean(search.trim());
 
 	const label = blogTagLabel(slug);
 	const canonicalPath = `/topics/${slug}`;
@@ -56,9 +56,6 @@ export async function generateMetadata({
 			description,
 			url: `${baseUrl}${canonicalPath}`,
 		},
-		...(hasSearch && {
-			robots: { index: false, follow: true },
-		}),
 	};
 }
 
@@ -66,20 +63,34 @@ export default async function TopicBlogsPage({ params, searchParams }: PageProps
 	const raw = (await params).slug;
 	const sp = await searchParams;
 	const page = typeof sp.page === "string" ? Number(sp.page) : 1;
-	const search = typeof sp.search === "string" ? sp.search : "";
+	const titleQuery = parseListingTitleQuery(sp);
 
 	const slug = resolveTopicSlugForPath(raw);
 	if (!slug) {
 		notFound();
 	}
-	if (slug !== raw) {
-		redirect(topicListingHref({ slug, search, page }));
+	const sort = parseSortFromSearchParams(sp);
+
+	if (titleQuery) {
+		redirect(
+			searchListingHref({
+				tags: [slug],
+				search: titleQuery,
+				page,
+				sort,
+			}),
+		);
 	}
 
-	const { blogs, totalPages } = await getBlogsCached(page, 12, search, [slug]);
+	if (slug !== raw) {
+		redirect(topicListingHref({ slug, page, sort }));
+	}
 
-	const pageHref = (n: number) =>
-		topicListingHref({ slug, search, page: n });
+	const { blogs, totalPages } = await getBlogsCached(page, 12, "", [slug], {
+		sort,
+	});
+
+	const pageHref = (n: number) => topicListingHref({ slug, page: n, sort });
 
 	const label = blogTagLabel(slug);
 
@@ -109,8 +120,20 @@ export default async function TopicBlogsPage({ params, searchParams }: PageProps
 			</header>
 
 			<section className="space-y-6">
-				<Suspense fallback={<TopicFilterChipsFallback />}>
-					<TopicFilterChips variant="editorial" />
+				<Suspense
+					fallback={
+						<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+							<TopicFilterChipsFallback />
+							<div className="h-10 w-44 animate-pulse rounded-xl bg-muted/70" />
+						</div>
+					}
+				>
+					<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+						<div className="min-w-0 flex-1">
+							<TopicFilterChips variant="editorial" />
+						</div>
+						<ListingSortBar />
+					</div>
 				</Suspense>
 			</section>
 

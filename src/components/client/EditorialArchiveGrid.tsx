@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Eye } from "lucide-react";
 import type { BlogPostCardItem } from "@/components/client/BlogPostCardGrid";
+import { cn } from "@/lib/utils";
 import {
 	blogTagFilterHref,
 	blogTagLabel,
@@ -13,9 +14,20 @@ function readMinutes(content: string) {
 	return Math.max(1, Math.ceil(words / 200));
 }
 
-export function EditorialArchiveGrid({ blogs }: { blogs: BlogPostCardItem[] }) {
+export function EditorialArchiveGrid({
+	blogs,
+	className,
+}: {
+	blogs: BlogPostCardItem[];
+	className?: string;
+}) {
 	return (
-		<div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-3">
+		<div
+			className={cn(
+				"grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-3",
+				className,
+			)}
+		>
 			{blogs.map((blog) => {
 				const primaryTag = blog.tags?.[0];
 				const tagLabel = primaryTag ? blogTagLabel(primaryTag) : "Story";

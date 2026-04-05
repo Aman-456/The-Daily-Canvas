@@ -11,9 +11,12 @@ import {
 	blogListingHref,
 	hrefForActiveTags,
 	isBlogTagSlug,
+	listingTitleQueryFromUrlSearchParams,
+	searchListingHref,
 	type BlogTagSlug,
 	type TopicListingBase,
 } from "@/lib/blog-tags";
+import { parseBlogListSort } from "@/lib/blog-list-sort";
 
 const VISIBLE_TOPIC_COUNT = 10;
 
@@ -22,13 +25,14 @@ export function TopicFilterChips({
 	listingBase = "home",
 }: {
 	variant?: "default" | "editorial";
-	/** Where multi-tag and “all” filters live: `/` vs `/archive`. */
+	/** Where multi-tag and “all” filters live: `/`, `/archive`, or `/search`. */
 	listingBase?: TopicListingBase;
 }) {
 	const [expanded, setExpanded] = useState(false);
 	const pathname = usePathname();
 	const sp = useSearchParams();
-	const search = sp.get("search") ?? "";
+	const search = listingTitleQueryFromUrlSearchParams(sp);
+	const sort = parseBlogListSort(sp.get("sort"));
 
 	const topicSeg = pathname.match(/^\/topics\/([^/]+)$/);
 	const slugFromPath =
@@ -43,13 +47,15 @@ export function TopicFilterChips({
 		const next = new Set<BlogTagSlug>(activeTags);
 		if (next.has(slug)) next.delete(slug);
 		else next.add(slug);
-		return hrefForActiveTags([...next].sort(), search, listingBase);
+		return hrefForActiveTags([...next].sort(), search, listingBase, sort);
 	};
 
 	const allStoriesHref =
-		listingBase === "archive"
-			? archiveListingHref({ search })
-			: blogListingHref({ search });
+		listingBase === "search"
+			? searchListingHref({ search, sort })
+			: listingBase === "archive"
+				? archiveListingHref({ search, sort })
+				: blogListingHref({ search, sort });
 
 	const visibleTags = BLOG_TAGS.slice(0, VISIBLE_TOPIC_COUNT);
 	const extraTags = BLOG_TAGS.slice(VISIBLE_TOPIC_COUNT);
