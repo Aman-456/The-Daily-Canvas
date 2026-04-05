@@ -20,6 +20,11 @@ import {
 import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
 import { ListingSortBar } from "@/components/client/ListingSortBar";
 import { homeArchiveTeaserCount } from "@/lib/home-blog-grid";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	jsonLdGraph,
+	webPageJsonLd,
+} from "@/lib/json-ld";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -228,22 +233,15 @@ export default async function BlogsPage({
 				</div>
 			)}
 
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify({
-						"@context": "https://schema.org",
-						"@type": "WebSite",
-						name: "The Daily Thoughts",
-						url: process.env.NEXT_PUBLIC_APP_URL,
-						potentialAction: {
-							"@type": "SearchAction",
-							target: `${process.env.NEXT_PUBLIC_APP_URL
-								}/search?query={search_term_string}`,
-							"query-input": "required name=search_term_string",
-						},
+			<JsonLd
+				data={jsonLdGraph([
+					webPageJsonLd({
+						name: "Daily Thoughts — Stories and essays",
+						description:
+							"Essays, craft, and ideas at the intersection of design, technology, and how we read on the web.",
+						path: "/",
 					}),
-				}}
+				])}
 			/>
 		</div>
 	);

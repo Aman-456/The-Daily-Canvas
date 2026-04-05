@@ -16,7 +16,15 @@ import {
 	blogTagFilterHref,
 	blogTagLabel,
 	blogTagSlugForLink,
+	isBlogTagSlug,
 } from "@/lib/blog-tags";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+	absoluteUrl,
+	breadcrumbListJsonLd,
+	jsonLdGraph,
+	siteBaseUrl,
+} from "@/lib/json-ld";
 
 export const revalidate = 3600;
 
@@ -79,6 +87,10 @@ export default async function SingleBlogPage({
 		(blog.tags ?? []).filter(Boolean),
 		4,
 	);
+
+	const base = siteBaseUrl();
+	const postUrl = absoluteUrl(`/blogs/${blog.slug}`);
+	const cover = blog.coverImage ? absoluteUrl(blog.coverImage) : undefined;
 
 	return (
 		<div
@@ -257,56 +269,48 @@ export default async function SingleBlogPage({
 				)}
 			</div>
 
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify([
-						{
-							"@context": "https://schema.org",
-							"@type": "BlogPosting",
-							headline: blog.title,
-							description: blog.metaDescription || (blog.excerpt || blog.title),
-							image: blog.coverImage ? [blog.coverImage] : [],
-							datePublished: blog.createdAt,
-							dateModified: blog.updatedAt || blog.createdAt,
-							author: [
-								{
-									"@type": "Person",
-									name: blog.authorId?.name || "Deleted User",
-									image: blog.authorId?.image,
-								},
-							],
-							mainEntityOfPage: {
-								"@type": "WebPage",
-								"@id": `${process.env.NEXT_PUBLIC_APP_URL}/blogs/${blog.slug}`,
-							},
+			<JsonLd
+				data={jsonLdGraph([
+					{
+						"@type": "BlogPosting",
+						"@id": `${postUrl}#article`,
+						headline: blog.title,
+						description:
+							blog.metaDescription || blog.excerpt?.trim() || blog.title,
+						...(cover ? { image: [cover] } : {}),
+						datePublished: blog.createdAt,
+						dateModified: blog.updatedAt || blog.createdAt,
+						author: {
+							"@type": "Person",
+							name: blog.authorId?.name || "Deleted User",
+							...(blog.authorId?.image
+								? { image: absoluteUrl(blog.authorId.image) }
+								: {}),
 						},
-						{
-							"@context": "https://schema.org",
-							"@type": "BreadcrumbList",
-							itemListElement: [
-								{
-									"@type": "ListItem",
-									position: 1,
-									name: "Home",
-									item: `${process.env.NEXT_PUBLIC_APP_URL}`,
-								},
-								{
-									"@type": "ListItem",
-									position: 2,
-									name: "Blogs",
-									item: `${process.env.NEXT_PUBLIC_APP_URL}/`,
-								},
-								{
-									"@type": "ListItem",
-									position: 3,
-									name: blog.title,
-									item: `${process.env.NEXT_PUBLIC_APP_URL}/blogs/${blog.slug}`,
-								},
-							],
+						publisher: { "@id": `${base}/#organization` },
+						mainEntityOfPage: {
+							"@type": "WebPage",
+							"@id": `${postUrl}#webpage`,
 						},
+						url: postUrl,
+						...(blog.keywords?.length
+							? { keywords: blog.keywords.join(", ") }
+							: {}),
+						...(blog.tags?.filter(isBlogTagSlug).length
+							? {
+									articleSection: blog.tags
+										.filter(isBlogTagSlug)
+										.map((t) => blogTagLabel(t))
+										.join(", "),
+								}
+							: {}),
+					},
+					breadcrumbListJsonLd([
+						{ name: "Home", item: "/" },
+						{ name: "Stories", item: "/" },
+						{ name: blog.title, item: `/blogs/${blog.slug}` },
 					]),
-				}}
+				])}
 			/>
 		</div>
 	);
