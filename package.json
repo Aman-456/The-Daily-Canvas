@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:blog-views": "tsx scripts/ensure-blog-view-count.ts",
     "db:newsletter": "tsx scripts/ensure-newsletter-table.ts",
+    "db:contact": "tsx scripts/ensure-contact-submission-table.ts",
     "db:seed-blogs": "tsx scripts/seed-new-blogs.ts",
     "db:seed-blogs:update": "tsx scripts/seed-new-blogs.ts --update",
     "db:backfill-blog-tags": "tsx scripts/backfill-blog-tags.ts",

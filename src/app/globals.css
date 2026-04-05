@@ -223,3 +223,35 @@
 		color: oklch(49.169% 0.21125 264.952) !important;
 	}
 }
+
+@layer components {
+	/* FAQ / CMS intro + answers (outside prose so <details> stays native) */
+	.faq-md > p {
+		@apply mb-6 text-base leading-relaxed text-muted-foreground;
+	}
+	.faq-md > p strong {
+		@apply font-semibold text-foreground;
+	}
+	.faq-md > p a {
+		@apply font-medium text-primary underline-offset-4 hover:underline;
+	}
+	.faq-md details p {
+		@apply mt-3 pl-6 text-sm leading-relaxed text-muted-foreground;
+	}
+	.faq-md details a {
+		@apply font-medium text-primary underline-offset-4 hover:underline;
+	}
+	.faq-md details code {
+		@apply rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground;
+	}
+	.faq-md details ul {
+		@apply mt-3 list-disc space-y-2 pl-10 text-sm text-muted-foreground;
+	}
+	.faq-md details li {
+		@apply leading-relaxed;
+	}
+	/* Chevron when open (fallback if group-open variant is unavailable) */
+	.faq-md details[open] .faq-chevron {
+		transform: rotate(90deg);
+	}
+}

@@ -261,6 +261,23 @@ export async function getRelatedBlogs(
 		.limit(limit);
 }
 
+/** Recent published posts for RSS (not cached; feed should stay fresh). */
+export async function getRecentBlogsForFeed(limit = 100) {
+	return db
+		.select({
+			slug: blogs.slug,
+			title: blogs.title,
+			excerpt: blogs.excerpt,
+			metaDescription: blogs.metaDescription,
+			updatedAt: blogs.updatedAt,
+			createdAt: blogs.createdAt,
+		})
+		.from(blogs)
+		.where(eq(blogs.isPublished, true))
+		.orderBy(desc(blogs.createdAt))
+		.limit(limit);
+}
+
 export const getAllBlogSlugs = async () => {
 	const result = await db.select({
 		slug: blogs.slug,

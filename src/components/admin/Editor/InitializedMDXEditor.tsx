@@ -37,6 +37,7 @@ import {
 	Separator,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
+import { InsertDetailsBlock } from "./InsertDetailsBlock";
 
 interface InitializedMDXEditorProps {
 	editorRef: ForwardedRef<MDXEditorMethods> | null;
@@ -97,6 +98,7 @@ export default function InitializedMDXEditor({
 							<InsertImage />
 							<InsertTable />
 							<InsertThematicBreak />
+							<InsertDetailsBlock />
 							<Separator />
 							<ConditionalContents
 								options={[

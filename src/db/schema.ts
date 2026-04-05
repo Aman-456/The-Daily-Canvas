@@ -145,6 +145,7 @@ export const notifications = pgTable("notification", {
       | "BLOG_DELETE"
       | "NEWSLETTER_SUBSCRIBE"
       | "USER_SIGNUP"
+      | "CONTACT_FORM"
     >()
     .default("COMMENT")
     .notNull(),
@@ -158,6 +159,17 @@ export const notifications = pgTable("notification", {
 export const newsletterSubscribers = pgTable("newsletter_subscriber", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text("email").notNull().unique(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+})
+
+/** Public contact form messages; admins are notified on insert. */
+export const contactSubmissions = pgTable("contact_submission", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  message: text("message").notNull(),
+  /** Workflow: new → read → contacted → resolved */
+  status: text("status").notNull().default("new"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
 })
 
@@ -183,4 +195,7 @@ export type NewNotification = InferInsertModel<typeof notifications>;
 
 export type NewsletterSubscriber = InferSelectModel<typeof newsletterSubscribers>;
 export type NewNewsletterSubscriber = InferInsertModel<typeof newsletterSubscribers>;
+
+export type ContactSubmission = InferSelectModel<typeof contactSubmissions>;
+export type NewContactSubmission = InferInsertModel<typeof contactSubmissions>;
 

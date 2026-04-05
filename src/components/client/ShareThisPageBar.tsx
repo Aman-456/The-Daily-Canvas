@@ -12,6 +12,11 @@ function shareTitleForPath(pathname: string): string {
 	if (pathname === "/about") return "Daily Thoughts — About";
 	if (pathname === "/privacy-policy") return "Daily Thoughts — Privacy";
 	if (pathname === "/terms-of-service") return "Daily Thoughts — Terms";
+	if (pathname === "/changelog") return "Daily Thoughts — Changelog";
+	if (pathname === "/faq") return "Daily Thoughts — FAQ";
+	if (pathname === "/contact") return "Daily Thoughts — Contact";
+	if (pathname === "/community-guidelines")
+		return "Daily Thoughts — Community guidelines";
 
 	const topicMatch = pathname.match(/^\/topics\/([^/]+)$/);
 	if (topicMatch) {
