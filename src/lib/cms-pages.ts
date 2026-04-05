@@ -43,6 +43,13 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>RSS: subscribe at <code>/feed.xml</code> in your reader of choice.</li>
 <li>Contact inbox: clearer errors if the database is missing the submission <code>status</code> column; run <code>npm run db:migrate</code> or <code>npm run db:contact</code> on the same database as production.</li>
 <li>Manage Pages editor: toolbar control to insert a <code>details</code> / <code>summary</code> accordion block (handy for FAQ-style entries).</li>
+</ul>
+
+<h2>2026-04-05 — Topics, archive, and sitemap</h2>
+<ul>
+<li>Multi-topic browsing uses path URLs like <code>/topics/pakistan/south-asia</code> (every segment is a topic; posts must match all of them). Segments are in a fixed, alphabetical order so each combination has one canonical link; old <code>?tag=</code> combinations on topic or archive pages redirect there.</li>
+<li>Home and archive listings keep the same filters, but choosing several topics from the home teaser or archive now lands on those topic paths instead of the home URL with query params.</li>
+<li>The public sitemap lists site pages only; the RSS feed stays discoverable via the site <code>&lt;link rel="alternate"&gt;</code> (not in the XML sitemap).</li>
 </ul>`;
 
 export function defaultCmsPage(
