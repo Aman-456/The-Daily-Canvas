@@ -3,7 +3,7 @@
 import { db } from "@/db/index";
 import { users } from "@/db/schema";
 import { auth } from "@/auth";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { isAdmin } from "@/lib/utils";
 import { unstable_cache } from "next/cache";
 import { eq, like, or, desc, sql } from "drizzle-orm";
@@ -105,6 +105,8 @@ export async function deleteUser(userId: string) {
 		await db.delete(users).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
+		revalidateTag("users", "max");
+		revalidateTag("stats", "max");
 
 		return { success: true };
 	} catch (error: any) {

@@ -133,11 +133,30 @@ export const notifications = pgTable("notification", {
   link: text("link").notNull(),
   blogLink: text("blogLink").notNull(),
   isRead: boolean("isRead").default(false).notNull(),
-  type: text("type").$type<"COMMENT" | "SYSTEM" | "BLOG_PUBLISHED" | "BLOG_UNPUBLISHED" | "BLOG_UPDATE" | "BLOG_DELETE">().default("COMMENT").notNull(),
+  type: text("type")
+    .$type<
+      | "COMMENT"
+      | "SYSTEM"
+      | "BLOG_PUBLISHED"
+      | "BLOG_UNPUBLISHED"
+      | "BLOG_UPDATE"
+      | "BLOG_DELETE"
+      | "NEWSLETTER_SUBSCRIBE"
+      | "USER_SIGNUP"
+    >()
+    .default("COMMENT")
+    .notNull(),
   userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   targetAuthorId: text("targetAuthorId").references(() => users.id),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
+})
+
+/** Public newsletter signups; email is normalized to lowercase in app code. */
+export const newsletterSubscribers = pgTable("newsletter_subscriber", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
 })
 
 import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
@@ -159,4 +178,7 @@ export type NewPage = InferInsertModel<typeof pages>;
 
 export type Notification = InferSelectModel<typeof notifications>;
 export type NewNotification = InferInsertModel<typeof notifications>;
+
+export type NewsletterSubscriber = InferSelectModel<typeof newsletterSubscribers>;
+export type NewNewsletterSubscriber = InferInsertModel<typeof newsletterSubscribers>;
 

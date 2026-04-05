@@ -2,7 +2,7 @@
 
 import { db } from "@/db/index";
 import { pages } from "@/db/schema";
-import { revalidatePath, unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 import { hasPermission } from "@/lib/utils";
 import { eq, desc } from "drizzle-orm";
@@ -92,6 +92,14 @@ export async function updateAdminPage(slug: string, content: string, title?: str
 		}
 
 		revalidatePath(`/${slug}`);
+		revalidatePath("/admin/pages");
+		revalidateTag("pages", "max");
+		if (slug === "privacy-policy") {
+			revalidateTag("page-privacy-policy", "max");
+		}
+		if (slug === "terms-of-service") {
+			revalidateTag("page-terms-of-service", "max");
+		}
 
 		return { success: true, data: updatedPages[0] };
 	} catch (error: any) {

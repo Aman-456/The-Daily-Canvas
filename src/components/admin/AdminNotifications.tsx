@@ -19,6 +19,74 @@ import {
 import { Button } from "@/components/ui/button";
 import { Notification } from "@/db/schema";
 
+function NotificationActions({
+	n,
+	onRead,
+}: {
+	n: Notification;
+	onRead: (id: string, isRead: boolean) => void;
+}) {
+	const singleLinkTypes = new Set([
+		"NEWSLETTER_SUBSCRIBE",
+		"USER_SIGNUP",
+		"SYSTEM",
+	]);
+
+	if (singleLinkTypes.has(n.type)) {
+		return (
+			<Link
+				href={n.link}
+				onClick={() => onRead(n.id, n.isRead)}
+				className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}
+			>
+				Open
+			</Link>
+		);
+	}
+
+	if (n.type === "COMMENT") {
+		return (
+			<div className="flex gap-3 text-xs font-bold">
+				<Link
+					href={n.link}
+					onClick={() => onRead(n.id, n.isRead)}
+					className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}
+				>
+					View in admin
+				</Link>
+				<span className="text-muted-foreground/40">•</span>
+				<Link
+					href={n.blogLink}
+					onClick={() => onRead(n.id, n.isRead)}
+					className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}
+				>
+					Go to post
+				</Link>
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex gap-3 text-xs font-bold">
+			<Link
+				href={n.link}
+				onClick={() => onRead(n.id, n.isRead)}
+				className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}
+			>
+				Admin
+			</Link>
+			<span className="text-muted-foreground/40">•</span>
+			<Link
+				href={n.blogLink}
+				onClick={() => onRead(n.id, n.isRead)}
+				className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}
+			>
+				Blog post
+			</Link>
+		</div>
+	);
+}
+
 export function AdminNotifications() {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
@@ -124,15 +192,7 @@ export function AdminNotifications() {
 						{notifications.map((n) => (
 							<div key={n.id} className={`p-4 border-b last:border-0 transition-colors ${n.isRead ? "bg-white dark:bg-zinc-950 opacity-80" : "bg-blue-50/50 dark:bg-blue-900/10"}`}>
 								<p className={`text-sm mb-3 ${n.isRead ? "text-muted-foreground" : "text-foreground font-semibold"}`}>{n.message}</p>
-								<div className="flex gap-3 text-xs font-bold">
-									<Link href={n.link} onClick={() => handleRead(n.id, n.isRead)} className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}>
-										View in Comments
-									</Link>
-									<span className="text-muted-foreground/40">•</span>
-									<Link href={n.blogLink} onClick={() => handleRead(n.id, n.isRead)} className={`hover:underline ${n.isRead ? "text-muted-foreground/60" : "text-primary"}`}>
-										Go to Blog
-									</Link>
-								</div>
+								<NotificationActions n={n} onRead={handleRead} />
 							</div>
 						))}
 					</div>

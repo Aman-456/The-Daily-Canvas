@@ -171,6 +171,7 @@ export async function createBlog(formData: FormData) {
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
 		revalidateTag("blogs", "max");
+		revalidateTag("stats", "max");
 
 		if (isPublished) {
 			await pingIndexNow(slug);
@@ -246,6 +247,7 @@ export async function deleteBlog(id: string) {
 		revalidatePath("/");
 		revalidatePath("/admin/blogs");
 		revalidateTag("blogs", "max");
+		revalidateTag("stats", "max");
 
 		await pingIndexNow(slugToPing);
 

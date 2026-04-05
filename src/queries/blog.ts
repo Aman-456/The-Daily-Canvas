@@ -1,7 +1,17 @@
 import { db } from "@/db/index";
 import { blogs, users } from "@/db/schema";
 import { unstable_cache } from "next/cache";
-import { eq, desc, sql, ilike, and, arrayContains } from "drizzle-orm";
+import {
+	eq,
+	ne,
+	desc,
+	sql,
+	ilike,
+	and,
+	arrayContains,
+	arrayOverlaps,
+	notInArray,
+} from "drizzle-orm";
 import { isBlogTagSlug } from "@/lib/blog-tags";
 
 import { blogSummarySelector, blogFullSelector } from "@/db/selectors";
@@ -38,15 +48,22 @@ const _getCachedBlogsList = unstable_cache(
 	},
 );
 
+export type GetBlogsListOptions = {
+	/** Omit these slugs from the result (e.g. home feed vs spotlight strip). */
+	excludeSlugs?: string[];
+};
+
 export const getBlogsCached = async (
 	page: number,
 	limit: number,
 	search?: string,
 	tagSlugs?: string[],
+	options?: GetBlogsListOptions,
 ) => {
 	const hasSearch = Boolean(search?.trim());
 	const validTags = [...new Set((tagSlugs ?? []).filter(isBlogTagSlug))].sort();
 	const hasTagFilter = validTags.length > 0;
+	const excludeSlugs = [...new Set((options?.excludeSlugs ?? []).filter(Boolean))];
 
 	if (hasSearch || hasTagFilter) {
 		const offset = (page - 1) * limit;
@@ -57,7 +74,37 @@ export const getBlogsCached = async (
 		for (const t of validTags) {
 			conditions.push(arrayContains(blogs.tags, [t]));
 		}
+		if (excludeSlugs.length > 0) {
+			conditions.push(notInArray(blogs.slug, excludeSlugs));
+		}
 		const whereClause = and(...conditions);
+
+		const [totalResult, blogsData] = await Promise.all([
+			db.select({ count: sql<number>`count(*)` })
+				.from(blogs)
+				.where(whereClause),
+			db.select(blogSummarySelector)
+				.from(blogs)
+				.leftJoin(users, eq(blogs.authorId, users.id))
+				.where(whereClause)
+				.orderBy(desc(blogs.createdAt))
+				.limit(limit)
+				.offset(offset),
+		]);
+
+		return {
+			blogs: blogsData,
+			total: totalResult[0].count,
+			totalPages: Math.ceil(totalResult[0].count / limit),
+		};
+	}
+
+	if (excludeSlugs.length > 0) {
+		const offset = (page - 1) * limit;
+		const whereClause = and(
+			eq(blogs.isPublished, true),
+			notInArray(blogs.slug, excludeSlugs),
+		);
 
 		const [totalResult, blogsData] = await Promise.all([
 			db.select({ count: sql<number>`count(*)` })
@@ -122,6 +169,56 @@ const _getBlogByIdCached = unstable_cache(
 export const getBlogByIdCached = (id: string) => _getBlogByIdCached(id);
 
 
+
+/**
+ * Home spotlight strip: one ordered list (not CMS-curated).
+ * Ranking today: comment count, then recency — swap when you define “featured” rules.
+ * Cached ~1h via `unstable_cache` + `revalidateTag("blogs")` on publish flows.
+ */
+const _getSpotlightStrip = unstable_cache(
+	async () => {
+		const items = await db
+			.select(blogSummarySelector)
+			.from(blogs)
+			.leftJoin(users, eq(blogs.authorId, users.id))
+			.where(eq(blogs.isPublished, true))
+			.orderBy(desc(blogs.commentsCount), desc(blogs.createdAt))
+			.limit(8);
+
+		return { items };
+	},
+	["home-spotlight-strip"],
+	{ revalidate: 3600, tags: ["blogs"] },
+);
+
+export const getSpotlightStrip = () => _getSpotlightStrip();
+
+/** @deprecated use `getSpotlightStrip` */
+export const getHomeSpotlight = getSpotlightStrip;
+
+/**
+ * Related posts by overlapping tags. Not admin-picked; not cached (runs per article view).
+ */
+export async function getRelatedBlogs(
+	excludeId: string,
+	tagSlugs: string[],
+	limit = 4,
+) {
+	if (!tagSlugs.length) return [];
+	return db
+		.select(blogSummarySelector)
+		.from(blogs)
+		.leftJoin(users, eq(blogs.authorId, users.id))
+		.where(
+			and(
+				eq(blogs.isPublished, true),
+				ne(blogs.id, excludeId),
+				arrayOverlaps(blogs.tags, tagSlugs),
+			),
+		)
+		.orderBy(desc(blogs.commentsCount), desc(blogs.createdAt))
+		.limit(limit);
+}
 
 export const getAllBlogSlugs = async () => {
 	const result = await db.select({

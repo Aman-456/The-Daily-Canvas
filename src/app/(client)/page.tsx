@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getBlogsCached } from "@/queries/blog";
-import SearchInput from "@/components/client/SearchInput";
+import { getBlogsCached, getSpotlightStrip } from "@/queries/blog";
+import { HomeFeaturedMosaic } from "@/components/client/HomeFeaturedMosaic";
 import {
 	TopicFilterChips,
 	TopicFilterChipsFallback,
 } from "@/components/client/TopicFilterChips";
-import { BlogPostCardGrid } from "@/components/client/BlogPostCardGrid";
+import { EditorialArchiveGrid } from "@/components/client/EditorialArchiveGrid";
 import {
+	archiveListingHref,
 	blogListingHref,
 	blogTagLabel,
 	parseTagSlugsFromSearchParams,
 	topicListingHref,
 } from "@/lib/blog-tags";
+import { homeArchiveTeaserCount } from "@/lib/home-blog-grid";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -67,70 +69,127 @@ export default async function BlogsPage({
 		redirect(topicListingHref({ slug: activeTags[0], search, page }));
 	}
 
-	const { blogs, totalPages } = await getBlogsCached(page, 12, search, activeTags);
+	if (page > 1) {
+		redirect(
+			archiveListingHref({
+				page,
+				search,
+				tags: activeTags,
+			}),
+		);
+	}
 
-	const pageHref = (n: number) =>
-		blogListingHref({
-			page: n,
-			search,
-			tags: activeTags,
-		});
+	const isCleanHome = activeTags.length === 0 && !search.trim();
+	const spotlightStrip = isCleanHome ? await getSpotlightStrip() : null;
+	const teaserLimit = homeArchiveTeaserCount();
+	/** Only exclude posts shown in the featured mosaic (4), not the full spotlight strip (8). */
+	const featuredMosaicCount = 4;
+	const excludeSpotlightSlugs =
+		spotlightStrip?.items?.length && isCleanHome
+			? spotlightStrip.items.slice(0, featuredMosaicCount).map((b) => b.slug)
+			: undefined;
+
+	const { blogs, total } = await getBlogsCached(
+		1,
+		teaserLimit,
+		search,
+		activeTags,
+		excludeSpotlightSlugs
+			? { excludeSlugs: excludeSpotlightSlugs }
+			: undefined,
+	);
+
+	const archiveMoreHref = archiveListingHref({ search, tags: activeTags });
+	const hasMoreInArchive = total > blogs.length;
+
+	const featuredSlice =
+		spotlightStrip?.items?.length && page === 1
+			? spotlightStrip.items.slice(0, featuredMosaicCount)
+			: [];
 
 	return (
-		<div className="space-y-10">
-			<div className="flex flex-col md:flex-row items-center justify-between gap-4">
-				<div>
-					<h1 className="text-4xl font-bold tracking-tight">Explore Blogs</h1>
-					<p className="text-muted-foreground mt-2">
-						Read the latest stories and insights.
-					</p>
-				</div>
-
-				<SearchInput defaultValue={search} />
-			</div>
-
-			<Suspense fallback={<TopicFilterChipsFallback />}>
-				<TopicFilterChips />
-			</Suspense>
-
-			{activeTags.length > 0 && (
-				<p className="text-sm text-muted-foreground">
-					Showing posts that include{" "}
-					<span className="font-medium text-foreground">
-						{activeTags.map((s) => blogTagLabel(s)).join(", ")}
-					</span>{" "}
-					(all selected topics).{" "}
-					<Link
-						href={blogListingHref({ search })}
-						className="text-primary underline-offset-4 hover:underline"
-					>
-						Clear topics
-					</Link>
+		<div className="space-y-14 sm:space-y-16">
+			<header className="max-w-3xl space-y-4">
+				<p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
+					Digital curation
 				</p>
+				<h1 className="font-headline text-4xl font-extrabold tracking-tighter text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+					Daily Thoughts
+				</h1>
+				<p className="text-lg leading-relaxed text-muted-foreground sm:text-xl">
+					Essays, craft, and ideas at the intersection of design, technology,
+					and how we read on the web.
+				</p>
+			</header>
+
+			{featuredSlice.length > 0 && (
+				<HomeFeaturedMosaic items={featuredSlice} />
 			)}
 
+			<section
+				id="archive"
+				className="scroll-mt-28 space-y-8 border-b border-border/50 pb-10"
+			>
+				<div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+					<div>
+						<h2 className="font-headline text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+							The archive
+						</h2>
+						<p className="mt-2 max-w-lg text-muted-foreground">
+							Browse the full collection. Filter by topic — posts match every tag
+							you select.{" "}
+							<Link
+								href="/archive"
+								className="font-medium text-primary underline-offset-4 hover:underline"
+							>
+								Open archive page
+							</Link>
+						</p>
+					</div>
+				</div>
+
+				<Suspense fallback={<TopicFilterChipsFallback />}>
+					<TopicFilterChips variant="editorial" />
+				</Suspense>
+
+				{activeTags.length > 0 && (
+					<p className="text-sm text-muted-foreground">
+						Showing posts that include{" "}
+						<span className="font-medium text-foreground">
+							{activeTags.map((s) => blogTagLabel(s)).join(", ")}
+						</span>
+						.{" "}
+						<Link
+							href={blogListingHref({ search })}
+							className="font-medium text-primary underline-offset-4 hover:underline"
+						>
+							Clear topics
+						</Link>
+					</p>
+				)}
+			</section>
+
 			{blogs.length === 0 ? (
-				<div className="text-center py-20 text-muted-foreground">
+				<div className="py-20 text-center text-muted-foreground">
 					No blogs found matching your criteria.
 				</div>
 			) : (
-				<BlogPostCardGrid blogs={blogs} />
+				<EditorialArchiveGrid blogs={blogs} />
 			)}
 
-			{totalPages > 1 && (
-				<div className="flex justify-center gap-2 pt-10">
-					{Array.from({ length: totalPages }).map((_, i) => (
-						<Link
-							key={i}
-							href={pageHref(i + 1)}
-							className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${page === i + 1
-								? "bg-primary text-primary-foreground font-bold"
-								: "bg-muted hover:bg-muted/80"
-								}`}
-						>
-							{i + 1}
-						</Link>
-					))}
+			{blogs.length > 0 && (
+				<div className="flex flex-col items-center gap-2 pt-8">
+					<Link
+						href={archiveMoreHref}
+						className="font-headline inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-10 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+					>
+						Show more
+					</Link>
+					<p className="text-center text-xs text-muted-foreground">
+						{hasMoreInArchive
+							? "More posts live on the archive page."
+							: "Open the archive for pagination and the full list."}
+					</p>
 				</div>
 			)}
 
