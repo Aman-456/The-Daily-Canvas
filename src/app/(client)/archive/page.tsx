@@ -85,6 +85,17 @@ export default async function ArchivePage({
 		);
 	}
 
+	if (activeTags.length > 1) {
+		redirect(
+			topicListingHref({
+				slug: activeTags[0],
+				extraTags: activeTags.slice(1),
+				page,
+				sort,
+			}),
+		);
+	}
+
 	if (activeTags.length === 1) {
 		redirect(topicListingHref({ slug: activeTags[0], page, sort }));
 	}
