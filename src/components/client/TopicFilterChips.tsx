@@ -12,6 +12,7 @@ import {
 	hrefForActiveTags,
 	isBlogTagSlug,
 	listingTitleQueryFromUrlSearchParams,
+	parseTopicSlugsFromPathname,
 	searchListingHref,
 	type BlogTagSlug,
 	type TopicListingBase,
@@ -26,7 +27,7 @@ export function TopicFilterChips({
 	listingBase = "home",
 }: {
 	variant?: "default" | "editorial";
-	/** Where multi-tag and “all” filters live: `/`, `/archive`, or `/search`. */
+	/** Where multi-tag and “all” filters live: `/`, `/archive`, `/search`, or topic page. */
 	listingBase?: TopicListingBase;
 }) {
 	const [expanded, setExpanded] = useState(false);
@@ -36,20 +37,23 @@ export function TopicFilterChips({
 	const search = listingTitleQueryFromUrlSearchParams(sp);
 	const sort = parseBlogListSort(sp.get("sort"));
 
-	const topicSeg = pathname.match(/^\/topics\/([^/]+)$/);
-	const slugFromPath =
-		topicSeg && isBlogTagSlug(topicSeg[1]) ? topicSeg[1] : null;
+	const slugsFromTopicPath = parseTopicSlugsFromPathname(pathname);
 
 	const rawTags = sp.getAll("tag");
-	const activeTags: BlogTagSlug[] = slugFromPath
-		? [slugFromPath]
-		: [...new Set(rawTags.filter(isBlogTagSlug))].sort();
+	const fromQuery = rawTags.filter(isBlogTagSlug);
+	const activeTags: BlogTagSlug[] = slugsFromTopicPath
+		? [...new Set([...slugsFromTopicPath, ...fromQuery])].sort()
+		: [...new Set(fromQuery)].sort();
 
-	const hrefToggle = (slug: BlogTagSlug) => {
+	const hrefToggle = (tagSlug: BlogTagSlug) => {
 		const next = new Set<BlogTagSlug>(activeTags);
-		if (next.has(slug)) next.delete(slug);
-		else next.add(slug);
-		return hrefForActiveTags([...next].sort(), search, listingBase, sort);
+		if (next.has(tagSlug)) next.delete(tagSlug);
+		else next.add(tagSlug);
+		const sorted = [...next].sort();
+		if (listingBase === "topic") {
+			return hrefForActiveTags(sorted, search, "topic", sort);
+		}
+		return hrefForActiveTags(sorted, search, listingBase, sort);
 	};
 
 	const allStoriesHref =

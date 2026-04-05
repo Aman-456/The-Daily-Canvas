@@ -3,8 +3,8 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import {
-	archiveListingHref,
 	isBlogTagSlug,
+	parseTopicSlugsFromPathname,
 	topicListingHref,
 } from "@/lib/blog-tags";
 import { parseBlogListSort } from "@/lib/blog-list-sort";
@@ -30,10 +30,15 @@ export default function SearchInput({
 		for (const tag of searchParams.getAll("tag")) {
 			if (isBlogTagSlug(tag)) params.append("tag", tag);
 		}
-		const topicSeg = pathname.match(/^\/topics\/([^/]+)$/);
-		if (topicSeg?.[1] && isBlogTagSlug(topicSeg[1])) {
-			const fromQuery = new Set(params.getAll("tag"));
-			if (!fromQuery.has(topicSeg[1])) params.append("tag", topicSeg[1]);
+		const fromTopicPath = parseTopicSlugsFromPathname(pathname);
+		if (fromTopicPath?.length) {
+			const have = new Set(params.getAll("tag"));
+			for (const t of fromTopicPath) {
+				if (!have.has(t)) {
+					params.append("tag", t);
+					have.add(t);
+				}
+			}
 		}
 
 		const sort = parseBlogListSort(searchParams.get("sort"));
@@ -57,7 +62,13 @@ export default function SearchInput({
 			} else if (tags.length === 1) {
 				router.push(topicListingHref({ slug: tags[0], sort }));
 			} else {
-				router.push(archiveListingHref({ tags, sort }));
+				router.push(
+					topicListingHref({
+						slug: tags[0],
+						extraTags: tags.slice(1),
+						sort,
+					}),
+				);
 			}
 			return;
 		}

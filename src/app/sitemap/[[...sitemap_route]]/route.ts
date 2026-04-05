@@ -41,7 +41,6 @@ function buildStaticRoutes(origin: string): StaticRoute[] {
 		},
 		{ loc: `${origin}/privacy-policy`, lastmod, changefreq: "weekly", priority: 0.8 },
 		{ loc: `${origin}/terms-of-service`, lastmod, changefreq: "weekly", priority: 0.8 },
-		{ loc: `${origin}/feed.xml`, lastmod, changefreq: "daily", priority: 0.5 },
 		...topicTags.map((t) => ({
 			loc: `${origin}/topics/${t.slug}`,
 			lastmod,

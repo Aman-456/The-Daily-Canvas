@@ -167,12 +167,12 @@ export function resolveToBlogTagSlug(token: string): string | null {
 }
 
 /** `/topics/[slug]` path segment → current catalog slug, or null. */
-export function resolveTopicSlugForPath(pathSlug: string): string | null {
+export function resolveTopicSlugForPath(pathSlug: string): BlogTagSlug | null {
 	const lower = pathSlug.toLowerCase();
-	if (SLUG_SET.has(pathSlug)) return pathSlug;
-	if (SLUG_SET.has(lower)) return lower;
+	if (SLUG_SET.has(pathSlug)) return pathSlug as BlogTagSlug;
+	if (SLUG_SET.has(lower)) return lower as BlogTagSlug;
 	const canon = LEGACY_TO_CANONICAL_SLUG[lower];
-	return canon && SLUG_SET.has(canon) ? canon : null;
+	return canon && SLUG_SET.has(canon) ? (canon as BlogTagSlug) : null;
 }
 
 function tokensFromUnknown(val: unknown): string[] {
@@ -215,29 +215,72 @@ export function topicPath(slug: string): string {
 	return `/topics/${slug}`;
 }
 
-/** Topic listing with optional `search`, `page`, and `sort` (query only; slug is in the path). */
+/**
+ * Canonical `/topics` path for one or more AND tags (segments sorted lexicographically).
+ * e.g. `["pakistan","south-asia"]` → `/topics/pakistan/south-asia`
+ */
+export function topicPathFromSlugs(slugs: readonly BlogTagSlug[]): string {
+	const u = [...new Set(slugs)].sort();
+	if (u.length === 0) return "/";
+	if (u.length === 1) return `/topics/${u[0]}`;
+	return `/topics/${u.join("/")}`;
+}
+
+/**
+ * Parse `/topics/a` or `/topics/a/b/c` into canonical sorted slugs. Returns null if unknown segment.
+ */
+export function parseTopicSlugsFromPathname(pathname: string): BlogTagSlug[] | null {
+	if (!pathname.startsWith("/topics/")) return null;
+	const rest = pathname.slice("/topics/".length).split("/").filter(Boolean);
+	if (rest.length === 0) return null;
+	const resolved: BlogTagSlug[] = [];
+	for (const seg of rest) {
+		const r = resolveTopicSlugForPath(seg);
+		if (!r) return null;
+		resolved.push(r);
+	}
+	return [...new Set(resolved)].sort();
+}
+
+/** Topic listing: path is `/topics/slug` or `/topics/a/b/c` (sorted); `page` / `sort` in query only. */
 export function topicListingHref(opts: {
 	slug: string;
+	/** Additional AND tags (merged with `slug`, then path segments are sorted). */
+	extraTags?: readonly string[];
 	search?: string;
 	page?: number;
 	sort?: BlogListSort;
 }): string {
 	if (!isBlogTagSlug(opts.slug)) return "/";
+	const extrasFiltered = [
+		...new Set(
+			(opts.extraTags ?? []).filter(
+				(t): t is BlogTagSlug => isBlogTagSlug(t) && t !== opts.slug,
+			),
+		),
+	].sort();
+
+	const allSorted = [
+		...new Set([opts.slug as BlogTagSlug, ...extrasFiltered]),
+	].sort();
+
 	if (opts.search?.trim()) {
 		return searchListingHref({
-			tags: [opts.slug],
+			tags: allSorted,
 			search: opts.search,
 			page: opts.page,
 			sort: opts.sort,
 		});
 	}
+
+	const basePath = topicPathFromSlugs(allSorted);
 	const p = new URLSearchParams();
 	appendListingParams(p, {
 		page: opts.page,
 		sort: opts.sort,
 	});
 	const qs = p.toString();
-	return qs ? `/topics/${opts.slug}?${qs}` : `/topics/${opts.slug}`;
+	return qs ? `${basePath}?${qs}` : basePath;
 }
 
 /** Canonical title search + optional topic filters (`?query=` + repeated `?tag=`). */
@@ -274,8 +317,8 @@ export function blogTagFilterHref(slug: string): string {
 }
 
 /**
- * Home `/`: no topic or multi-topic (`?tag=a&tag=b`). Title search uses `/search` (see `searchListingHref`).
- * Single-topic views use `/topics/[slug]` (see `topicListingHref`).
+ * Home `/` for no filters; single topic → `/topics/slug`; two or more → `/topics/a/b/…` (sorted).
+ * Title search uses `/search` (see `searchListingHref`).
  */
 export function blogListingHref(opts: {
 	tags?: string[];
@@ -307,18 +350,21 @@ export function blogListingHref(opts: {
 		});
 	}
 
-	const p = new URLSearchParams();
-	appendListingParams(p, { page, sort });
-	for (const t of unique) {
-		p.append("tag", t);
+	if (unique.length >= 2) {
+		return topicListingHref({
+			slug: unique[0],
+			extraTags: unique.slice(1),
+			page,
+			sort,
+		});
 	}
-	const qs = p.toString();
-	return qs ? `/?${qs}` : "/";
+
+	return "/";
 }
 
 /**
- * Paginated `/archive` listing: same query rules as `blogListingHref`, but base path
- * `/archive` when there are 0 or 2+ tags. Single-tag still uses `/topics/[slug]`.
+ * Paginated `/archive` with no tags; 2+ tag filters use canonical `/topics/a/b/…` (sorted).
+ * Single-tag requests redirect to `/topics/slug` at runtime.
  */
 export function archiveListingHref(opts: {
 	tags?: string[];
@@ -350,18 +396,26 @@ export function archiveListingHref(opts: {
 		});
 	}
 
+	if (unique.length >= 2) {
+		return topicListingHref({
+			slug: unique[0],
+			extraTags: unique.slice(1),
+			page,
+			sort,
+		});
+	}
+
 	const p = new URLSearchParams();
 	appendListingParams(p, { page, sort });
-	for (const t of unique) {
-		p.append("tag", t);
-	}
 	const qs = p.toString();
 	return qs ? `/archive?${qs}` : "/archive";
 }
 
-export type TopicListingBase = "home" | "archive" | "search";
+export type TopicListingBase = "home" | "archive" | "search" | "topic";
 
-/** Chip navigation: search queries use `/search`; otherwise home, archive, or topic paths. */
+/**
+ * Chip navigation: search → `/search`; single tag → `/topics/slug`; multiple AND tags → `/topics/a/b/c` (sorted).
+ */
 export function hrefForActiveTags(
 	tags: string[],
 	search: string,
@@ -386,9 +440,12 @@ export function hrefForActiveTags(
 	if (unique.length === 1) {
 		return topicListingHref({ slug: unique[0], sort });
 	}
-	return listingBase === "archive"
-		? archiveListingHref({ tags: unique, sort })
-		: blogListingHref({ tags: unique, sort });
+
+	return topicListingHref({
+		slug: unique[0],
+		extraTags: unique.slice(1),
+		sort,
+	});
 }
 
 function firstParamString(

@@ -89,6 +89,16 @@ export default async function BlogsPage({
 		redirect(topicListingHref({ slug: activeTags[0], page, sort }));
 	}
 
+	if (activeTags.length > 1) {
+		redirect(
+			archiveListingHref({
+				tags: activeTags,
+				page,
+				sort,
+			}),
+		);
+	}
+
 	if (page > 1) {
 		redirect(
 			archiveListingHref({
