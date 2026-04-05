@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Facebook, Link as LinkIcon, Linkedin, XIcon } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { whatsAppShareUrl } from "@/lib/social-share-urls";
 
 export function SocialShareCompact({
 	url,
@@ -31,8 +33,13 @@ export function SocialShareCompact({
 			case "linkedin":
 				shareUrl = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(fullUrl)}&title=${encodeURIComponent(title)}`;
 				break;
+			case "whatsapp":
+				shareUrl = whatsAppShareUrl(fullUrl, title);
+				break;
 		}
-		if (shareUrl) window.open(shareUrl, "_blank", "width=600,height=400");
+		if (shareUrl) {
+			window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=400");
+		}
 	};
 
 	const btn =
@@ -105,6 +112,20 @@ export function SocialShareCompact({
 				}}
 			>
 				<Linkedin className={icon} />
+			</Button>
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon"
+				className={`${btn} hover:text-emerald-600`}
+				title="WhatsApp"
+				onClick={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					share("whatsapp");
+				}}
+			>
+				<WhatsAppIcon className={icon} />
 			</Button>
 		</div>
 	);
