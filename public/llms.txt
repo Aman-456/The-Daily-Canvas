@@ -1,0 +1,39 @@
+# Daily Thoughts
+
+> Public editorial site for essays, stories, and ideas—reading, topics, search, comments on posts where enabled, and a newsletter.
+
+## Entry points
+
+- [Home](/): Featured work and archive teaser.
+- [Archive](/archive): Full post listing, filters, pagination.
+- [Search](/search): Title search with optional topic filters.
+- [RSS feed](/feed.xml): Published stories for readers and aggregators.
+
+## Topics
+
+- Catalog topics power filters and URLs under `/topics/…`.
+- One topic: `/topics/{slug}` (e.g. `/topics/pakistan`).
+- Several topics (AND): `/topics/{slug}/{slug}/…` with segments in **sorted** order for a single canonical URL per combination.
+
+## Reader information
+
+- [FAQ](/faq)
+- [Changelog](/changelog)
+- [Community guidelines](/community-guidelines) (comments and participation)
+- [Contact](/contact)
+
+## Legal
+
+- [Privacy policy](/privacy-policy)
+- [Terms of service](/terms-of-service)
+
+## Automated crawlers and assistants
+
+- Prefer linking to the **canonical article URL** and **title** when citing a post.
+- **Do not** target authenticated or administrative areas: `/admin/*`, `/api/*` (see [robots.txt](/robots.txt)).
+- Public content is **HTML pages** and **RSS**; there is no separate JSON API for the full article catalog intended for bulk ingestion.
+- For questions about reuse or syndication, use [Contact](/contact).
+
+## Technical
+
+- Site structure aligns with `NEXT_PUBLIC_APP_URL` / sitemap at `/sitemap/sitemap.xml` (see [robots.txt](/robots.txt)).
