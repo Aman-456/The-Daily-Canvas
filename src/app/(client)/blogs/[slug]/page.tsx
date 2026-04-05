@@ -1,4 +1,8 @@
-import { getBlogBySlugCached, getRelatedBlogs } from "@/queries/blog";
+import {
+	getBlogBySlugCached,
+	getBlogViewCountBySlug,
+	getRelatedBlogs,
+} from "@/queries/blog";
 import { getLatestRootComment } from "@/queries/comment";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +16,7 @@ import { MarkdownWithToc } from "@/components/blog/MarkdownWithToc";
 import { extractTocFromMarkdown } from "@/lib/markdown-toc";
 import { TableOfContents } from "@/components/client/TableOfContents";
 import { RelatedPosts } from "@/components/client/RelatedPosts";
+import { BlogViewTracker } from "@/components/client/BlogViewTracker";
 import {
 	blogTagFilterHref,
 	blogTagLabel,
@@ -68,8 +73,9 @@ export default async function SingleBlogPage({
 }) {
 	const { slug } = await params;
 	const blog = await getBlogBySlugCached(slug);
-
 	if (!blog) notFound();
+
+	const initialViewCount = await getBlogViewCountBySlug(slug);
 
 	// Use aggregated count for deferred loading
 	const commentLimit = 10;
@@ -179,6 +185,11 @@ export default async function SingleBlogPage({
 								</span>
 								<span className="text-[10px]">•</span>
 								<span>{readTime} min read</span>
+								<span className="text-[10px]">•</span>
+								<BlogViewTracker
+									slug={blog.slug}
+									initialCount={initialViewCount}
+								/>
 							</div>
 						</div>
 					</div>

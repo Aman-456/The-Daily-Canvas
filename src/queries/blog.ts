@@ -275,3 +275,16 @@ export const getAllBlogSlugs = async () => {
 		updatedAt: blog.updatedAt || blog.createdAt,
 	}));
 };
+
+/**
+ * Live view total for a published post. Not wrapped in `unstable_cache` so it does not
+ * affect or bloat the cached blog body from `getBlogBySlugCached` (which omits `viewCount`).
+ */
+export async function getBlogViewCountBySlug(slug: string): Promise<number> {
+	const row = await db
+		.select({ viewCount: blogs.viewCount })
+		.from(blogs)
+		.where(and(eq(blogs.slug, slug), eq(blogs.isPublished, true)))
+		.limit(1);
+	return row[0]?.viewCount ?? 0;
+}

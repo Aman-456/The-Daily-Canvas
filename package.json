@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
+    "db:blog-views": "tsx scripts/ensure-blog-view-count.ts",
     "db:newsletter": "tsx scripts/ensure-newsletter-table.ts",
     "db:seed-blogs": "tsx scripts/seed-new-blogs.ts",
     "db:seed-blogs:update": "tsx scripts/seed-new-blogs.ts --update",
