@@ -36,7 +36,6 @@ export function HeaderShareStrip() {
 
 	useEffect(() => {
 		if (!pathname.startsWith("/blogs/")) {
-			setArticleHeadline(null);
 			return;
 		}
 
@@ -51,7 +50,9 @@ export function HeaderShareStrip() {
 		readTitle();
 
 		const titleNode = document.querySelector("title");
-		if (!titleNode) return;
+		if (!titleNode) {
+			return;
+		}
 
 		const obs = new MutationObserver(readTitle);
 		obs.observe(titleNode, {

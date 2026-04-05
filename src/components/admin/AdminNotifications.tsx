@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import Link from "next/link";
 import {
@@ -91,7 +91,7 @@ export function AdminNotifications() {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
 	const [open, setOpen] = useState(false);
-	const hasLoadedListRef = useRef(false);
+	const [hasLoadedList, setHasLoadedList] = useState(false);
 
 	useEffect(() => {
 		let alive = true;
@@ -129,7 +129,7 @@ export function AdminNotifications() {
 			if (res.success && res.data) {
 				setNotifications(res.data);
 				setUnreadCount(res.data.filter((n) => !n.isRead).length);
-				hasLoadedListRef.current = true;
+				setHasLoadedList(true);
 			}
 		};
 
@@ -185,7 +185,7 @@ export function AdminNotifications() {
 				<DropdownMenuSeparator />
 				{notifications.length === 0 ? (
 					<div className="p-4 text-center text-sm text-muted-foreground">
-						{hasLoadedListRef.current ? "No new notifications" : "Open to load notifications"}
+						{hasLoadedList ? "No new notifications" : "Open to load notifications"}
 					</div>
 				) : (
 					<div className="max-h-80 overflow-y-auto w-full">
