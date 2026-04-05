@@ -22,7 +22,7 @@ dotenv.config();
 const MAX_TAGS = 8;
 
 /** When nothing maps to the catalog, keep one on-topic default slug. */
-const FALLBACK_SLUG = "essay" as const;
+const FALLBACK_SLUG = "politics" as const;
 
 function titleTokens(title: string): string[] {
 	return title

@@ -118,6 +118,7 @@ export async function addComment(formData: FormData) {
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
 		revalidateTag("comments", "max");
+		revalidateTag("stats", "max");
 
 		return { success: true, data: { ...populated, _id: populated.id } };
 	} catch (error: any) {
@@ -276,6 +277,7 @@ export async function deleteComment(
 		revalidateTag("comments", "max");
 
 		await updateBlogCommentCount(blogId);
+		revalidateTag("stats", "max");
 
 		return { success: true };
 	} catch (error: any) {
@@ -306,6 +308,7 @@ export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
 		revalidateTag("comments", "max");
+		revalidateTag("stats", "max");
 
 		return { success: true };
 	} catch (error: any) {

@@ -47,3 +47,4 @@ scripts/verify-blogs.ts
 *.tsbuildinfo
 next-env.d.ts
 
+design

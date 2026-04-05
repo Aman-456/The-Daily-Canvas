@@ -89,56 +89,56 @@ export function BlogPostCardGrid({ blogs }: { blogs: BlogPostCardItem[] }) {
 							</div>
 						)}
 
-						<div className="px-4 pb-3.5 pt-1 flex items-center justify-between border-t border-border/40 mt-auto">
-							<div className="flex items-center gap-2">
-								<Avatar className="h-7 w-7 border">
-									<AvatarImage src={blog.authorId?.image || undefined} />
-									<AvatarFallback className="text-[10px]">
-										{blog.authorId?.name?.charAt(0) || "U"}
-									</AvatarFallback>
-								</Avatar>
-								<div className="text-[11px] leading-tight">
-									<p className="font-medium text-foreground">
-										{blog.authorId?.name}
-									</p>
-									<p className="text-muted-foreground">
-										{new Date(blog.createdAt).toLocaleDateString()}
-									</p>
+								<div className="px-4 pb-3.5 pt-1 flex items-center justify-between border-t border-border/40 mt-auto">
+									<div className="flex items-center gap-2">
+										<Avatar className="h-7 w-7 border">
+											<AvatarImage src={blog.authorId?.image || undefined} />
+											<AvatarFallback className="text-[10px]">
+												{blog.authorId?.name?.charAt(0) || "U"}
+											</AvatarFallback>
+										</Avatar>
+										<div className="text-[11px] leading-tight">
+											<p className="font-medium text-foreground">
+												{blog.authorId?.name}
+											</p>
+											<p className="text-muted-foreground">
+												{new Date(blog.createdAt).toLocaleDateString()}
+											</p>
+										</div>
+									</div>
+									<div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
+										<span className="flex items-center gap-1">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 20 20"
+												fill="currentColor"
+												className="w-3.5 h-3.5"
+											>
+												<path
+													fillRule="evenodd"
+													d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
+													clipRule="evenodd"
+												/>
+											</svg>
+											{readTime} min
+										</span>
+										<span className="flex items-center gap-1">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 20 20"
+												fill="currentColor"
+												className="w-3.5 h-3.5"
+											>
+												<path
+													fillRule="evenodd"
+													d="M2 5a3 3 0 013-3h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.586l-2.707 2.707a1 1 0 01-1.414 0L6.586 14H5a3 3 0 01-3-3V5zm3-1a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 01.707.293L10 14.586l2.293-2.293A1 1 0 0113 12h2a1 1 0 001-1V5a1 1 0 00-1-1H5z"
+													clipRule="evenodd"
+												/>
+											</svg>
+											{blog.commentsCount || 0}
+										</span>
+									</div>
 								</div>
-							</div>
-							<div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
-								<span className="flex items-center gap-1">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-										className="w-3.5 h-3.5"
-									>
-										<path
-											fillRule="evenodd"
-											d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z"
-											clipRule="evenodd"
-										/>
-									</svg>
-									{readTime} min
-								</span>
-								<span className="flex items-center gap-1">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-										className="w-3.5 h-3.5"
-									>
-										<path
-											fillRule="evenodd"
-											d="M2 5a3 3 0 013-3h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.586l-2.707 2.707a1 1 0 01-1.414 0L6.586 14H5a3 3 0 01-3-3V5zm3-1a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 01.707.293L10 14.586l2.293-2.293A1 1 0 0113 12h2a1 1 0 001-1V5a1 1 0 00-1-1H5z"
-											clipRule="evenodd"
-										/>
-									</svg>
-									{blog.commentsCount || 0}
-								</span>
-							</div>
-						</div>
 					</article>
 				);
 			})}

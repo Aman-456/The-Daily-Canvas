@@ -10,10 +10,10 @@ import {
 	Users,
 	Files,
 	ArrowLeft,
-	Power,
 	ChevronLeft,
 	ChevronRight,
 	Database,
+	Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { isAdmin, hasPermission, } from "@/lib/utils";
@@ -21,6 +21,10 @@ import { PERMISSIONS } from "@/lib/constants";
 import { usePathname } from "next/navigation";
 import { UserNav } from "@/components/client/UserNav";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
+
+/** Matches aside shell so the footer reads as docked when nav scrolls. */
+const sidebarFooterBg =
+	"bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl supports-[backdrop-filter]:bg-white/50";
 
 export function AdminSidebar({ user }: { user: any }) {
 	const role = user?.role || "USER";
@@ -54,6 +58,12 @@ export function AdminSidebar({ user }: { user: any }) {
 			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_USERS)
 		},
 		{
+			name: "Newsletter",
+			href: "/admin/newsletter",
+			icon: Mail,
+			show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_USERS)
+		},
+		{
 			name: "Pages",
 			href: "/admin/pages",
 			icon: Files,
@@ -68,62 +78,41 @@ export function AdminSidebar({ user }: { user: any }) {
 	];
 
 	const DesktopNavLinks = () => (
-		<div className="flex flex-col h-full justify-between">
-			<nav className="flex flex-col space-y-2 mt-4">
-				{navItems
-					.filter((item) => item.show)
-					.map((item) => {
-						const Icon = item.icon;
-						const isActive = pathname === item.href;
-						return (
-							<Link
-								key={item.href}
-								href={item.href}
-								onClick={() => setOpen(false)}
-								className={`group relative flex items-center p-3 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
-									? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
-									: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
-									}`}
-							>
-								<Icon
-									size={20}
-									className={`${isMinimized ? "mx-auto" : "mr-3"} shrink-0`}
-								/>
-								{!isMinimized && <span>{item.name}</span>}
+		<>
+			{navItems
+				.filter((item) => item.show)
+				.map((item) => {
+					const Icon = item.icon;
+					const isActive = pathname === item.href;
+					return (
+						<Link
+							key={item.href}
+							href={item.href}
+							onClick={() => setOpen(false)}
+							className={`group relative flex items-center p-3 text-sm font-medium rounded-xl transition-all duration-200 ${isActive
+								? "bg-primary text-primary-foreground shadow-md dark:shadow-none"
+								: "text-muted-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-foreground"
+								}`}
+						>
+							<Icon
+								size={20}
+								className={`${isMinimized ? "mx-auto" : "mr-3"} shrink-0`}
+							/>
+							{!isMinimized && <span>{item.name}</span>}
 
-								{isMinimized && (
-									<div className="absolute left-full ml-3 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-lg">
-										{item.name}
-									</div>
-								)}
-							</Link>
-						);
-					})}
-			</nav>
-
-			<div className="mt-8 pt-4 border-t border-gray-200 dark:border-zinc-800">
-				<Link
-					href="/"
-					className="group relative flex items-center p-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
-				>
-					<ArrowLeft
-						size={20}
-						className={`${isMinimized ? "mx-auto" : "mr-3"} shrink-0`}
-					/>
-					{!isMinimized && <span>Back to Site</span>}
-
-					{isMinimized && (
-						<div className="absolute left-full ml-3 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-lg">
-							Back to Site
-						</div>
-					)}
-				</Link>
-			</div>
-		</div>
+							{isMinimized && (
+								<div className="absolute left-full ml-3 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-lg">
+									{item.name}
+								</div>
+							)}
+						</Link>
+					);
+				})}
+		</>
 	);
 
 	const MobileNavLinks = () => (
-		<nav className="flex flex-col space-y-2">
+		<>
 			{navItems
 				.filter((item) => item.show)
 				.map((item) => {
@@ -144,17 +133,26 @@ export function AdminSidebar({ user }: { user: any }) {
 						</Link>
 					);
 				})}
-			<div className="pt-6 mt-6 border-t border-gray-200 dark:border-zinc-800">
-				<Link
-					href="/"
-					onClick={() => setOpen(false)}
-					className="flex items-center p-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
-				>
-					<ArrowLeft size={20} className="mr-3 shrink-0" />
-					<span>Back to Site</span>
-				</Link>
-			</div>
-		</nav>
+		</>
+	);
+
+	const BackToSiteLinkDesktop = () => (
+		<Link
+			href="/"
+			className="group relative flex items-center p-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
+		>
+			<ArrowLeft
+				size={20}
+				className={`${isMinimized ? "mx-auto" : "mr-3"} shrink-0`}
+			/>
+			{!isMinimized && <span>Back to Site</span>}
+
+			{isMinimized && (
+				<div className="absolute left-full ml-3 px-3 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black text-xs font-semibold rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap shadow-lg">
+					Back to Site
+				</div>
+			)}
+		</Link>
 	);
 
 	return (
@@ -178,14 +176,26 @@ export function AdminSidebar({ user }: { user: any }) {
 
 			{/* Mobile Menu Overlay */}
 			{open && (
-				<div className="md:hidden fixed inset-x-0 top-[69px] bottom-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md z-50 p-6 shadow-xl border-t border-gray-200 dark:border-zinc-800 overflow-y-auto slide-in-from-top-2 animate-in duration-200">
-					<MobileNavLinks />
+				<div className="md:hidden fixed inset-x-0 top-[69px] bottom-0 z-50 flex flex-col bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md shadow-xl border-t border-gray-200 dark:border-zinc-800 slide-in-from-top-2 animate-in duration-200">
+					<nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-6 flex flex-col space-y-2">
+						<MobileNavLinks />
+					</nav>
+					<div className="sticky bottom-0 shrink-0 border-t border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 px-6 py-4 backdrop-blur-md">
+						<Link
+							href="/"
+							onClick={() => setOpen(false)}
+							className="flex items-center p-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all duration-200"
+						>
+							<ArrowLeft size={20} className="mr-3 shrink-0" />
+							<span>Back to Site</span>
+						</Link>
+					</div>
 				</div>
 			)}
 
 			{/* Desktop Sidebar */}
 			<aside
-				className={`hidden md:flex flex-col shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-zinc-800/50 p-4 shadow-sm min-h-screen relative transition-all duration-300 ease-in-out z-40 ${isMinimized ? "w-[80px]" : "w-[260px]"
+				className={`hidden md:flex flex-col shrink-0 sticky top-0 h-[100dvh] max-h-[100dvh] self-start bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-zinc-800/50 p-4 shadow-sm relative transition-all duration-300 ease-in-out z-40 ${isMinimized ? "w-[80px]" : "w-[260px]"
 					}`}
 			>
 				{/* Toggle Switch */}
@@ -197,7 +207,7 @@ export function AdminSidebar({ user }: { user: any }) {
 				</button>
 
 				<div
-					className={`flex items-center min-h-[40px] mb-8 mt-2 transition-all duration-300 ${isMinimized ? "justify-center" : "px-2"
+					className={`shrink-0 flex items-center min-h-[40px] mb-4 mt-2 transition-all duration-300 ${isMinimized ? "justify-center" : "px-2"
 						}`}
 				>
 					{!isMinimized ? (
@@ -211,7 +221,15 @@ export function AdminSidebar({ user }: { user: any }) {
 					)}
 				</div>
 
-				<DesktopNavLinks />
+				<nav className="flex min-h-0 flex-1 flex-col space-y-2 overflow-y-auto overflow-x-hidden overscroll-contain pt-1">
+					<DesktopNavLinks />
+				</nav>
+
+				<div
+					className={`sticky bottom-0 z-10 mt-2 shrink-0 border-t border-gray-200 dark:border-zinc-800 pt-4 ${sidebarFooterBg} -mx-4 -mb-4 px-4 pb-4`}
+				>
+					<BackToSiteLinkDesktop />
+				</div>
 			</aside>
 		</>
 	);

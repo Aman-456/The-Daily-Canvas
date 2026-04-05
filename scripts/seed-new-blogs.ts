@@ -74,7 +74,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "pakistan-solar-net-metering-rooftop-2026",
 		excerpt:
 			"Panels spread across Punjab and Sindh faster than some disco engineers expected. Net metering made the math sing—until fixed costs, voltage protection, and tariff design collided. This is the long view on fairness, reliability, and what policy will argue about next.",
-		tags: ["pakistan", "energy", "climate"],
+		tags: ["pakistan", "energy", "environment"],
 		metaTitle: "Pakistan rooftop solar & net metering: long read",
 		metaDescription:
 			"Net metering, distribution utilities, NEPRA, grid integration, and international parallels— with references.",
@@ -91,7 +91,7 @@ const SEED_BLOGS: SeedBlogMeta[] = [
 		slug: "ai-data-center-energy-demand-2026",
 		excerpt:
 			"Chatbots feel weightless; substations do not. Training spikes and inference forever are reshaping grid forecasts, water use, and the politics of who pays for new transmission. A full tour of the load—and the levers that actually matter.",
-		tags: ["ai", "energy", "technology"],
+		tags: ["artificial-intelligence", "energy", "technology"],
 		metaTitle: "AI & data-center electricity: the 2026 grid story",
 		metaDescription:
 			"Long read: AI power demand, PUE and cooling, PPAs, interconnection queues, chip vs datacenter energy, and primary sources.",

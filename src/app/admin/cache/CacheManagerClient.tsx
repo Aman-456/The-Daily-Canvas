@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { clearAppCache } from "@/actions/cache";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Globe, FileText, MessageSquare, Users, Files, Database } from "lucide-react";
+import { Loader2, RefreshCw, Globe, FileText, MessageSquare, Users, Files, Database, Mail, LayoutDashboard } from "lucide-react";
 
 export function CacheManagerClient() {
     const [loading, setLoading] = useState<string | null>(null);
@@ -32,6 +32,8 @@ export function CacheManagerClient() {
         { id: 'comments', name: 'Comments Cache', description: 'Clear all comments lists. Affects articles and moderation.', icon: MessageSquare },
         { id: 'users', name: 'Users Cache', description: 'Clear roles, profiles, and statistics from the user cache.', icon: Users },
         { id: 'pages', name: 'Static Pages Cache', description: 'Clear dynamic pages (Privacy Policy, Terms of Service).', icon: Files },
+        { id: 'newsletter', name: 'Newsletter list cache', description: 'Refresh admin newsletter subscriber list from the database.', icon: Mail },
+        { id: 'stats', name: 'Dashboard stats cache', description: 'Invalidate user / blog / comment counts on the admin dashboard.', icon: LayoutDashboard },
     ];
 
     return (

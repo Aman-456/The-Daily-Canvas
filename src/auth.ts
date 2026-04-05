@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db/index";
 import { users } from "./db/schema";
+import { insertAdminOnlyNotification } from "./lib/notify-admins";
 import { eq } from "drizzle-orm";
 import { authConfig } from "./auth.config";
 
@@ -59,10 +60,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 	},
 	events: {
 		async createUser({ user }) {
-			// This ensures that new users created via NextAuth adapter 
+			// This ensures that new users created via NextAuth adapter
 			// have the 'USER' role explicitly set in the database.
 			if (user.id) {
-				await db.update(users)
+				await db
+					.update(users)
 					.set({
 						role: "USER",
 						permissions: {
@@ -74,7 +76,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 						},
 					})
 					.where(eq(users.id, user.id));
+
+				try {
+					const label =
+						user.name && user.email
+							? `${user.name} (${user.email})`
+							: user.email || user.name || user.id;
+					await insertAdminOnlyNotification({
+						type: "USER_SIGNUP",
+						message: `New member signed up: ${label}`,
+						link: "/admin/users",
+						blogLink: "/admin/users",
+						userIdForFk: user.id,
+					});
+				} catch (notifErr) {
+					console.error("[auth createUser] admin notification:", notifErr);
+				}
 			}
-		}
+		},
 	}
 });

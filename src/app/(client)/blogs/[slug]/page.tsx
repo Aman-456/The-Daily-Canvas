@@ -1,4 +1,4 @@
-import { getBlogBySlugCached } from "@/queries/blog";
+import { getBlogBySlugCached, getRelatedBlogs } from "@/queries/blog";
 import { getLatestRootComment } from "@/queries/comment";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SocialShare } from "@/components/client/SocialShare";
 import { Metadata } from "next";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 import { CommentSection } from "@/components/client/CommentSection";
 import Image from "next/image";
+import { MarkdownWithToc } from "@/components/blog/MarkdownWithToc";
+import { extractTocFromMarkdown } from "@/lib/markdown-toc";
+import { TableOfContents } from "@/components/client/TableOfContents";
+import { RelatedPosts } from "@/components/client/RelatedPosts";
 import {
 	blogTagFilterHref,
 	blogTagLabel,
@@ -72,8 +73,35 @@ export default async function SingleBlogPage({
 	const latestComment =
 		totalComments > 0 ? await getLatestRootComment(blog.id) : null;
 
+	const toc = extractTocFromMarkdown(blog.content);
+	const related = await getRelatedBlogs(
+		blog.id,
+		(blog.tags ?? []).filter(Boolean),
+		4,
+	);
+
 	return (
-		<article className="max-w-3xl mx-auto pb-12 px-2 md:px-0 space-y-10">
+		<div
+			className={
+				toc.length > 0
+					? "mx-auto max-w-7xl pb-12 px-3 sm:px-6"
+					: "mx-auto max-w-5xl pb-12 px-2 md:px-0"
+			}
+		>
+			<div
+				className={
+					toc.length > 0
+						? "lg:flex lg:justify-center lg:gap-5 lg:items-start"
+						: ""
+				}
+			>
+				<article
+					className={
+						toc.length > 0
+							? "mx-auto min-w-0 w-full max-w-3xl space-y-10 lg:mx-0 lg:max-w-[52rem]"
+							: "mx-auto min-w-0 max-w-3xl space-y-10"
+					}
+				>
 			<div className="space-y-6">
 				<Link
 					href="/"
@@ -82,12 +110,12 @@ export default async function SingleBlogPage({
 					<span className="mr-2">←</span> Back to stories
 				</Link>
 
-				<h1 className="text-3xl sm:text-4xl font-bold tracking-normal leading-[40px]k sm:leading-[44px] text-foreground mb-[12px]">
+				<h1 className="text-2xl font-bold tracking-tight leading-snug text-foreground sm:text-3xl sm:leading-tight md:text-4xl md:leading-[1.15] mb-3">
 					{blog.title}
 				</h1>
 
 				{blog.excerpt && (
-					<p className="text-[17px] md:text-[19px] text-muted-foreground font-normal m-0">
+					<p className="m-0 text-sm leading-relaxed text-muted-foreground sm:text-base md:text-[19px] md:leading-relaxed">
 						{blog.excerpt}
 					</p>
 				)}
@@ -168,12 +196,24 @@ export default async function SingleBlogPage({
 				</figure>
 			)}
 
+			{toc.length > 0 && (
+				<details className="lg:hidden rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+					<summary className="cursor-pointer text-sm font-medium">
+						On this page
+					</summary>
+					<div className="mt-2 pb-1">
+						<TableOfContents items={toc} variant="inline" />
+					</div>
+				</details>
+			)}
+
 			{/* Content Rendering */}
-			<div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-xl prose-pre:bg-zinc-900 prose-pre:shadow-lg leading-relaxed antialiased blog-content">
-				<ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-					{blog.content}
-				</ReactMarkdown>
-			</div>
+			<MarkdownWithToc
+				content={blog.content}
+				className="prose prose-md sm:prose-base md:prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-28 prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-xl prose-pre:bg-zinc-900 prose-pre:shadow-lg leading-relaxed antialiased blog-content"
+			/>
+
+			<RelatedPosts posts={related} />
 
 			<div className="pt-12 border-t flex flex-col items-center gap-6">
 				<div className="text-center space-y-2">
@@ -206,6 +246,16 @@ export default async function SingleBlogPage({
 				limit={commentLimit}
 				latestComment={latestComment}
 			/>
+				</article>
+
+				{toc.length > 0 && (
+					<aside className="hidden lg:block w-44 shrink-0 pt-1 sm:w-48">
+						<div className="sticky top-24 max-h-[min(70vh,28rem)] overflow-y-auto overscroll-y-contain border-l border-border/30 pl-3 pr-1 [scrollbar-width:thin]">
+							<TableOfContents items={toc} variant="sidebar" />
+						</div>
+					</aside>
+				)}
+			</div>
 
 			<script
 				type="application/ld+json"
@@ -258,6 +308,6 @@ export default async function SingleBlogPage({
 					]),
 				}}
 			/>
-		</article>
+		</div>
 	);
 }

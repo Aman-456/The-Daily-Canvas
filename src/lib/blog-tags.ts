@@ -9,171 +9,87 @@ type BlogTagEntry = {
 	aliases: readonly string[];
 };
 
+/**
+ * Short public topic list (filters, `/topics/[slug]`, admin checkboxes).
+ * Aliases help map keywords / legacy labels into these slugs.
+ */
 export const BLOG_TAGS = [
-	// News, Society & Opinion
-	{ slug: "politics", label: "Politics", aliases: ["political", "government", "govt"] },
 	{
-		slug: "world-affairs",
-		label: "World Affairs",
-		aliases: ["global affairs", "international", "geopolitics"],
+		slug: "politics",
+		label: "Politics",
+		aliases: ["political", "government", "govt", "opinion", "editorial", "column"],
 	},
 	{ slug: "pakistan", label: "Pakistan", aliases: ["pak", "pakistani"] },
 	{ slug: "south-asia", label: "South Asia", aliases: ["south asian", "subcontinent"] },
-	{ slug: "current-events", label: "Current Events", aliases: ["news", "headlines", "breaking"] },
-	{ slug: "opinion", label: "Opinion", aliases: ["editorial", "commentary", "column"] },
-
-	// Technology & Computing
-	{ slug: "technology", label: "Technology", aliases: ["tech"] },
-	{ slug: "hardware", label: "Hardware", aliases: ["pc", "components"] },
 	{
-		slug: "semiconductors",
-		label: "Semiconductors",
-		aliases: ["chips", "semiconductor", "silicon"],
+		slug: "world-affairs",
+		label: "World Affairs",
+		aliases: ["international", "geopolitics", "global affairs", "current events", "news", "headlines"],
 	},
-	{ slug: "energy", label: "Energy", aliases: ["power", "utilities", "grid"] },
-	{ slug: "computing", label: "Computing", aliases: ["computer", "it", "ict"] },
 	{
-		slug: "cyber-security",
-		label: "Cyber Security",
-		aliases: ["cybersecurity", "infosec", "cyber"],
+		slug: "energy",
+		label: "Energy",
+		aliases: ["power", "utilities", "grid", "oil", "solar", "renewable", "gas"],
+	},
+	{
+		slug: "economics",
+		label: "Economics",
+		aliases: ["economy", "macro", "markets", "finance", "business", "investing", "stocks"],
+	},
+	{
+		slug: "technology",
+		label: "Technology",
+		aliases: ["tech", "hardware", "semiconductors", "gadgets", "software", "science", "chips"],
 	},
 	{
 		slug: "artificial-intelligence",
-		label: "Artificial Intelligence",
-		aliases: ["ai", "gen ai", "generative ai"],
+		label: "AI",
+		aliases: ["ai", "machine learning", "ml", "deep learning", "generative ai", "chatgpt"],
 	},
 	{
-		slug: "machine-learning",
-		label: "Machine Learning",
-		aliases: ["ml", "deep learning", "dl"],
-	},
-	{ slug: "programming", label: "Programming", aliases: ["coding", "coder", "developer"] },
-	{
-		slug: "web-development",
-		label: "Web Development",
-		aliases: ["webdev", "web dev", "frontend", "front-end"],
-	},
-	{ slug: "software", label: "Software", aliases: ["apps", "applications", "saas"] },
-	{ slug: "gadgets", label: "Gadgets", aliases: ["devices", "consumer tech"] },
-	{ slug: "crypto", label: "Cryptocurrency", aliases: ["cryptocurrency", "bitcoin", "defi"] },
-	{ slug: "blockchain", label: "Blockchain", aliases: ["web3", "distributed ledger"] },
-
-	// Business & Finance
-	{ slug: "business", label: "Business", aliases: ["biz", "commerce", "enterprise"] },
-	{ slug: "economics", label: "Economics", aliases: ["economy", "macro", "markets"] },
-	{ slug: "finance", label: "Finance", aliases: ["financial", "banking", "fintech"] },
-	{ slug: "investing", label: "Investing", aliases: ["investment", "stocks", "portfolio"] },
-	{
-		slug: "entrepreneurship",
-		label: "Entrepreneurship",
-		aliases: ["entrepreneur", "founder", "startup founder"],
-	},
-	{ slug: "startups", label: "Startups", aliases: ["startup", "venture", "vc"] },
-	{ slug: "marketing", label: "Marketing", aliases: ["branding", "advertising", "growth"] },
-	{ slug: "sales", label: "Sales", aliases: ["selling", "revenue", "crm"] },
-	{ slug: "leadership", label: "Leadership", aliases: ["leader", "executive", "ceo"] },
-	{ slug: "management", label: "Management", aliases: ["manager", "operations", "ops"] },
-	{
-		slug: "side-hustle",
-		label: "Side Hustle",
-		aliases: ["side hustle", "freelance", "gig economy"],
-	},
-
-	// Personal Development & Productivity
-	{
-		slug: "personal-growth",
-		label: "Personal Growth",
-		aliases: ["self growth", "development", "growth mindset"],
+		slug: "computing",
+		label: "Computing",
+		aliases: ["computer", "programming", "coding", "developer", "it", "ict", "education", "learning"],
 	},
 	{
-		slug: "self-improvement",
-		label: "Self Improvement",
-		aliases: ["self help", "betterment", "self-development"],
+		slug: "cyber-security",
+		label: "Cyber Security",
+		aliases: ["cybersecurity", "infosec", "cyber", "security", "quantum"],
 	},
 	{
-		slug: "productivity",
-		label: "Productivity",
-		aliases: ["efficiency", "time management", "deep work"],
-	},
-	{ slug: "motivation", label: "Motivation", aliases: ["inspire", "drive", "willpower"] },
-	{ slug: "success", label: "Success", aliases: ["achievement", "goals", "winning"] },
-	{ slug: "habits", label: "Habits", aliases: ["habit", "routines", "rituals"] },
-	{ slug: "mindfulness", label: "Mindfulness", aliases: ["meditation", "awareness", "presence"] },
-
-	// Health & Wellness
-	{ slug: "health", label: "Health", aliases: ["healthy", "wellbeing", "well-being"] },
-	{
-		slug: "mental-health",
-		label: "Mental Health",
-		aliases: ["therapy", "anxiety", "depression"],
-	},
-	{ slug: "fitness", label: "Fitness", aliases: ["workout", "exercise", "gym"] },
-	{ slug: "nutrition", label: "Nutrition", aliases: ["diet", "eating", "macros"] },
-	{ slug: "wellness", label: "Wellness", aliases: ["holistic", "self-care", "balance"] },
-	{ slug: "yoga", label: "Yoga", aliases: ["asana", "stretching", "mind-body"] },
-
-	// Lifestyle & Daily Life
-	{ slug: "life", label: "Life", aliases: ["living", "daily life", "existence"] },
-	{ slug: "lifestyle", label: "Lifestyle", aliases: ["way of life", "life design"] },
-	{
-		slug: "relationships",
-		label: "Relationships",
-		aliases: ["dating", "marriage", "partnership"],
-	},
-	{ slug: "parenting", label: "Parenting", aliases: ["parents", "kids", "family life"] },
-	{ slug: "travel", label: "Travel", aliases: ["tourism", "trip", "vacation"] },
-	{ slug: "food", label: "Food", aliases: ["cuisine", "eating", "dining"] },
-	{ slug: "recipes", label: "Recipes", aliases: ["cooking", "cookbook", "baking"] },
-	{ slug: "fashion", label: "Fashion", aliases: ["style", "apparel", "outfits"] },
-	{ slug: "beauty", label: "Beauty", aliases: ["skincare", "makeup", "cosmetics"] },
-	{
-		slug: "home-decor",
-		label: "Home Decor",
-		aliases: ["interior design", "decorating", "interiors"],
+		slug: "environment",
+		label: "Environment",
+		aliases: [
+			"climate",
+			"climate change",
+			"sustainability",
+			"green",
+			"nature",
+			"ecology",
+			"carbon",
+			"pollution",
+		],
 	},
 	{
-		slug: "minimalism",
-		label: "Minimalism",
-		aliases: ["simple living", "declutter", "essentialism"],
+		slug: "health",
+		label: "Health",
+		aliases: ["wellness", "fitness", "mental health", "medicine", "nutrition", "smog", "air quality"],
 	},
-
-	// Culture, Arts & Humanities
-	{ slug: "culture", label: "Culture", aliases: ["cultural", "society", "heritage"] },
-	{ slug: "art", label: "Art", aliases: ["arts", "fine art", "visual art"] },
-	{ slug: "literature", label: "Literature", aliases: ["books", "fiction", "novels"] },
-	{ slug: "poetry", label: "Poetry", aliases: ["poems", "verse", "poet"] },
-	{ slug: "music", label: "Music", aliases: ["songs", "audio", "musician"] },
-	{ slug: "film", label: "Film", aliases: ["movies", "cinema", "hollywood"] },
-	{ slug: "theater", label: "Theater", aliases: ["theatre", "drama", "stage"] },
-	{ slug: "history", label: "History", aliases: ["historical", "past", "archive"] },
-	{ slug: "philosophy", label: "Philosophy", aliases: ["ethics", "logic", "thinkers"] },
-	{ slug: "psychology", label: "Psychology", aliases: ["behavior", "cognitive", "psych"] },
-
-	// Environment & Sustainability
-	{ slug: "environment", label: "Environment", aliases: ["nature", "ecology", "ecosystem"] },
-	{
-		slug: "sustainability",
-		label: "Sustainability",
-		aliases: ["sustainable", "green", "esg"],
-	},
-	{
-		slug: "climate-change",
-		label: "Climate Change",
-		aliases: ["climate", "global warming", "carbon"],
-	},
-
-	// Education & Learning
-	{ slug: "education", label: "Education", aliases: ["school", "teaching", "academic"] },
-	{ slug: "learning", label: "Learning", aliases: ["study", "studying", "skills"] },
-
-	// Other Popular Niches
-	{ slug: "essay", label: "Essay", aliases: ["essays", "longform", "op-ed"] },
-	{ slug: "review", label: "Review", aliases: ["reviews", "critique", "rating"] },
-	{ slug: "how-to", label: "How To", aliases: ["howto", "tutorial", "guide"] },
-	{ slug: "diy", label: "DIY", aliases: ["do it yourself", "homemade", "maker"] },
-	{ slug: "gaming", label: "Gaming", aliases: ["games", "esports", "videogames"] },
-	{ slug: "pets", label: "Pets", aliases: ["pet", "dogs", "cats"] },
 ] as const satisfies readonly BlogTagEntry[];
+
+/** Old catalog slugs still stored in DB or bookmarks → current slug. */
+const LEGACY_TO_CANONICAL_SLUG: Record<string, string> = {
+	"climate-change": "environment",
+	essay: "politics",
+	"current-events": "world-affairs",
+	opinion: "politics",
+	life: "politics",
+	semiconductors: "technology",
+	hardware: "technology",
+	software: "technology",
+	"machine-learning": "artificial-intelligence",
+	education: "computing",
+};
 
 export type BlogTagDefinition = (typeof BLOG_TAGS)[number];
 export type BlogTagSlug = BlogTagDefinition["slug"];
@@ -200,6 +116,11 @@ export function isBlogTagSlug(s: string): s is BlogTagSlug {
 export function blogTagLabel(stored: string): string {
 	const bySlug = BLOG_TAGS.find((t) => t.slug === stored);
 	if (bySlug) return bySlug.label;
+	const legacyCanon = LEGACY_TO_CANONICAL_SLUG[stored.toLowerCase()];
+	if (legacyCanon) {
+		const mapped = BLOG_TAGS.find((t) => t.slug === legacyCanon);
+		if (mapped) return mapped.label;
+	}
 	const slugFromLabel = LABEL_TO_SLUG.get(stored.toLowerCase());
 	if (slugFromLabel) {
 		return BLOG_TAGS.find((t) => t.slug === slugFromLabel)!.label;
@@ -226,7 +147,21 @@ export function resolveToBlogTagSlug(token: string): string | null {
 	if (SLUG_SET.has(hyphenated)) return hyphenated;
 	const fromAlias = ALIAS_TO_SLUG.get(lower) ?? ALIAS_TO_SLUG.get(hyphenated);
 	if (fromAlias) return fromAlias;
+	const legacy =
+		LEGACY_TO_CANONICAL_SLUG[lower] ??
+		LEGACY_TO_CANONICAL_SLUG[hyphenated] ??
+		LEGACY_TO_CANONICAL_SLUG[trimmed];
+	if (legacy && SLUG_SET.has(legacy)) return legacy;
 	return null;
+}
+
+/** `/topics/[slug]` path segment → current catalog slug, or null. */
+export function resolveTopicSlugForPath(pathSlug: string): string | null {
+	const lower = pathSlug.toLowerCase();
+	if (SLUG_SET.has(pathSlug)) return pathSlug;
+	if (SLUG_SET.has(lower)) return lower;
+	const canon = LEGACY_TO_CANONICAL_SLUG[lower];
+	return canon && SLUG_SET.has(canon) ? canon : null;
 }
 
 function tokensFromUnknown(val: unknown): string[] {
@@ -326,16 +261,64 @@ export function blogListingHref(opts: {
 	return qs ? `/?${qs}` : "/";
 }
 
-/** Chip navigation: 0 tags → home; 1 → `/topics/slug`; 2+ → `/?tag=…`. */
-export function hrefForActiveTags(tags: string[], search: string): string {
+/**
+ * Paginated `/archive` listing: same query rules as `blogListingHref`, but base path
+ * `/archive` when there are 0 or 2+ tags. Single-tag still uses `/topics/[slug]`.
+ */
+export function archiveListingHref(opts: {
+	tags?: string[];
+	/** @deprecated use `tags: [slug]` or `topicListingHref` */
+	tag?: string;
+	search?: string;
+	page?: number;
+}): string {
+	const fromOpts = opts.tags?.length
+		? opts.tags
+		: opts.tag && isBlogTagSlug(opts.tag)
+			? [opts.tag]
+			: [];
+	const unique = [...new Set(fromOpts.filter(isBlogTagSlug))].sort();
+	const search = opts.search ?? "";
+	const page = opts.page ?? 1;
+
+	if (unique.length === 1) {
+		return topicListingHref({
+			slug: unique[0],
+			search,
+			page,
+		});
+	}
+
+	const p = new URLSearchParams();
+	if (page > 1) p.set("page", String(page));
+	if (search.trim()) p.set("search", search.trim());
+	for (const t of unique) {
+		p.append("tag", t);
+	}
+	const qs = p.toString();
+	return qs ? `/archive?${qs}` : "/archive";
+}
+
+export type TopicListingBase = "home" | "archive";
+
+/** Chip navigation: 0 tags → home or `/archive`; 1 → `/topics/slug`; 2+ → `/?tag=…` or `/archive?tag=…`. */
+export function hrefForActiveTags(
+	tags: string[],
+	search: string,
+	listingBase: TopicListingBase = "home",
+): string {
 	const unique = [...new Set(tags.filter(isBlogTagSlug))].sort();
 	if (unique.length === 0) {
-		return blogListingHref({ search });
+		return listingBase === "archive"
+			? archiveListingHref({ search })
+			: blogListingHref({ search });
 	}
 	if (unique.length === 1) {
 		return topicListingHref({ slug: unique[0], search });
 	}
-	return blogListingHref({ tags: unique, search });
+	return listingBase === "archive"
+		? archiveListingHref({ tags: unique, search })
+		: blogListingHref({ tags: unique, search });
 }
 
 /** Validated tag slugs from Next.js `searchParams` (supports repeated `tag`). */

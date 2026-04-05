@@ -1,11 +1,21 @@
- import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import type { Metadata } from "next";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 
-const outfit = Outfit({ subsets: ["latin"] });
+const inter = Inter({
+	subsets: ["latin"],
+	variable: "--font-inter",
+	display: "swap",
+});
+const manrope = Manrope({
+	subsets: ["latin"],
+	variable: "--font-manrope",
+	display: "swap",
+});
 
 export const metadata: Metadata = {
 	metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL!),
@@ -36,19 +46,27 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html
+			lang="en"
+			className={`${inter.variable} ${manrope.variable}`}
+			suppressHydrationWarning
+		>
 			<body
-				className={`${outfit.className} antialiased min-h-screen bg-background font-sans`}
+				className={`${inter.className} min-h-screen bg-background font-sans antialiased`}
 			>
-				<AuthProvider>
-					<NextTopLoader
-						height={4}
-						showSpinner={true}
-						color="var(--sidebar-ring)"
-					/>
-					{children}
-					<Toaster />
-				</AuthProvider>
+				<ThemeProvider>
+					<AuthProvider>
+						<NextTopLoader
+							height={4}
+							showSpinner={true}
+							color="var(--sidebar-ring)"
+							showForHashAnchor={false}
+							
+						/>
+						{children}
+						<Toaster />
+					</AuthProvider>
+				</ThemeProvider>
 			</body>
 		</html>
 	);
