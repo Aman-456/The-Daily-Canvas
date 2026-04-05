@@ -35,9 +35,11 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 <p>Contributors publish under their byline on each article. For pitches or press, use the contact page.</p>
 </details>`;
 
-const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use an <code>&lt;h2&gt;</code> per release (date and title), then a bullet list.</p>
+const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
-<h2>2026-04-05 — Site expansion</h2>
+<h2>2026-04-05 — Site update</h2>
+
+<h3>Content &amp; admin</h3>
 <ul>
 <li>Added Changelog, FAQ, Community guidelines, and an RSS feed for published stories.</li>
 <li>RSS: subscribe at <code>/feed.xml</code> in your reader of choice.</li>
@@ -45,11 +47,16 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>Manage Pages editor: toolbar control to insert a <code>details</code> / <code>summary</code> accordion block (handy for FAQ-style entries).</li>
 </ul>
 
-<h2>2026-04-05 — Topics, archive, and sitemap</h2>
+<h3>Topics, archive &amp; sitemap</h3>
 <ul>
 <li>Multi-topic browsing uses path URLs like <code>/topics/pakistan/south-asia</code> (every segment is a topic; posts must match all of them). Segments are in a fixed, alphabetical order so each combination has one canonical link; old <code>?tag=</code> combinations on topic or archive pages redirect there.</li>
 <li>Home and archive listings keep the same filters, but choosing several topics from the home teaser or archive now lands on those topic paths instead of the home URL with query params.</li>
 <li>The public sitemap lists site pages only; the RSS feed stays discoverable via the site <code>&lt;link rel="alternate"&gt;</code> (not in the XML sitemap).</li>
+</ul>
+
+<h3>LLMs &amp; crawlers</h3>
+<ul>
+<li>Published <code>/llms.txt</code> (static file) with a short site overview, key paths, how multi-topic URLs work, and notes for crawlers and assistants—alongside <code>robots.txt</code>, not a replacement for it.</li>
 </ul>`;
 
 export function defaultCmsPage(
