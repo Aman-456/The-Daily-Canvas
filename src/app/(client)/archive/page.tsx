@@ -19,6 +19,7 @@ import {
 import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
 import { homeBlogGridPageSize } from "@/lib/home-blog-grid";
 import { ListingSortBar } from "@/components/client/ListingSortBar";
+import { EditorialListingEmptyState } from "@/components/client/EditorialListingEmptyState";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
 	breadcrumbListJsonLd,
@@ -136,16 +137,17 @@ export default async function ArchivePage({
 			<section className="space-y-8">
 				<Suspense
 					fallback={
-						<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+						<div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] md:items-end md:gap-6">
 							<TopicFilterChipsFallback />
-							<div className="h-10 w-44 animate-pulse rounded-xl bg-muted/70" />
+							<div className="flex w-full min-w-0 flex-col gap-2 md:max-w-[240px]">
+								<div className="h-3 w-14 animate-pulse rounded bg-muted/70" />
+								<div className="h-11 w-full animate-pulse rounded-xl bg-muted/70" />
+							</div>
 						</div>
 					}
 				>
-					<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-						<div className="min-w-0 flex-1">
-							<TopicFilterChips variant="editorial" listingBase="archive" />
-						</div>
+					<div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] md:items-end md:gap-6">
+						<TopicFilterChips variant="editorial" listingBase="archive" />
 						<ListingSortBar />
 					</div>
 				</Suspense>
@@ -168,9 +170,10 @@ export default async function ArchivePage({
 			</section>
 
 			{blogs.length === 0 ? (
-				<div className="py-20 text-center text-muted-foreground">
-					No blogs found matching your criteria.
-				</div>
+				<EditorialListingEmptyState
+					title="Nothing matches"
+					description="No posts match the topics you’ve selected. Try clearing a tag or opening the full archive without filters."
+				/>
 			) : (
 				<EditorialArchiveGrid blogs={blogs} />
 			)}
