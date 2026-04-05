@@ -84,11 +84,12 @@ export function HeaderShareStrip() {
 							Share
 						</p>
 						<p
-							className="truncate text-xs font-medium text-foreground/90 sm:text-[13px]"
+							className="hidden truncate text-xs font-medium text-foreground/90 sm:block sm:text-[13px]"
 							title={title}
 						>
 							{title}
 						</p>
+						<span className="sr-only sm:hidden">{title}</span>
 					</div>
 				</div>
 				<SocialShareCompact url={path} title={title} variant="header" />

@@ -3,7 +3,7 @@ import Link from "next/link";
 export function SiteFooter() {
 	const year = new Date().getFullYear();
 	return (
-		<footer className="mt-auto border-t border-border/40 bg-muted/30 py-14 dark:bg-muted/10">
+		<footer className="mt-auto border-t border-border/40 bg-muted/30 py-14 max-md:pb-24 dark:bg-muted/10">
 			<div className="mx-auto max-w-screen-2xl px-4 sm:px-8">
 				<div className="mb-12 grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
 					<div className="lg:col-span-2">
