@@ -8,6 +8,7 @@ import {
 	topicListingHref,
 } from "@/lib/blog-tags";
 import { parseBlogListSort } from "@/lib/blog-list-sort";
+import { SEARCH_SCROLL_RESULTS_FLAG } from "@/components/client/SearchScrollToResults";
 
 export default function SearchInput({
 	defaultValue,
@@ -63,6 +64,12 @@ export default function SearchInput({
 
 		params.set("query", query.trim());
 		if (sort !== "newest") params.set("sort", sort);
+
+		try {
+			sessionStorage.setItem(SEARCH_SCROLL_RESULTS_FLAG, "1");
+		} catch {
+			/* private mode / quota */
+		}
 
 		const qs = params.toString();
 		router.push(qs ? `/search?${qs}` : "/search");

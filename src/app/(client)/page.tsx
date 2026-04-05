@@ -19,6 +19,7 @@ import {
 } from "@/lib/blog-tags";
 import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
 import { ListingSortBar } from "@/components/client/ListingSortBar";
+import { EditorialListingEmptyState } from "@/components/client/EditorialListingEmptyState";
 import { homeArchiveTeaserCount } from "@/lib/home-blog-grid";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
@@ -177,16 +178,17 @@ export default async function BlogsPage({
 				) : (
 					<Suspense
 						fallback={
-							<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+							<div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] md:items-end md:gap-6">
 								<TopicFilterChipsFallback />
-								<div className="h-10 w-44 animate-pulse rounded-xl bg-muted/70" />
+								<div className="flex w-full min-w-0 flex-col gap-2 md:max-w-[240px]">
+									<div className="h-3 w-14 animate-pulse rounded bg-muted/70" />
+									<div className="h-11 w-full animate-pulse rounded-xl bg-muted/70" />
+								</div>
 							</div>
 						}
 					>
-						<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-							<div className="min-w-0 flex-1">
-								<TopicFilterChips variant="editorial" />
-							</div>
+						<div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] md:items-end md:gap-6">
+							<TopicFilterChips variant="editorial" />
 							<ListingSortBar />
 						</div>
 					</Suspense>
@@ -210,9 +212,10 @@ export default async function BlogsPage({
 			</section>
 
 			{blogs.length === 0 ? (
-				<div className="py-20 text-center text-muted-foreground">
-					No blogs found matching your criteria.
-				</div>
+				<EditorialListingEmptyState
+					title="Nothing to show yet"
+					description="No posts match these filters on the home teaser. Try another topic or open the archive for the full list."
+				/>
 			) : (
 				<EditorialArchiveGrid blogs={blogs} />
 			)}
