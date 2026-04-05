@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { UserNav } from "@/components/client/UserNav";
 import { ThemeToggle } from "@/components/client/ThemeToggle";
 import SearchInput from "@/components/client/SearchInput";
+import { listingTitleQueryFromUrlSearchParams } from "@/lib/blog-tags";
 import { HeaderShareStrip } from "@/components/client/ShareThisPageBar";
 import { signIn } from "next-auth/react";
 
@@ -19,10 +20,11 @@ function navLinkClass(active: boolean) {
 export function SiteHeader({ session }: { session: Session | null }) {
 	const pathname = usePathname();
 	const sp = useSearchParams();
-	const search = sp.get("search") ?? "";
+	const search = listingTitleQueryFromUrlSearchParams(sp);
 	const homeActive = pathname === "/";
 	const archiveActive = pathname === "/archive";
 	const aboutActive = pathname === "/about";
+	const hideNavSearch = pathname === "/search";
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 shadow-[0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-md dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
@@ -49,9 +51,11 @@ export function SiteHeader({ session }: { session: Session | null }) {
 				</div>
 
 				<div className="flex items-center gap-3 sm:gap-5">
-					<div className="relative hidden lg:block w-56 xl:w-64">
-						<SearchInput defaultValue={search} key={search} variant="editorial" />
-					</div>
+					{!hideNavSearch && (
+						<div className="relative hidden lg:block w-56 xl:w-64">
+							<SearchInput defaultValue={search} key={search} variant="editorial" />
+						</div>
+					)}
 					<Link href="/#newsletter" className="hidden sm:inline-flex">
 						<Button
 							size="sm"
@@ -76,9 +80,11 @@ export function SiteHeader({ session }: { session: Session | null }) {
 					)}
 				</div>
 			</div>
-			<div className="border-t border-border/30 px-4 pb-3 pt-2 lg:hidden">
-				<SearchInput defaultValue={search} key={`m-${search}`} variant="editorial" />
-			</div>
+			{!hideNavSearch && (
+				<div className="border-t border-border/30 px-4 pb-3 pt-2 lg:hidden">
+					<SearchInput defaultValue={search} key={`m-${search}`} variant="editorial" />
+				</div>
+			)}
 		</header>
 	);
 }

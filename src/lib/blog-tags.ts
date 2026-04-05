@@ -1,3 +1,14 @@
+import type { BlogListSort } from "./blog-list-sort";
+
+function appendListingParams(
+	p: URLSearchParams,
+	opts: { page?: number; search?: string; sort?: BlogListSort },
+) {
+	if (opts.page && opts.page > 1) p.set("page", String(opts.page));
+	if (opts.search?.trim()) p.set("query", opts.search.trim());
+	if (opts.sort && opts.sort !== "newest") p.set("sort", opts.sort);
+}
+
 /**
  * Canonical blog tags: `slug` is stored in the database; `label` is shown in the UI.
  * Optional `aliases` are extra tokens (e.g. “ai”, “economy”) that resolve to the same slug when normalizing input.
@@ -204,18 +215,57 @@ export function topicPath(slug: string): string {
 	return `/topics/${slug}`;
 }
 
-/** Topic listing with optional `search` and `page` (query only; slug is in the path). */
+/** Topic listing with optional `search`, `page`, and `sort` (query only; slug is in the path). */
 export function topicListingHref(opts: {
 	slug: string;
 	search?: string;
 	page?: number;
+	sort?: BlogListSort;
 }): string {
 	if (!isBlogTagSlug(opts.slug)) return "/";
+	if (opts.search?.trim()) {
+		return searchListingHref({
+			tags: [opts.slug],
+			search: opts.search,
+			page: opts.page,
+			sort: opts.sort,
+		});
+	}
 	const p = new URLSearchParams();
-	if (opts.page && opts.page > 1) p.set("page", String(opts.page));
-	if (opts.search?.trim()) p.set("search", opts.search.trim());
+	appendListingParams(p, {
+		page: opts.page,
+		sort: opts.sort,
+	});
 	const qs = p.toString();
 	return qs ? `/topics/${opts.slug}?${qs}` : `/topics/${opts.slug}`;
+}
+
+/** Canonical title search + optional topic filters (`?query=` + repeated `?tag=`). */
+export function searchListingHref(opts: {
+	tags?: string[];
+	/** @deprecated use `tags: [slug]` */
+	tag?: string;
+	search?: string;
+	page?: number;
+	sort?: BlogListSort;
+}): string {
+	const fromOpts = opts.tags?.length
+		? opts.tags
+		: opts.tag && isBlogTagSlug(opts.tag)
+			? [opts.tag]
+			: [];
+	const unique = [...new Set(fromOpts.filter(isBlogTagSlug))].sort();
+	const p = new URLSearchParams();
+	appendListingParams(p, {
+		page: opts.page,
+		search: opts.search,
+		sort: opts.sort,
+	});
+	for (const t of unique) {
+		p.append("tag", t);
+	}
+	const qs = p.toString();
+	return qs ? `/search?${qs}` : "/search";
 }
 
 /** Link from a post to that topic’s browse page. */
@@ -224,7 +274,7 @@ export function blogTagFilterHref(slug: string): string {
 }
 
 /**
- * Home `/`: no topic, multi-topic (`?tag=a&tag=b`), or search/pagination only.
+ * Home `/`: no topic or multi-topic (`?tag=a&tag=b`). Title search uses `/search` (see `searchListingHref`).
  * Single-topic views use `/topics/[slug]` (see `topicListingHref`).
  */
 export function blogListingHref(opts: {
@@ -233,6 +283,7 @@ export function blogListingHref(opts: {
 	tag?: string;
 	search?: string;
 	page?: number;
+	sort?: BlogListSort;
 }): string {
 	const fromOpts = opts.tags?.length
 		? opts.tags
@@ -242,18 +293,22 @@ export function blogListingHref(opts: {
 	const unique = [...new Set(fromOpts.filter(isBlogTagSlug))].sort();
 	const search = opts.search ?? "";
 	const page = opts.page ?? 1;
+	const sort = opts.sort;
+
+	if (search.trim()) {
+		return searchListingHref({ tags: unique, search, page, sort });
+	}
 
 	if (unique.length === 1) {
 		return topicListingHref({
 			slug: unique[0],
-			search,
 			page,
+			sort,
 		});
 	}
 
 	const p = new URLSearchParams();
-	if (page > 1) p.set("page", String(page));
-	if (search.trim()) p.set("search", search.trim());
+	appendListingParams(p, { page, sort });
 	for (const t of unique) {
 		p.append("tag", t);
 	}
@@ -271,6 +326,7 @@ export function archiveListingHref(opts: {
 	tag?: string;
 	search?: string;
 	page?: number;
+	sort?: BlogListSort;
 }): string {
 	const fromOpts = opts.tags?.length
 		? opts.tags
@@ -280,18 +336,22 @@ export function archiveListingHref(opts: {
 	const unique = [...new Set(fromOpts.filter(isBlogTagSlug))].sort();
 	const search = opts.search ?? "";
 	const page = opts.page ?? 1;
+	const sort = opts.sort;
+
+	if (search.trim()) {
+		return searchListingHref({ tags: unique, search, page, sort });
+	}
 
 	if (unique.length === 1) {
 		return topicListingHref({
 			slug: unique[0],
-			search,
 			page,
+			sort,
 		});
 	}
 
 	const p = new URLSearchParams();
-	if (page > 1) p.set("page", String(page));
-	if (search.trim()) p.set("search", search.trim());
+	appendListingParams(p, { page, sort });
 	for (const t of unique) {
 		p.append("tag", t);
 	}
@@ -299,26 +359,70 @@ export function archiveListingHref(opts: {
 	return qs ? `/archive?${qs}` : "/archive";
 }
 
-export type TopicListingBase = "home" | "archive";
+export type TopicListingBase = "home" | "archive" | "search";
 
-/** Chip navigation: 0 tags → home or `/archive`; 1 → `/topics/slug`; 2+ → `/?tag=…` or `/archive?tag=…`. */
+/** Chip navigation: search queries use `/search`; otherwise home, archive, or topic paths. */
 export function hrefForActiveTags(
 	tags: string[],
 	search: string,
 	listingBase: TopicListingBase = "home",
+	sort?: BlogListSort,
 ): string {
 	const unique = [...new Set(tags.filter(isBlogTagSlug))].sort();
+
+	if (listingBase === "search") {
+		return searchListingHref({ tags: unique, search, sort });
+	}
+
+	if (search.trim()) {
+		return searchListingHref({ tags: unique, search, sort });
+	}
+
 	if (unique.length === 0) {
 		return listingBase === "archive"
-			? archiveListingHref({ search })
-			: blogListingHref({ search });
+			? archiveListingHref({ sort })
+			: blogListingHref({ sort });
 	}
 	if (unique.length === 1) {
-		return topicListingHref({ slug: unique[0], search });
+		return topicListingHref({ slug: unique[0], sort });
 	}
 	return listingBase === "archive"
-		? archiveListingHref({ tags: unique, search })
-		: blogListingHref({ tags: unique, search });
+		? archiveListingHref({ tags: unique, sort })
+		: blogListingHref({ tags: unique, sort });
+}
+
+function firstParamString(
+	v: string | string[] | undefined,
+): string | undefined {
+	if (typeof v === "string") return v;
+	if (Array.isArray(v) && typeof v[0] === "string") return v[0];
+	return undefined;
+}
+
+/**
+ * Title search text from `?query=` (preferred) or legacy `?search=`.
+ * Use on server from `searchParams`.
+ */
+export function parseListingTitleQuery(params: {
+	[key: string]: string | string[] | undefined;
+}): string {
+	const q = firstParamString(params.query)?.trim() ?? "";
+	if (q) return q;
+	return firstParamString(params.search)?.trim() ?? "";
+}
+
+/** Client: same rules as `parseListingTitleQuery` for `URLSearchParams`. */
+export function listingTitleQueryFromUrlSearchParams(sp: URLSearchParams): string {
+	const q = sp.get("query")?.trim() ?? "";
+	if (q) return q;
+	return sp.get("search")?.trim() ?? "";
+}
+
+/** Only `?query=` (no legacy `?search=`). Use with a legacy redirect to canonical URLs. */
+export function parseListingQueryParamOnly(params: {
+	[key: string]: string | string[] | undefined;
+}): string {
+	return firstParamString(params.query)?.trim() ?? "";
 }
 
 /** Validated tag slugs from Next.js `searchParams` (supports repeated `tag`). */

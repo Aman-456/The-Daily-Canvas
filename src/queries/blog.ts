@@ -5,6 +5,7 @@ import {
 	eq,
 	ne,
 	desc,
+	asc,
 	sql,
 	ilike,
 	and,
@@ -13,6 +14,8 @@ import {
 	notInArray,
 } from "drizzle-orm";
 import { isBlogTagSlug } from "@/lib/blog-tags";
+import type { BlogListSort } from "@/lib/blog-list-sort";
+import { parseBlogListSort } from "@/lib/blog-list-sort";
 
 import { blogSummarySelector, blogFullSelector } from "@/db/selectors";
 
@@ -51,7 +54,21 @@ const _getCachedBlogsList = unstable_cache(
 export type GetBlogsListOptions = {
 	/** Omit these slugs from the result (e.g. home feed vs spotlight strip). */
 	excludeSlugs?: string[];
+	sort?: BlogListSort;
 };
+
+function orderByForBlogList(sort: BlogListSort) {
+	switch (sort) {
+		case "oldest":
+			return [asc(blogs.createdAt)];
+		case "most-commented":
+			return [desc(blogs.commentsCount), desc(blogs.createdAt)];
+		case "title":
+			return [asc(sql`lower(${blogs.title})`)];
+		default:
+			return [desc(blogs.createdAt)];
+	}
+}
 
 export const getBlogsCached = async (
 	page: number,
@@ -60,10 +77,12 @@ export const getBlogsCached = async (
 	tagSlugs?: string[],
 	options?: GetBlogsListOptions,
 ) => {
+	const sort = parseBlogListSort(options?.sort);
 	const hasSearch = Boolean(search?.trim());
 	const validTags = [...new Set((tagSlugs ?? []).filter(isBlogTagSlug))].sort();
 	const hasTagFilter = validTags.length > 0;
 	const excludeSlugs = [...new Set((options?.excludeSlugs ?? []).filter(Boolean))];
+	const orderBy = orderByForBlogList(sort);
 
 	if (hasSearch || hasTagFilter) {
 		const offset = (page - 1) * limit;
@@ -87,7 +106,7 @@ export const getBlogsCached = async (
 				.from(blogs)
 				.leftJoin(users, eq(blogs.authorId, users.id))
 				.where(whereClause)
-				.orderBy(desc(blogs.createdAt))
+				.orderBy(...orderBy)
 				.limit(limit)
 				.offset(offset),
 		]);
@@ -114,7 +133,29 @@ export const getBlogsCached = async (
 				.from(blogs)
 				.leftJoin(users, eq(blogs.authorId, users.id))
 				.where(whereClause)
-				.orderBy(desc(blogs.createdAt))
+				.orderBy(...orderBy)
+				.limit(limit)
+				.offset(offset),
+		]);
+
+		return {
+			blogs: blogsData,
+			total: totalResult[0].count,
+			totalPages: Math.ceil(totalResult[0].count / limit),
+		};
+	}
+
+	if (sort !== "newest") {
+		const offset = (page - 1) * limit;
+		const [totalResult, blogsData] = await Promise.all([
+			db.select({ count: sql<number>`count(*)` })
+				.from(blogs)
+				.where(eq(blogs.isPublished, true)),
+			db.select(blogSummarySelector)
+				.from(blogs)
+				.leftJoin(users, eq(blogs.authorId, users.id))
+				.where(eq(blogs.isPublished, true))
+				.orderBy(...orderBy)
 				.limit(limit)
 				.offset(offset),
 		]);

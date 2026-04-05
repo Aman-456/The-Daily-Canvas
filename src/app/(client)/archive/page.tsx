@@ -11,10 +11,14 @@ import { EditorialPagination } from "@/components/client/EditorialPagination";
 import {
 	archiveListingHref,
 	blogTagLabel,
+	parseListingTitleQuery,
 	parseTagSlugsFromSearchParams,
+	searchListingHref,
 	topicListingHref,
 } from "@/lib/blog-tags";
+import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
 import { homeBlogGridPageSize } from "@/lib/home-blog-grid";
+import { ListingSortBar } from "@/components/client/ListingSortBar";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -28,9 +32,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const params = await searchParams;
 	const tags = parseTagSlugsFromSearchParams(params);
-	const search =
-		typeof params.search === "string" ? params.search : "";
-	const messy = tags.length > 1 || Boolean(search.trim());
+	const messy = tags.length > 1;
 
 	const title = "Archive | Daily Thoughts";
 	const description =
@@ -61,28 +63,41 @@ export default async function ArchivePage({
 }) {
 	const params = await searchParams;
 	const page = typeof params.page === "string" ? Number(params.page) : 1;
-	const search = typeof params.search === "string" ? params.search : "";
+	const titleQuery = parseListingTitleQuery(params);
 	const activeTags = parseTagSlugsFromSearchParams(params);
+	const sort = parseSortFromSearchParams(params);
 
-	if (activeTags.length === 1) {
-		redirect(topicListingHref({ slug: activeTags[0], search, page }));
+	if (titleQuery) {
+		redirect(
+			searchListingHref({
+				tags: activeTags,
+				search: titleQuery,
+				page,
+				sort,
+			}),
+		);
 	}
 
-	const isCleanArchive = activeTags.length === 0 && !search.trim();
+	if (activeTags.length === 1) {
+		redirect(topicListingHref({ slug: activeTags[0], page, sort }));
+	}
+
+	const isCleanArchive = activeTags.length === 0;
 	const gridLimit = isCleanArchive ? homeBlogGridPageSize() : 12;
 
 	const { blogs, totalPages } = await getBlogsCached(
 		page,
 		gridLimit,
-		search,
+		"",
 		activeTags,
+		{ sort },
 	);
 
 	const pageHref = (n: number) =>
 		archiveListingHref({
 			page: n,
-			search,
 			tags: activeTags,
+			sort,
 		});
 
 	return (
@@ -97,8 +112,8 @@ export default async function ArchivePage({
 							Journal archive
 						</h1>
 						<p className="text-lg leading-relaxed text-muted-foreground">
-							Explore the full collection — filter by topic (posts match every
-							tag you select) or search by title.
+							Explore the full collection — filter by topic (posts match every tag
+							you select) or use search in the header.
 						</p>
 						<p className="text-sm">
 							<Link
@@ -113,8 +128,20 @@ export default async function ArchivePage({
 			</header>
 
 			<section className="space-y-8">
-				<Suspense fallback={<TopicFilterChipsFallback />}>
-					<TopicFilterChips variant="editorial" listingBase="archive" />
+				<Suspense
+					fallback={
+						<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+							<TopicFilterChipsFallback />
+							<div className="h-10 w-44 animate-pulse rounded-xl bg-muted/70" />
+						</div>
+					}
+				>
+					<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+						<div className="min-w-0 flex-1">
+							<TopicFilterChips variant="editorial" listingBase="archive" />
+						</div>
+						<ListingSortBar />
+					</div>
 				</Suspense>
 
 				{activeTags.length > 0 && (
@@ -125,7 +152,7 @@ export default async function ArchivePage({
 						</span>
 						.{" "}
 						<Link
-							href={archiveListingHref({ search })}
+							href={archiveListingHref({ sort })}
 							className="font-medium text-primary underline-offset-4 hover:underline"
 						>
 							Clear topics

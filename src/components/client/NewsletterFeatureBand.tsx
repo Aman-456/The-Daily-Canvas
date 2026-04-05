@@ -62,7 +62,7 @@ export function NewsletterFeatureBand() {
 							placeholder="email@address.com"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
-							className="h-12 rounded-xl border border-white/20 bg-white/10 px-5 text-background placeholder:text-background/45 focus-visible:ring-primary/50"
+							className="h-12 rounded-xl border border-background/45 bg-background/15 px-5 text-background placeholder:text-background/50 focus-visible:border-background/70 focus-visible:ring-background/25"
 						/>
 						<Button
 							type="submit"
