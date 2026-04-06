@@ -3,14 +3,16 @@ import Image from "next/image";
 import { Flame, Sparkles } from "lucide-react";
 import type { BlogPostCardItem } from "@/components/client/BlogPostCardGrid";
 import { blogTagLabel } from "@/lib/blog-tags";
+import { cn } from "@/lib/utils";
 
 function byline(blog: BlogPostCardItem) {
 	const name = blog.authorId?.name?.trim() || "Editorial";
-	const d = new Date(blog.createdAt).toLocaleDateString(undefined, {
+	const d = new Intl.DateTimeFormat("en-US", {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
-	});
+		timeZone: "UTC",
+	}).format(new Date(blog.createdAt));
 	return `${name} · ${d}`;
 }
 
@@ -31,10 +33,16 @@ export function EditorialOverlayPostCard({
 	blog,
 	size,
 	className = "",
+	titleClassName,
+	overlayClassName,
+	tintClassName,
 }: {
 	blog: BlogPostCardItem;
 	size: EditorialOverlaySize;
 	className?: string;
+	titleClassName?: string;
+	overlayClassName?: string;
+	tintClassName?: string;
 }) {
 	const tag = blog.tags?.[0];
 	const label = tag ? blogTagLabel(tag) : "Story";
@@ -76,7 +84,15 @@ export function EditorialOverlayPostCard({
 			) : (
 				<div className="absolute inset-0 bg-linear-to-br from-zinc-300 to-zinc-400 dark:from-zinc-700 dark:to-zinc-900" />
 			)}
-			<div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent" />
+			{tintClassName ? (
+				<div className={cn("absolute inset-0", tintClassName)} />
+			) : null}
+			<div
+				className={cn(
+					"absolute inset-0 bg-linear-to-t from-black/85 via-black/25 to-transparent",
+					overlayClassName,
+				)}
+			/>
 			<div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2 sm:left-4 sm:right-4 sm:top-4">
 				<span className="editorial-glass-badge">
 					<Sparkles className="size-3 shrink-0 opacity-90" aria-hidden />
@@ -91,7 +107,11 @@ export function EditorialOverlayPostCard({
 				className={`absolute bottom-0 left-0 w-full space-y-2 text-white ${padClass}`}
 			>
 				<h2
-					className={`font-headline font-bold leading-tight tracking-tight ${titleClass}`}
+					className={cn(
+						"font-headline font-bold leading-tight tracking-tight",
+						titleClass,
+						titleClassName,
+					)}
 				>
 					{blog.title}
 				</h2>

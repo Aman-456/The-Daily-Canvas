@@ -59,6 +59,8 @@ export default function RootLayout({
 			<body
 				className={`${inter.className} min-h-screen bg-background font-sans antialiased`}
 			>
+				{/* Keep JSON-LD in the server layout (not inside client providers). */}
+				<JsonLd data={sitewideJsonLdGraph()} />
 				<ThemeProvider>
 					<AuthProvider>
 						<NextTopLoader
@@ -66,11 +68,9 @@ export default function RootLayout({
 							showSpinner={true}
 							color="var(--sidebar-ring)"
 							showForHashAnchor={false}
-							
 						/>
 						{children}
 						<Toaster />
-						<JsonLd data={sitewideJsonLdGraph()} />
 					</AuthProvider>
 				</ThemeProvider>
 			</body>

@@ -199,6 +199,23 @@
 		color: white;
 		backdrop-filter: blur(12px);
 	}
+
+	/* Home Featured carousel (Swiper) */
+	.home-featured-swiper {
+		--swiper-theme-color: var(--primary);
+		--swiper-pagination-bullet-inactive-color: var(--muted-foreground);
+		--swiper-pagination-bullet-inactive-opacity: 0.35;
+		--swiper-pagination-bullet-size: 8px;
+		--swiper-pagination-bullet-horizontal-gap: 5px;
+	}
+
+	.home-featured-swiper .swiper-pagination {
+		bottom: 10px;
+	}
+
+	.home-featured-swiper .swiper-pagination-bullet {
+		transform: translateZ(0);
+	}
 }
 
 @layer base {
