@@ -22,7 +22,7 @@ export function RelatedPosts({ posts }: { posts: BlogPostCardItem[] }) {
 								{blog.coverImage ? (
 									<Image
 										src={blog.coverImage}
-										alt=""
+										alt={`${blog.title} cover image`}
 										fill
 										className="object-cover"
 										sizes="96px"
