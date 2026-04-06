@@ -1,13 +1,47 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getProviders, signIn } from "next-auth/react";
+import type { SignInResponse } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
 type ProvidersMap = Record<string, { id: string; name: string }> | null;
+
+function googleSignInHref(callbackUrl: string) {
+	const q = new URLSearchParams({ callbackUrl });
+	return `/api/auth/signin/google?${q.toString()}`;
+}
+
+/** Maps Auth.js `error` query values to readable copy. */
+function mapAuthError(error: string, code: string | null): string {
+	if (error === "CredentialsSignin" && code === "account_disabled") {
+		return "This account has been disabled. Contact an administrator if you think this is a mistake.";
+	}
+	switch (error) {
+		case "CredentialsSignin":
+			return "Invalid email or password.";
+		case "AccessDenied":
+			return "Your account cannot sign in. It may be disabled or not allowed.";
+		case "Configuration":
+			return "Sign-in is misconfigured. Contact the site administrator.";
+		case "OAuthAccountNotLinked":
+			return "This sign-in method is not linked to your account. Sign in with the method you used before.";
+		case "OAuthCallbackError":
+		case "OAuthSignInError":
+			return "We could not complete sign-in with the provider. Please try again.";
+		case "OAuthCreateAccount":
+			return "Could not create your account. Please try again.";
+		case "EmailSignInError":
+			return "Could not send the sign-in email.";
+		case "SessionRequired":
+			return "You need to sign in to access that page.";
+		default:
+			return code ? `Sign-in failed (${error}, ${code}).` : `Sign-in failed (${error}).`;
+	}
+}
 
 function SignInFallback() {
 	return (
@@ -20,6 +54,7 @@ function SignInFallback() {
 }
 
 function SignInForm() {
+	const router = useRouter();
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
@@ -43,6 +78,21 @@ function SignInForm() {
 		};
 	}, []);
 
+	/** OAuth and other flows redirect back with `?error=` (and optional `code=`). */
+	useEffect(() => {
+		const err = searchParams.get("error");
+		if (!err) return;
+
+		const code = searchParams.get("code");
+		setError(mapAuthError(err, code));
+
+		const next = new URLSearchParams(searchParams.toString());
+		next.delete("error");
+		next.delete("code");
+		const qs = next.toString();
+		router.replace(qs ? `/signin?${qs}` : "/signin");
+	}, [searchParams, router]);
+
 	const hasGoogle = !!providers?.google;
 	const hasCredentials = !!providers?.credentials;
 
@@ -51,22 +101,31 @@ function SignInForm() {
 		setError(null);
 		setIsSubmitting(true);
 		try {
-			const res = await signIn("credentials", {
+			const res = (await signIn("credentials", {
 				email,
 				password,
+				redirect: false,
 				callbackUrl,
-			});
+			})) as SignInResponse | undefined;
 
-			// With default redirect behavior, successful sign-in navigates away automatically.
-			// If it doesn't navigate (e.g. error), NextAuth may still return a response.
-			const maybeRes = res as unknown as { error?: string } | undefined;
-			if (maybeRes?.error) {
-				setError(
-					maybeRes.error === "CredentialsSignin"
-						? "Invalid email or password."
-						: maybeRes.error,
-				);
+			if (!res) {
+				setError("Could not reach the sign-in service. Please try again.");
+				return;
 			}
+
+			// Failed sign-in often returns HTTP 200 with `error` in the redirect URL; `res.ok` is the
+			// fetch status, not “signed in successfully”. Check `res.error` before redirecting.
+			if (res.error) {
+				setError(mapAuthError(res.error, res.code ?? null));
+				return;
+			}
+
+			if (res.ok) {
+				window.location.href = res.url ?? callbackUrl;
+				return;
+			}
+
+			setError("Sign-in failed. Please try again.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -83,14 +142,18 @@ function SignInForm() {
 						</p>
 					</div>
 
-					{hasGoogle && (
-						<Button
-							type="button"
-							className="w-full"
-							variant="secondary"
-							onClick={() => signIn("google", { callbackUrl })}
+					{error && (
+						<div
+							className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive font-medium"
+							role="alert"
 						>
-							Sign in with Google
+							{error}
+						</div>
+					)}
+
+					{hasGoogle && (
+						<Button asChild className="w-full" variant="secondary">
+							<Link href={googleSignInHref(callbackUrl)}>Sign in with Google</Link>
 						</Button>
 					)}
 
@@ -127,23 +190,22 @@ function SignInForm() {
 								/>
 							</div>
 
-							{error && (
-								<div className="text-sm text-destructive font-medium">{error}</div>
-							)}
-
 							<Button type="submit" className="w-full" disabled={isSubmitting}>
 								{isSubmitting ? "Signing in..." : "Sign in"}
 							</Button>
 
 							<p className="text-xs text-muted-foreground">
-								Credentials sign-in is available only when configured (and may be
-								enabled only in development).
+								Email sign-in is enabled when <code className="text-[0.7rem]">DEV_ADMIN_EMAIL</code>{" "}
+								and <code className="text-[0.7rem]">DEV_ADMIN_PASSWORD</code> are set in the
+								server environment.
 							</p>
 						</form>
 					) : (
 						<p className="text-sm text-muted-foreground">
-							Credentials sign-in is not enabled. If you are the developer, set
-							`DEV_ADMIN_EMAIL` and `DEV_ADMIN_PASSWORD` in your env.
+							Email and password sign-in is not configured. Set{" "}
+							<code className="text-xs">DEV_ADMIN_EMAIL</code> and{" "}
+							<code className="text-xs">DEV_ADMIN_PASSWORD</code> in the server environment to
+							enable it.
 						</p>
 					)}
 

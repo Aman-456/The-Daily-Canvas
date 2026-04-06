@@ -1,10 +1,11 @@
 import NextAuth from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db/index";
-import { users } from "./db/schema";
+import { sessions, users } from "./db/schema";
 import { insertAdminOnlyNotification } from "./lib/notify-admins";
 import { eq } from "drizzle-orm";
 import { authConfig } from "./auth.config";
+import type { Session } from "next-auth";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
 	...authConfig,
@@ -14,10 +15,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 		strategy: process.env.NODE_ENV === "development" ? "jwt" : "database",
 	},
 	callbacks: {
+		async signIn({ user, account, profile }) {
+			if (account?.provider === "credentials") {
+				return true;
+			}
+			const email =
+				(user.email?.trim() ||
+					(profile as { email?: string } | undefined)?.email?.trim()) ??
+				"";
+			if (!email) return false;
+
+			const dbUser = await db.query.users.findFirst({
+				where: eq(users.email, email),
+			});
+			if (dbUser?.isDisabled) return false;
+			return true;
+		},
 		async jwt({ token, user }) {
 			// On sign-in, persist user id into the token.
 			if (user?.id) {
 				token.sub = user.id;
+			}
+			const sub =
+				token && typeof (token as { sub?: unknown }).sub === "string"
+					? (token as { sub: string }).sub
+					: undefined;
+			if (sub) {
+				const dbUser = await db.query.users.findFirst({
+					where: eq(users.id, sub),
+				});
+				if (dbUser?.isDisabled) {
+					return null;
+				}
 			}
 			return token;
 		},
@@ -30,13 +59,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 			const userId = user?.id ?? tokenSub ?? session?.user?.id;
 
 			if (userId) {
-				// Ensure id exists even for JWT sessions
-				session.user.id = userId;
-
 				// Fetch the FULL user record from your custom schema
 				const dbUser = await db.query.users.findFirst({
 					where: eq(users.id, userId),
 				});
+
+				if (dbUser?.isDisabled) {
+					await db.delete(sessions).where(eq(sessions.userId, userId));
+					return null as unknown as Session;
+				}
+
+				// Ensure id exists even for JWT sessions
+				session.user.id = userId;
 
 				if (dbUser) {
 					session.user.id = dbUser.id;

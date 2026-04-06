@@ -37,6 +37,18 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
+<h2>2026-04-07 — Sign-in page &amp; email login</h2>
+
+<h3>Auth</h3>
+<ul>
+<li>Email and password sign-in (Credentials) is available in production whenever <code>DEV_ADMIN_EMAIL</code> and <code>DEV_ADMIN_PASSWORD</code> are set—same behavior as local development.</li>
+<li>Google sign-in on <code>/signin</code> uses a normal navigation to <code>/api/auth/signin/google</code> (full-page OAuth redirect) instead of the client <code>signIn()</code> flow.</li>
+<li>Copy on <code>/signin</code> reflects production email login and how to configure it.</li>
+<li>Users marked <strong>disabled</strong> in Admin cannot sign in (Google or email/password); existing sessions are cleared when a session is checked.</li>
+<li>Failed sign-in on <code>/signin</code> shows inline and query-string errors (including OAuth); credentials failures no longer send you to the home page without a message.</li>
+<li>Disabled accounts using email/password see an explicit “account has been disabled” message instead of a generic invalid-password hint.</li>
+</ul>
+
 <h2>2026-04-06 — Reading &amp; sign-in polish</h2>
 
 <h3>Auth</h3>

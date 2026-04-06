@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
@@ -7,6 +8,14 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 const hasGoogleOAuth = !!(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
+const hasCredentialsAuth = !!(
+	process.env.DEV_ADMIN_EMAIL?.trim() && process.env.DEV_ADMIN_PASSWORD
+);
+
+/** Thrown when the env user exists but is disabled; surfaces as `code=account_disabled` on the sign-in URL. */
+class AccountDisabledCredentials extends CredentialsSignin {
+	code = "account_disabled";
+}
 
 export const authConfig = {
 	providers: [
@@ -19,16 +28,16 @@ export const authConfig = {
 					}),
 				]
 			: []),
-		...(process.env.NODE_ENV === "development"
+		...(hasCredentialsAuth
 			? [
 					Credentials({
-						name: "Dev Admin (local)",
+						name: "Email & password",
 						credentials: {
 							email: { label: "Email", type: "email" },
 							password: { label: "Password", type: "password" },
 						},
 						async authorize(credentials) {
-							const devEmail = process.env.DEV_ADMIN_EMAIL;
+							const devEmail = process.env.DEV_ADMIN_EMAIL?.trim();
 							const devPassword = process.env.DEV_ADMIN_PASSWORD;
 
 							if (!devEmail || !devPassword) return null;
@@ -49,7 +58,11 @@ export const authConfig = {
 							});
 
 							if (existing) {
-								// Always enforce full admin perms for dev credentials sign-in
+								if (existing.isDisabled) {
+									throw new AccountDisabledCredentials();
+								}
+
+								// Always enforce full admin perms for env-based credentials sign-in
 								await db
 									.update(users)
 									.set({
