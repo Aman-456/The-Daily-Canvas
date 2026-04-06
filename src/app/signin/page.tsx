@@ -10,11 +10,6 @@ import Link from "next/link";
 
 type ProvidersMap = Record<string, { id: string; name: string }> | null;
 
-function googleSignInHref(callbackUrl: string) {
-	const q = new URLSearchParams({ callbackUrl });
-	return `/api/auth/signin/google?${q.toString()}`;
-}
-
 /** Maps Auth.js `error` query values to readable copy. */
 function mapAuthError(error: string, code: string | null): string {
 	if (error === "CredentialsSignin" && code === "account_disabled") {
@@ -26,7 +21,7 @@ function mapAuthError(error: string, code: string | null): string {
 		case "AccessDenied":
 			return "Your account cannot sign in. It may be disabled or not allowed.";
 		case "Configuration":
-			return "Sign-in is misconfigured. Contact the site administrator.";
+			return "Sign-in hit a server configuration error. If this persists, contact the site administrator.";
 		case "OAuthAccountNotLinked":
 			return "This sign-in method is not linked to your account. Sign in with the method you used before.";
 		case "OAuthCallbackError":
@@ -64,6 +59,7 @@ function SignInForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [googleLoading, setGoogleLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -139,6 +135,18 @@ function SignInForm() {
 		}
 	}
 
+	async function onGoogleSignIn() {
+		setError(null);
+		setGoogleLoading(true);
+		try {
+			// Auth.js v5 does not support GET /api/auth/signin/{provider} (it throws UnknownAction).
+			// OAuth must start via the client signIn() POST flow.
+			await signIn("google", { callbackUrl });
+		} finally {
+			setGoogleLoading(false);
+		}
+	}
+
 	return (
 		<div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-10">
 			<div className="w-full max-w-md rounded-2xl border bg-background shadow-sm">
@@ -164,8 +172,14 @@ function SignInForm() {
 					) : (
 						<>
 							{hasGoogle && (
-								<Button asChild className="w-full" variant="secondary">
-									<Link href={googleSignInHref(callbackUrl)}>Sign in with Google</Link>
+								<Button
+									type="button"
+									className="w-full"
+									variant="secondary"
+									disabled={googleLoading}
+									onClick={() => void onGoogleSignIn()}
+								>
+									{googleLoading ? "Redirecting…" : "Sign in with Google"}
 								</Button>
 							)}
 

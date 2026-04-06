@@ -9,6 +9,8 @@ import type { Session } from "next-auth";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
 	...authConfig,
+	// Verbose Auth.js logs when debugging OAuth; set AUTH_DEBUG=1 in any environment.
+	debug: process.env.NODE_ENV === "development" || process.env.AUTH_DEBUG === "1",
 	adapter: DrizzleAdapter(db),
 	session: {
 		// Credentials auth in development is easiest with JWT sessions (no DB session write needed).

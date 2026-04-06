@@ -42,12 +42,13 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <h3>Auth</h3>
 <ul>
 <li>Email and password sign-in (Credentials) is available in production whenever <code>DEV_ADMIN_EMAIL</code> and <code>DEV_ADMIN_PASSWORD</code> are set—same behavior as local development.</li>
-<li>Google sign-in on <code>/signin</code> uses a normal navigation to <code>/api/auth/signin/google</code> (full-page OAuth redirect) instead of the client <code>signIn()</code> flow.</li>
+<li>Google sign-in on <code>/signin</code> uses the client <code>signIn(&quot;google&quot;, …)</code> flow (Auth.js v5). A plain link to <code>GET /api/auth/signin/google</code> is not supported and previously led to a generic configuration error.</li>
 <li>Copy on <code>/signin</code> reflects production email login and how to configure it.</li>
 <li>Users marked <strong>disabled</strong> in Admin cannot sign in (Google or email/password); existing sessions are cleared when a session is checked.</li>
 <li>Failed sign-in on <code>/signin</code> shows inline and query-string errors (including OAuth); credentials failures no longer send you to the home page without a message.</li>
 <li>Disabled accounts using email/password see an explicit “account has been disabled” message instead of a generic invalid-password hint.</li>
 <li>The sign-in page shows a short “Loading sign-in options…” state while provider metadata loads, so the “email sign-in is not configured” message does not flash briefly when credentials are enabled.</li>
+<li>Docs: troubleshooting for OAuth <code>error=Configuration</code> (env, callback URIs, and not using a GET link to start Google sign-in).</li>
 </ul>
 
 <h2>2026-04-06 — Reading &amp; sign-in polish</h2>
