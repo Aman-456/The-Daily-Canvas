@@ -65,6 +65,11 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>Ensured images in related posts and markdown content have meaningful <code>alt</code> text; markdown images now render responsively.</li>
 </ul>
 
+<h3>Home</h3>
+<ul>
+<li>Featured stories now use a swipeable carousel on mobile with pagination dots, looping, autoplay, and improved dark-mode styling.</li>
+</ul>
+
 <h2>2026-04-05 — Site update</h2>
 
 <h3>Content &amp; admin</h3>
