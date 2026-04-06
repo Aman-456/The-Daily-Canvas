@@ -59,6 +59,8 @@ function SignInForm() {
 	const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
 	const [providers, setProviders] = useState<ProvidersMap>(null);
+	/** Avoid flashing “not configured” while `getProviders()` is in flight (`providers === null` means unknown, not absent). */
+	const [providersLoaded, setProvidersLoaded] = useState(false);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,10 +70,16 @@ function SignInForm() {
 		let alive = true;
 		getProviders()
 			.then((p) => {
-				if (alive) setProviders(p);
+				if (alive) {
+					setProviders(p);
+					setProvidersLoaded(true);
+				}
 			})
 			.catch(() => {
-				if (alive) setProviders(null);
+				if (alive) {
+					setProviders(null);
+					setProvidersLoaded(true);
+				}
 			});
 		return () => {
 			alive = false;
@@ -151,62 +159,69 @@ function SignInForm() {
 						</div>
 					)}
 
-					{hasGoogle && (
-						<Button asChild className="w-full" variant="secondary">
-							<Link href={googleSignInHref(callbackUrl)}>Sign in with Google</Link>
-						</Button>
-					)}
-
-					{hasGoogle && hasCredentials && (
-						<div className="flex items-center gap-3">
-							<div className="h-px flex-1 bg-border" />
-							<span className="text-xs text-muted-foreground font-medium">OR</span>
-							<div className="h-px flex-1 bg-border" />
-						</div>
-					)}
-
-					{hasCredentials ? (
-						<form onSubmit={onCredentialsSubmit} className="space-y-4">
-							<div className="space-y-2">
-								<label className="text-sm font-semibold">Email</label>
-								<Input
-									type="email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									placeholder="admin@example.com"
-									autoComplete="email"
-									required
-								/>
-							</div>
-							<div className="space-y-2">
-								<label className="text-sm font-semibold">Password</label>
-								<Input
-									type="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									placeholder="••••••••"
-									autoComplete="current-password"
-									required
-								/>
-							</div>
-
-							<Button type="submit" className="w-full" disabled={isSubmitting}>
-								{isSubmitting ? "Signing in..." : "Sign in"}
-							</Button>
-
-							<p className="text-xs text-muted-foreground">
-								Email sign-in is enabled when <code className="text-[0.7rem]">DEV_ADMIN_EMAIL</code>{" "}
-								and <code className="text-[0.7rem]">DEV_ADMIN_PASSWORD</code> are set in the
-								server environment.
-							</p>
-						</form>
+					{!providersLoaded ? (
+						<p className="text-sm text-muted-foreground">Loading sign-in options…</p>
 					) : (
-						<p className="text-sm text-muted-foreground">
-							Email and password sign-in is not configured. Set{" "}
-							<code className="text-xs">DEV_ADMIN_EMAIL</code> and{" "}
-							<code className="text-xs">DEV_ADMIN_PASSWORD</code> in the server environment to
-							enable it.
-						</p>
+						<>
+							{hasGoogle && (
+								<Button asChild className="w-full" variant="secondary">
+									<Link href={googleSignInHref(callbackUrl)}>Sign in with Google</Link>
+								</Button>
+							)}
+
+							{hasGoogle && hasCredentials && (
+								<div className="flex items-center gap-3">
+									<div className="h-px flex-1 bg-border" />
+									<span className="text-xs text-muted-foreground font-medium">OR</span>
+									<div className="h-px flex-1 bg-border" />
+								</div>
+							)}
+
+							{hasCredentials ? (
+								<form onSubmit={onCredentialsSubmit} className="space-y-4">
+									<div className="space-y-2">
+										<label className="text-sm font-semibold">Email</label>
+										<Input
+											type="email"
+											value={email}
+											onChange={(e) => setEmail(e.target.value)}
+											placeholder="admin@example.com"
+											autoComplete="email"
+											required
+										/>
+									</div>
+									<div className="space-y-2">
+										<label className="text-sm font-semibold">Password</label>
+										<Input
+											type="password"
+											value={password}
+											onChange={(e) => setPassword(e.target.value)}
+											placeholder="••••••••"
+											autoComplete="current-password"
+											required
+										/>
+									</div>
+
+									<Button type="submit" className="w-full" disabled={isSubmitting}>
+										{isSubmitting ? "Signing in..." : "Sign in"}
+									</Button>
+
+									<p className="text-xs text-muted-foreground">
+										Email sign-in is enabled when{" "}
+										<code className="text-[0.7rem]">DEV_ADMIN_EMAIL</code> and{" "}
+										<code className="text-[0.7rem]">DEV_ADMIN_PASSWORD</code> are set in the
+										server environment.
+									</p>
+								</form>
+							) : (
+								<p className="text-sm text-muted-foreground">
+									Email and password sign-in is not configured. Set{" "}
+									<code className="text-xs">DEV_ADMIN_EMAIL</code> and{" "}
+									<code className="text-xs">DEV_ADMIN_PASSWORD</code> in the server environment
+									to enable it.
+								</p>
+							)}
+						</>
 					)}
 
 					<div className="pt-2 text-sm">

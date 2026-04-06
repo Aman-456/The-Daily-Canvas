@@ -47,6 +47,7 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>Users marked <strong>disabled</strong> in Admin cannot sign in (Google or email/password); existing sessions are cleared when a session is checked.</li>
 <li>Failed sign-in on <code>/signin</code> shows inline and query-string errors (including OAuth); credentials failures no longer send you to the home page without a message.</li>
 <li>Disabled accounts using email/password see an explicit “account has been disabled” message instead of a generic invalid-password hint.</li>
+<li>The sign-in page shows a short “Loading sign-in options…” state while provider metadata loads, so the “email sign-in is not configured” message does not flash briefly when credentials are enabled.</li>
 </ul>
 
 <h2>2026-04-06 — Reading &amp; sign-in polish</h2>
