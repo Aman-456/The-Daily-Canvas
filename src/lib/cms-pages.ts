@@ -46,6 +46,12 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li><code>/signin</code> now defaults to returning to the home page when no <code>callbackUrl</code> is provided; admin redirects include <code>callbackUrl=/admin</code>.</li>
 </ul>
 
+<h3>Admin</h3>
+<ul>
+<li>Users, blogs, and comments tables now support quick filtering and sorting to speed up moderation and management.</li>
+<li>Users can be marked Disabled/Enabled from the Users table (admin only).</li>
+</ul>
+
 <h3>Table of contents</h3>
 <ul>
 <li>Desktop TOC rail stays sticky while reading.</li>

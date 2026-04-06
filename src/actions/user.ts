@@ -6,24 +6,49 @@ import { auth } from "@/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { isAdmin } from "@/lib/utils";
 import { unstable_cache } from "next/cache";
-import { eq, like, or, desc, sql } from "drizzle-orm";
+import { and, eq, like, or, desc, asc, sql } from "drizzle-orm";
 
 export const getCachedUsers = unstable_cache(
-	async (search: string, skip: number, limit: number) => {
+	async (
+		search: string,
+		skip: number,
+		limit: number,
+		status: "all" | "active" | "disabled" = "all",
+		sort: "joined_desc" | "joined_asc" | "name_asc" | "email_asc" = "joined_desc",
+	) => {
 		let dbQuery = db.select().from(users);
 		let countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
+
+		const conditions: any[] = [];
 
 		if (search) {
 			const searchCondition = or(
 				like(users.name, `%${search}%`),
 				like(users.email, `%${search}%`)
 			);
-			dbQuery = dbQuery.where(searchCondition) as any;
-			countQuery = countQuery.where(searchCondition) as any;
+			conditions.push(searchCondition);
 		}
 
+		if (status === "active") conditions.push(eq(users.isDisabled, false));
+		if (status === "disabled") conditions.push(eq(users.isDisabled, true));
+
+		const where = conditions.length ? and(...conditions) : undefined;
+		if (where) {
+			dbQuery = dbQuery.where(where) as any;
+			countQuery = countQuery.where(where) as any;
+		}
+
+		const orderBy =
+			sort === "joined_asc"
+				? asc(users.createdAt)
+				: sort === "name_asc"
+					? asc(users.name)
+					: sort === "email_asc"
+						? asc(users.email)
+						: desc(users.createdAt);
+
 		const [userResults, userCount] = await Promise.all([
-			dbQuery.orderBy(desc(users.createdAt)).limit(limit).offset(skip),
+			dbQuery.orderBy(orderBy).limit(limit).offset(skip),
 			countQuery,
 		]);
 
@@ -32,6 +57,37 @@ export const getCachedUsers = unstable_cache(
 	["admin-users-list"],
 	{ revalidate: 86400, tags: ["users"] }
 );
+
+export async function toggleUserDisabled(userId: string) {
+	try {
+		const session = await auth();
+
+		if (!session?.user || !isAdmin(session.user.role)) {
+			return { success: false, error: "Unauthorized: Only Admins can disable users" };
+		}
+
+		if (userId === session.user.id) {
+			return { success: false, error: "Cannot disable yourself" };
+		}
+
+		const existing = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+		const u = existing[0];
+		if (!u) return { success: false, error: "User not found" };
+
+		await db
+			.update(users)
+			.set({ isDisabled: !u.isDisabled, updatedAt: new Date() })
+			.where(eq(users.id, userId));
+
+		revalidatePath("/admin/users");
+		revalidateTag("users", "max");
+
+		return { success: true };
+	} catch (error: any) {
+		console.error("[toggleUserDisabled] Error:", error);
+		return { success: false, error: error.message || "An unexpected error occurred" };
+	}
+}
 
 export async function toggleUserRole(
 	userId: string,

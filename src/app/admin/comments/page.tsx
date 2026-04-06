@@ -11,6 +11,7 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import { getCachedComments } from "@/actions/comment";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
+import { AdminFilters } from "@/components/admin/AdminFilters";
 
 export default async function AdminCommentsPage({
 	searchParams,
@@ -25,6 +26,8 @@ export default async function AdminCommentsPage({
 	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
+	const status = (params.status as string) || "all";
+	const sort = (params.sort as string) || "created_desc";
 	const { comments, totalPages, total } = await getCachedComments(
 		page,
 		20,
@@ -32,6 +35,7 @@ export default async function AdminCommentsPage({
 		session?.user?.id,
 		session?.user?.role,
 		session?.user?.permissions,
+		{ status, sort },
 	);
 
 	return (
@@ -56,6 +60,29 @@ export default async function AdminCommentsPage({
 
 			<div className="flex items-center justify-between gap-4">
 				<AdminSearch placeholder="Search comments or blog ID..." />
+				<AdminFilters
+					filters={[
+						{
+							key: "status",
+							label: "Status",
+							defaultValue: "all",
+							options: [
+								{ value: "all", label: "All" },
+								{ value: "approved", label: "Approved" },
+								{ value: "pending", label: "Pending" },
+							],
+						},
+						{
+							key: "sort",
+							label: "Sort",
+							defaultValue: "created_desc",
+							options: [
+								{ value: "created_desc", label: "Date (newest)" },
+								{ value: "created_asc", label: "Date (oldest)" },
+							],
+						},
+					]}
+				/>
 			</div>
 
 			<div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-800 overflow-hidden">

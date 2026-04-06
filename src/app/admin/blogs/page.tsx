@@ -25,6 +25,7 @@ import { CopyIcon, Grid, List as ListIcon } from "lucide-react";
 import { getCachedBlogs } from "@/actions/blog";
 import Image from "next/image";
 import { Blog, BlogWithAuthor } from "@/db/schema";
+import { AdminFilters } from "@/components/admin/AdminFilters";
 
 export default async function AdminBlogsPage({
 	searchParams,
@@ -41,6 +42,12 @@ export default async function AdminBlogsPage({
 	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
+	const status = (params.status as string) || "all";
+	const sort = ((params.sort as string) || "created_desc") as
+		| "created_desc"
+		| "created_asc"
+		| "views_desc"
+		| "comments_desc";
 	const limit = 12;
 	const skip = (page - 1) * limit;
 
@@ -49,6 +56,8 @@ export default async function AdminBlogsPage({
 	if (search) {
 		query.title = { $regex: search, $options: "i" };
 	}
+	if (status === "published") query.isPublished = true;
+	if (status === "draft") query.isPublished = false;
 
 	const [blogs, total] = await getCachedBlogs(
 		query,
@@ -57,6 +66,7 @@ export default async function AdminBlogsPage({
 		session?.user?.id,
 		session?.user?.role,
 		session?.user?.permissions,
+		sort,
 	);
 
 	const totalPages = Math.ceil((total as any) / limit);
@@ -79,13 +89,39 @@ export default async function AdminBlogsPage({
 			<div className="flex items-center justify-between gap-4">
 				<AdminSearch placeholder="Search blogs..." />
 				<div className="flex items-center gap-4">
+					<AdminFilters
+						className="hidden md:flex items-center gap-3"
+						filters={[
+							{
+								key: "status",
+								label: "Status",
+								defaultValue: "all",
+								options: [
+									{ value: "all", label: "All" },
+									{ value: "published", label: "Published" },
+									{ value: "draft", label: "Draft" },
+								],
+							},
+							{
+								key: "sort",
+								label: "Sort",
+								defaultValue: "created_desc",
+								options: [
+									{ value: "created_desc", label: "Date (newest)" },
+									{ value: "created_asc", label: "Date (oldest)" },
+									{ value: "views_desc", label: "Views (high→low)" },
+									{ value: "comments_desc", label: "Comments (high→low)" },
+								],
+							},
+						]}
+					/>
 					<div className="flex border rounded-md overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
-						<Link href={`?page=${page}&search=${search}&view=table`}>
+						<Link href={`?page=${page}&search=${search}&status=${status}&sort=${sort}&view=table`}>
 							<Button variant={view === "table" ? "secondary" : "ghost"} size="icon" className="rounded-none w-10 h-10">
 								<ListIcon className="h-4 w-4" />
 							</Button>
 						</Link>
-						<Link href={`?page=${page}&search=${search}&view=grid`}>
+						<Link href={`?page=${page}&search=${search}&status=${status}&sort=${sort}&view=grid`}>
 							<Button variant={view === "grid" ? "secondary" : "ghost"} size="icon" className="rounded-none w-10 h-10 border-l">
 								<Grid className="h-4 w-4" />
 							</Button>

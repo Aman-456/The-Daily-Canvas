@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="Crew icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="48" fill="#0b1020"/>
+  <circle cx="440" cy="320" r="78" fill="url(#g)" opacity="0.35"/>
+  <circle cx="600" cy="285" r="92" fill="url(#g)" opacity="0.25"/>
+  <circle cx="770" cy="320" r="78" fill="url(#g)" opacity="0.35"/>
+  <path d="M330 520c30-70 220-70 250 0" fill="none" stroke="#e5e7eb" stroke-opacity="0.35" stroke-width="10" stroke-linecap="round"/>
+  <path d="M480 540c35-85 300-85 335 0" fill="none" stroke="#e5e7eb" stroke-opacity="0.28" stroke-width="10" stroke-linecap="round"/>
+</svg>

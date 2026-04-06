@@ -17,8 +17,9 @@ const _getCachedAdminCommentsList = unstable_cache(
 		search?: string,
 		userId?: string,
 		role?: string,
-		permissions?: any
-	) => getAllComments(page, limit, search, userId, role, permissions),
+		permissions?: any,
+		filters?: { status?: string; sort?: string },
+	) => getAllComments(page, limit, search, userId, role, permissions, filters),
 	["admin-comments-list"],
 	{ revalidate: 86400, tags: ["comments"] }
 );
@@ -29,14 +30,15 @@ export const getCachedComments = async (
 	search: string,
 	userId?: string,
 	role?: string,
-	permissions?: any
+	permissions?: any,
+	filters?: { status?: string; sort?: string },
 ) => {
 	const isAdminLevel = role === "ADMIN";
 
 	if (isAdminLevel) {
-		return _getCachedAdminCommentsList(page, limit, search, userId, role, permissions);
+		return _getCachedAdminCommentsList(page, limit, search, userId, role, permissions, filters);
 	} else {
-		return getAllComments(page, limit, search, userId, role, permissions);
+		return getAllComments(page, limit, search, userId, role, permissions, filters);
 	}
 };
 

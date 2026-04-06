@@ -175,6 +175,7 @@ export async function getAllComments(
 	userId?: string,
 	role?: string,
 	permissions?: any,
+	filters?: { status?: string; sort?: string },
 ) {
 	let queryConditions: any[] = [];
 
@@ -196,6 +197,9 @@ export async function getAllComments(
 			return { comments: [], total: 0, totalPages: 0 };
 		}
 	}
+
+	if (filters?.status === "approved") queryConditions.push(eq(comments.isApproved, true));
+	if (filters?.status === "pending") queryConditions.push(eq(comments.isApproved, false));
 
 	const finalCondition = queryConditions.length > 0 ? and(...queryConditions) : undefined;
 
@@ -228,7 +232,7 @@ export async function getAllComments(
 		.from(comments)
 		.leftJoin(users, eq(comments.userId, users.id))
 		.leftJoin(blogs, eq(comments.blogId, blogs.id))
-		.orderBy(desc(comments.createdAt))
+		.orderBy(filters?.sort === "created_asc" ? asc(comments.createdAt) : desc(comments.createdAt))
 		.offset((page - 1) * limit)
 		.limit(limit);
 

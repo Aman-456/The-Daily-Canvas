@@ -19,6 +19,8 @@ import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
 import { UserPermissionsModal } from "@/components/admin/UserPermissionsModal";
 import { DeleteUserButton } from "@/components/admin/DeleteUserButton";
+import { AdminFilters } from "@/components/admin/AdminFilters";
+import { ToggleUserDisabledButton } from "@/components/admin/ToggleUserDisabledButton";
 
 export default async function AdminUsersPage({
 	searchParams,
@@ -34,9 +36,18 @@ export default async function AdminUsersPage({
 	const params = await searchParams;
 	const page = parseInt(params.page as string) || 1;
 	const search = (params.search as string) || "";
+	const status = ((params.status as string) || "all") as "all" | "active" | "disabled";
+	const sort = ((params.sort as string) || "joined_desc") as
+		| "joined_desc"
+		| "joined_asc"
+		| "name_asc"
+		| "email_asc";
 	const limit = 20;
 	const skip = (page - 1) * limit;
-	const [users, total] = (await getCachedUsers(search, skip, limit)) as [any[], number];
+	const [users, total] = (await getCachedUsers(search, skip, limit, status, sort)) as [
+		any[],
+		number,
+	];
 
 	const totalPages = Math.ceil(total / limit);
 
@@ -58,6 +69,31 @@ export default async function AdminUsersPage({
 
 			<div className="flex items-center justify-between gap-4">
 				<AdminSearch placeholder="Search name or email..." />
+				<AdminFilters
+					filters={[
+						{
+							key: "status",
+							label: "Status",
+							defaultValue: "all",
+							options: [
+								{ value: "all", label: "All" },
+								{ value: "active", label: "Active" },
+								{ value: "disabled", label: "Disabled" },
+							],
+						},
+						{
+							key: "sort",
+							label: "Sort",
+							defaultValue: "joined_desc",
+							options: [
+								{ value: "joined_desc", label: "Joined (newest)" },
+								{ value: "joined_asc", label: "Joined (oldest)" },
+								{ value: "name_asc", label: "Name (A→Z)" },
+								{ value: "email_asc", label: "Email (A→Z)" },
+							],
+						},
+					]}
+				/>
 			</div>
 
 			<div className="bg-white dark:bg-zinc-900 border rounded-lg shadow-sm">
@@ -66,6 +102,7 @@ export default async function AdminUsersPage({
 						<TableRow>
 							<TableHead>User</TableHead>
 							<TableHead>Email</TableHead>
+							<TableHead>Status</TableHead>
 							<TableHead>Role</TableHead>
 							<TableHead className="w-[100px]">Joined</TableHead>
 						</TableRow>
@@ -92,6 +129,23 @@ export default async function AdminUsersPage({
 									</div>
 								</TableCell>
 								<TableCell>{user.email}</TableCell>
+								<TableCell>
+									<div className="flex items-center gap-2">
+										{user.isDisabled ? (
+											<Badge variant="secondary">Disabled</Badge>
+										) : (
+											<Badge className="bg-emerald-500 hover:bg-emerald-600">
+												Active
+											</Badge>
+										)}
+										{isAdmin(session?.user?.role) && (
+											<ToggleUserDisabledButton
+												userId={user.id.toString()}
+												isDisabled={!!user.isDisabled}
+											/>
+										)}
+									</div>
+								</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-1">
 										{
@@ -121,7 +175,7 @@ export default async function AdminUsersPage({
 						{users.length === 0 && (
 							<TableRow>
 								<TableCell
-									colSpan={4}
+									colSpan={5}
 									className="text-center h-24 text-muted-foreground"
 								>
 									No users found.

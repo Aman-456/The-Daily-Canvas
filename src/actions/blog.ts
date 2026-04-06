@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import slugify from "slugify";
 import { unstable_cache } from "next/cache";
-import { eq, desc, and, sql, ilike } from "drizzle-orm";
+import { eq, desc, asc, and, sql, ilike } from "drizzle-orm";
 import { blogFullSelector } from "@/db/selectors";
 import { getBlogByIdCached } from "@/queries/blog";
 import {
@@ -29,7 +29,8 @@ async function fetchBlogsList(
 	limit: number,
 	userId?: string,
 	role?: string,
-	permissions?: any
+	permissions?: any,
+	sort: "created_desc" | "created_asc" | "views_desc" | "comments_desc" = "created_desc",
 ) {
 
 	let dbQuery = db.select(blogFullSelector)
@@ -63,8 +64,17 @@ async function fetchBlogsList(
 		countQuery = countQuery.where(finalCondition);
 	}
 
+	const orderBy =
+		sort === "created_asc"
+			? asc(blogs.createdAt)
+			: sort === "views_desc"
+				? desc(blogs.viewCount)
+				: sort === "comments_desc"
+					? desc(blogs.commentsCount)
+					: desc(blogs.createdAt);
+
 	const [blogsData, totalResult] = await Promise.all([
-		dbQuery.orderBy(desc(blogs.createdAt)).offset(skip).limit(limit),
+		dbQuery.orderBy(orderBy).offset(skip).limit(limit),
 		countQuery,
 	]);
 
@@ -79,8 +89,9 @@ const _getCachedAdminBlogsList = unstable_cache(
 		limit: number,
 		userId?: string,
 		role?: string,
-		permissions?: any
-	) => fetchBlogsList(query, skip, limit, userId, role, permissions),
+		permissions?: any,
+		sort?: "created_desc" | "created_asc" | "views_desc" | "comments_desc",
+	) => fetchBlogsList(query, skip, limit, userId, role, permissions, sort),
 	["admin-blogs-list"],
 	{ revalidate: 86400, tags: ["blogs"] }
 );
@@ -91,14 +102,15 @@ export const getCachedBlogs = async (
 	limit: number,
 	userId?: string,
 	role?: string,
-	permissions?: any
+	permissions?: any,
+	sort?: "created_desc" | "created_asc" | "views_desc" | "comments_desc",
 ): Promise<[any[], number]> => {
 	const isAdminLevel = role === "ADMIN";
 
 	if (isAdminLevel) {
-		return _getCachedAdminBlogsList(query, skip, limit, userId, role, permissions);
+		return _getCachedAdminBlogsList(query, skip, limit, userId, role, permissions, sort);
 	} else {
-		return fetchBlogsList(query, skip, limit, userId, role, permissions);
+		return fetchBlogsList(query, skip, limit, userId, role, permissions, sort);
 	}
 };
 

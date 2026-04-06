@@ -15,6 +15,7 @@ export const users = pgTable("user", {
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  isDisabled: boolean("isDisabled").default(false).notNull(),
   role: text("role").$type<"USER" | "ADMIN">().default("USER").notNull(),
   permissions: json("permissions").$type<{
     canSeeStats: boolean;
