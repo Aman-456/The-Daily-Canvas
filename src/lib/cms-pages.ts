@@ -51,7 +51,6 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>Users, blogs, and comments tables now support quick filtering and sorting to speed up moderation and management.</li>
 <li>Users can be marked Disabled/Enabled from the Users table (admin only).</li>
 </ul>
-
 <h3>Table of contents</h3>
 <ul>
 <li>Desktop TOC rail stays sticky while reading.</li>

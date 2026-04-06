@@ -200,7 +200,6 @@ export async function getAllComments(
 
 	if (filters?.status === "approved") queryConditions.push(eq(comments.isApproved, true));
 	if (filters?.status === "pending") queryConditions.push(eq(comments.isApproved, false));
-
 	const finalCondition = queryConditions.length > 0 ? and(...queryConditions) : undefined;
 
 	let countQuery = db.select({ count: sql<number>`count(*)` }).from(comments);

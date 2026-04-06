@@ -20,7 +20,6 @@ export const getCachedUsers = unstable_cache(
 		let countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
 
 		const conditions: any[] = [];
-
 		if (search) {
 			const searchCondition = or(
 				like(users.name, `%${search}%`),
