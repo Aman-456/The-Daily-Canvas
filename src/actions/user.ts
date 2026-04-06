@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { isAdmin } from "@/lib/utils";
 import { unstable_cache } from "next/cache";
-import { and, eq, like, or, desc, asc, sql } from "drizzle-orm";
+import { and, count, eq, like, or, desc, asc, sql } from "drizzle-orm";
 
 export const getCachedUsers = unstable_cache(
 	async (
@@ -107,9 +107,30 @@ export async function toggleUserRole(
 			return { success: false, error: "Cannot demote yourself" };
 		}
 
+		const target = await db.query.users.findFirst({
+			where: eq(users.id, userId),
+		});
+		if (!target) {
+			return { success: false, error: "User not found" };
+		}
+
+		if (newRole === "USER" && target.role === "ADMIN") {
+			const [row] = await db
+				.select({ n: count() })
+				.from(users)
+				.where(eq(users.role, "ADMIN"));
+			if (Number(row?.n ?? 0) <= 1) {
+				return {
+					success: false,
+					error: "Cannot demote the last administrator",
+				};
+			}
+		}
+
 		await db.update(users).set({ role: newRole }).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
+		revalidateTag("users", "max");
 
 		return { success: true };
 	} catch (error: any) {

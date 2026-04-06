@@ -148,15 +148,13 @@ export default async function AdminUsersPage({
 								</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-1">
-										{
-											isAdmin(session?.user?.role) && user.role !== "ADMIN" && (
-												<UserRoleSelect
-													userId={user.id.toString()}
-													currentRole={user.role}
-													disabled={user.id.toString() === session?.user?.id}
-												/>
-											)
-										}
+										{isAdmin(session?.user?.role) && (
+											<UserRoleSelect
+												userId={user.id.toString()}
+												currentRole={user.role}
+												disabled={user.id.toString() === session?.user?.id}
+											/>
+										)}
 										{user.role === "USER" && isAdmin(session?.user?.role) && (
 											<UserPermissionsModal user={JSON.parse(JSON.stringify(user))} />
 										)}

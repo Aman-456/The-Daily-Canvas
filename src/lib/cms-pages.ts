@@ -37,6 +37,13 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
+<h2>2026-04-08 — Admin user roles</h2>
+
+<h3>Admin</h3>
+<ul>
+<li>On <strong>Users</strong>, administrators can change the role (USER / ADMIN) for <strong>other administrators</strong>, not only regular users. The role control stays disabled on your own row; demoting the last remaining administrator is blocked.</li>
+</ul>
+
 <h2>2026-04-07 — Sign-in page &amp; email login</h2>
 
 <h3>Auth</h3>
