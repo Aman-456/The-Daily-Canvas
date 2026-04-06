@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getProviders, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,20 @@ import Link from "next/link";
 
 type ProvidersMap = Record<string, { id: string; name: string }> | null;
 
-export default function SignInPage() {
+function SignInFallback() {
+	return (
+		<div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-10">
+			<div className="w-full max-w-md rounded-2xl border bg-background shadow-sm p-8 text-sm text-muted-foreground">
+				Loading sign-in…
+			</div>
+		</div>
+	);
+}
+
+function SignInForm() {
+	const searchParams = useSearchParams();
+	const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+
 	const [providers, setProviders] = useState<ProvidersMap>(null);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -31,12 +45,6 @@ export default function SignInPage() {
 
 	const hasGoogle = !!providers?.google;
 	const hasCredentials = !!providers?.credentials;
-
-	const callbackUrl = useMemo(() => {
-		if (typeof window === "undefined") return "/";
-		const params = new URLSearchParams(window.location.search);
-		return params.get("callbackUrl") || "/admin";
-	}, []);
 
 	async function onCredentialsSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -150,3 +158,10 @@ export default function SignInPage() {
 	);
 }
 
+export default function SignInPage() {
+	return (
+		<Suspense fallback={<SignInFallback />}>
+			<SignInForm />
+		</Suspense>
+	);
+}

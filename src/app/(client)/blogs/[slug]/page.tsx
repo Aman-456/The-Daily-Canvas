@@ -109,7 +109,7 @@ export default async function SingleBlogPage({
 			<div
 				className={
 					toc.length > 0
-						? "lg:flex lg:justify-center lg:gap-5 lg:items-start"
+						? "lg:flex lg:justify-center lg:gap-5 lg:items-stretch"
 						: ""
 				}
 			>
@@ -272,8 +272,8 @@ export default async function SingleBlogPage({
 				</article>
 
 				{toc.length > 0 && (
-					<aside className="hidden lg:block w-44 shrink-0 pt-1 sm:w-48">
-						<div className="sticky top-24 max-h-[min(70vh,28rem)] overflow-y-auto overscroll-y-contain border-l border-border/30 pl-3 pr-1 [scrollbar-width:thin]">
+					<aside className="hidden lg:block w-44 shrink-0 pt-1 xl:w-48">
+						<div className="sticky top-24 z-10 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-y-contain border-l border-border/30 pl-3 pr-1 [scrollbar-width:thin]">
 							<TableOfContents items={toc} variant="sidebar" />
 						</div>
 					</aside>

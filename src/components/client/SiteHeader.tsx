@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import type { Session } from "next-auth";
 import { Button } from "@/components/ui/button";
 import { UserNav } from "@/components/client/UserNav";
@@ -9,7 +10,6 @@ import { ThemeToggle } from "@/components/client/ThemeToggle";
 import SearchInput from "@/components/client/SearchInput";
 import { listingTitleQueryFromUrlSearchParams } from "@/lib/blog-tags";
 import { HeaderShareStrip } from "@/components/client/ShareThisPageBar";
-import { signIn } from "next-auth/react";
 
 function navLinkClass(active: boolean) {
 	return active
@@ -21,7 +21,11 @@ export function SiteHeader({ session }: { session: Session | null }) {
 	const pathname = usePathname();
 	const sp = useSearchParams();
 	const search = listingTitleQueryFromUrlSearchParams(sp);
-	const homeActive = pathname === "/";
+	const signInCallbackUrl = useMemo(() => {
+		const qs = sp.toString();
+		return qs ? `${pathname}?${qs}` : pathname;
+	}, [pathname, sp]);
+	const signInHref = `/signin?callbackUrl=${encodeURIComponent(signInCallbackUrl)}`;
 	const archiveActive = pathname === "/archive";
 	const aboutActive = pathname === "/about";
 	const hideNavSearch = pathname === "/search";
@@ -34,13 +38,11 @@ export function SiteHeader({ session }: { session: Session | null }) {
 					<Link
 						href="/"
 						className="font-headline text-xl font-extrabold tracking-tighter text-foreground shrink-0"
+						aria-label="Daily Thoughts — Home"
 					>
 						Daily <span className="text-primary">Thoughts</span>
 					</Link>
 					<nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-						<Link href="/" className={navLinkClass(homeActive)}>
-							Home
-						</Link>
 						<Link href="/archive" className={navLinkClass(archiveActive)}>
 							Archive
 						</Link>
@@ -68,14 +70,8 @@ export function SiteHeader({ session }: { session: Session | null }) {
 					{session?.user ? (
 						<UserNav user={session.user} />
 					) : (
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							className="hidden sm:inline-flex font-medium"
-							onClick={() => signIn("google")}
-						>
-							Sign in
+						<Button variant="ghost" size="sm" className="font-medium" asChild>
+							<Link href={signInHref}>Sign in</Link>
 						</Button>
 					)}
 				</div>

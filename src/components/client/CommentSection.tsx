@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { addComment, getComments } from "@/actions/comment";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CommentItem } from "./CommentItem";
 import { ChevronDown } from "lucide-react";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { MessageSquarePlus } from "lucide-react";
 
@@ -35,6 +37,12 @@ export function CommentSection({
 }: CommentSectionProps) {
 	const { data: session } = useSession();
 	const user = session?.user;
+	const pathname = usePathname();
+	const signInHref = useMemo(
+		() =>
+			`/signin?callbackUrl=${encodeURIComponent(`${pathname}#comment-form`)}`,
+		[pathname],
+	);
 
 	const [content, setContent] = useState("");
 	const [comments, setComments] = useState(initialComments);
@@ -345,12 +353,8 @@ export function CommentSection({
 						<p className="text-muted-foreground mb-4 font-medium">
 							Sign in to join the discussion and share your perspective.
 						</p>
-						<Button
-							variant="outline"
-							className="rounded-full px-8 font-bold border-2"
-							onClick={() => signIn("google")}
-						>
-							Sign In to Comment
+						<Button variant="outline" className="rounded-full px-8 font-bold border-2" asChild>
+							<Link href={signInHref}>Sign In to Comment</Link>
 						</Button>
 					</div>
 				)}

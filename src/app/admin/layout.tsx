@@ -13,7 +13,7 @@ export default async function AdminLayout({
   const session = await auth()
 
   if (!session?.user) {
-    redirect("/signin")
+    redirect(`/signin?callbackUrl=${encodeURIComponent("/admin")}`)
   }
 
   return (
