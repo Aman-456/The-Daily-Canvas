@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { extractTocFromMarkdown } from "@/lib/markdown-toc";
+import Image from "next/image";
 
 export function MarkdownWithToc({
 	content,
@@ -42,6 +43,51 @@ export function MarkdownWithToc({
 				{children}
 			</h3>
 		),
+		img: ({
+			alt,
+			src,
+			title,
+			width,
+			height,
+			...props
+		}: ComponentPropsWithoutRef<"img">) => {
+			if (!src || typeof src !== "string") return null;
+
+			const fallbackAlt =
+				(alt && alt.trim()) ||
+				(title && title.trim()) ||
+				"Blog image";
+
+			const w =
+				typeof width === "number"
+					? width
+					: typeof width === "string"
+						? Number.parseInt(width, 10)
+						: NaN;
+			const h =
+				typeof height === "number"
+					? height
+					: typeof height === "string"
+						? Number.parseInt(height, 10)
+						: NaN;
+
+			const resolvedWidth = Number.isFinite(w) && w > 0 ? w : 1200;
+			const resolvedHeight = Number.isFinite(h) && h > 0 ? h : 630;
+
+			return (
+				<span className="block my-6">
+					<Image
+						src={src}
+						alt={fallbackAlt}
+						width={resolvedWidth}
+						height={resolvedHeight}
+						sizes="(max-width: 768px) 100vw, 768px"
+						className="h-auto w-full rounded-xl"
+						{...props}
+					/>
+				</span>
+			);
+		},
 	};
 
 	return (

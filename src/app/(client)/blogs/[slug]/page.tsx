@@ -33,6 +33,32 @@ import {
 
 export const revalidate = 3600;
 
+function buildMetaDescription(blog: {
+	title: string;
+	metaDescription?: string | null;
+	excerpt?: string | null;
+	primaryKeyword?: string | null;
+}) {
+	const rawBase =
+		blog.metaDescription?.trim() ||
+		blog.excerpt?.trim() ||
+		blog.title?.trim() ||
+		"";
+	const maybeKeyword =
+		blog.primaryKeyword && blog.primaryKeyword.trim()
+			? blog.primaryKeyword.trim()
+			: null;
+
+	const raw =
+		!blog.metaDescription && maybeKeyword && !rawBase.toLowerCase().includes(maybeKeyword.toLowerCase())
+			? `${maybeKeyword} — ${rawBase}`
+			: rawBase;
+
+	const normalized = raw.replace(/\s+/g, " ").trim();
+	if (normalized.length <= 160) return normalized;
+	return normalized.slice(0, 157).replace(/\s+\S*$/, "").trim() + "...";
+}
+
 export async function generateMetadata({
 	params,
 }: {
@@ -42,19 +68,66 @@ export async function generateMetadata({
 	const blog = await getBlogBySlugCached(slug);
 	if (!blog) return { title: "Blog Not Found" };
 
-	const description = blog.metaDescription || (blog.excerpt ? blog.excerpt.substring(0, 150) : blog.title);
+	const tags = (blog.tags ?? []).filter(Boolean);
+	const primaryKeyword = blog.keywords?.[0]?.trim() || tags[0]?.trim() || null;
+	const description = buildMetaDescription({ ...blog, primaryKeyword });
+	const canonical = absoluteUrl(`/blogs/${blog.slug}`);
+	const imageUrl = blog.coverImage ? absoluteUrl(blog.coverImage) : undefined;
+	const baseTitle = blog.metaTitle || blog.title;
+	const title =
+		!blog.metaTitle &&
+		primaryKeyword &&
+		!baseTitle.toLowerCase().includes(primaryKeyword.toLowerCase()) &&
+		baseTitle.length <= 55
+			? `${baseTitle} | ${primaryKeyword}`
+			: baseTitle;
+	const keywords =
+		(blog.keywords?.length ? blog.keywords : null) ||
+		(tags.length ? tags : null) ||
+		["blog", "daily thoughts", "article", blog.title];
 
 	return {
-		title: blog.metaTitle || blog.title,
+		title,
 		description,
-		keywords: (blog.keywords?.length ? blog.keywords : null) || (blog.tags?.length ? blog.tags : null) || ["blog", "daily thoughts", "article", blog.title],
+		keywords,
+		robots: {
+			index: true,
+			follow: true,
+			googleBot: {
+				index: true,
+				follow: true,
+				"max-image-preview": "large",
+				"max-snippet": -1,
+				"max-video-preview": -1,
+			},
+		},
 		alternates: {
-			canonical: `/blogs/${blog.slug}`,
+			canonical,
 		},
 		openGraph: {
-			title: blog.metaTitle || blog.title,
+			type: "article",
+			url: canonical,
+			title,
 			description,
-			images: blog.coverImage ? [blog.coverImage] : [],
+			siteName: "The Daily Canvas",
+			publishedTime: new Date(blog.createdAt).toISOString(),
+			modifiedTime: new Date(blog.updatedAt || blog.createdAt).toISOString(),
+			authors: blog.authorId?.name ? [blog.authorId.name] : undefined,
+			tags: tags.length ? tags : undefined,
+			images: imageUrl
+				? [
+						{
+							url: imageUrl,
+							alt: `${blog.title} cover image`,
+						},
+					]
+				: [],
+		},
+		twitter: {
+			card: imageUrl ? "summary_large_image" : "summary",
+			title,
+			description,
+			images: imageUrl ? [imageUrl] : undefined,
 		},
 	};
 }
@@ -209,7 +282,7 @@ export default async function SingleBlogPage({
 					<div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-muted shadow-sm">
 						<Image
 							src={blog.coverImage!}
-							alt={blog.title}
+							alt={`${blog.title} cover image`}
 							fill
 							priority
 							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
@@ -271,13 +344,13 @@ export default async function SingleBlogPage({
 			/>
 				</article>
 
-				{toc.length > 0 && (
+				{/* {toc.length > 0 && (
 					<aside className="hidden lg:block w-44 shrink-0 pt-1 xl:w-48">
-						<div className="sticky top-24 z-10 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-y-contain border-l border-border/30 pl-3 pr-1 [scrollbar-width:thin]">
+						<div className="sticky top-2 z-10 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-y-contain border-l border-border/30 pl-3 pr-1 [scrollbar-width:thin]">
 							<TableOfContents items={toc} variant="sidebar" />
 						</div>
 					</aside>
-				)}
+				)} */}
 			</div>
 
 			<JsonLd

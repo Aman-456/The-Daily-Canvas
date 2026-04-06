@@ -53,6 +53,13 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>TOC items are auto-numbered when the heading text doesn’t already start with a number.</li>
 </ul>
 
+<h3>SEO</h3>
+<ul>
+<li>Upgraded blog post metadata with richer Open Graph + Twitter cards, absolute canonical URLs, and robots directives.</li>
+<li>Improved auto-generated titles/descriptions to better reflect the post’s primary topic when custom SEO fields aren’t set.</li>
+<li>Ensured images in related posts and markdown content have meaningful <code>alt</code> text; markdown images now render responsively.</li>
+</ul>
+
 <h2>2026-04-05 — Site update</h2>
 
 <h3>Content &amp; admin</h3>
