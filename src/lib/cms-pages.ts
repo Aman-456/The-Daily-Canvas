@@ -37,6 +37,22 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
+<h2>2026-04-06 — Reading &amp; sign-in polish</h2>
+
+<h3>Auth</h3>
+<ul>
+<li>Mobile header now shows Sign in (previously hidden on small screens).</li>
+<li>Sign in links route through <code>/signin</code> with an explicit <code>callbackUrl</code> to return you to the page you started from.</li>
+<li><code>/signin</code> now defaults to returning to the home page when no <code>callbackUrl</code> is provided; admin redirects include <code>callbackUrl=/admin</code>.</li>
+</ul>
+
+<h3>Table of contents</h3>
+<ul>
+<li>Desktop TOC rail stays sticky while reading.</li>
+<li>TOC clicks jump instantly (no smooth-scroll animation).</li>
+<li>TOC items are auto-numbered when the heading text doesn’t already start with a number.</li>
+</ul>
+
 <h2>2026-04-05 — Site update</h2>
 
 <h3>Content &amp; admin</h3>
