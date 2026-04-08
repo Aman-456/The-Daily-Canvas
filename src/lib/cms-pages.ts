@@ -44,6 +44,15 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <li>On <strong>Users</strong>, administrators can change the role (USER / ADMIN) for <strong>other administrators</strong>, not only regular users. The role control stays disabled on your own row; demoting the last remaining administrator is blocked.</li>
 </ul>
 
+<h3>Performance &amp; accessibility</h3>
+<ul>
+<li>Improved image delivery on listing cards (archive, grids, and featured rails) by lowering non-hero image quality and ensuring consistent <code>alt</code> text.</li>
+<li>Fixed mobile tap-target sizing for topic pills on archive cards.</li>
+<li>Adjusted footer heading levels to keep headings in sequential order for assistive technologies.</li>
+<li>Deferred loading the comments UI on blog pages to reduce main-thread work during initial render.</li>
+<li>JSON-LD now renders via a plain <code>&lt;script type=&quot;application/ld+json&quot;&gt;</code> tag (removes React “script tag” warnings while preserving structured data).</li>
+</ul>
+
 <h2>2026-04-07 — Sign-in page &amp; email login</h2>
 
 <h3>Auth</h3>
