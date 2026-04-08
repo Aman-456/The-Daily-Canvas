@@ -67,18 +67,12 @@ export function CommentSection({
 		setHasMore(initialHasMore);
 		setPage(1);
 		setIsLoaded(initialComments.length > 0);
-
-		console.log("[CommentSection] BlogId changed or initial sync", {
-			blogId,
-			hasInitial: initialComments.length > 0,
-		});
 	}, [blogId]);
 
 	const handleInitialLoad = async () => {
 		setIsLoadingMore(true);
 		try {
 			const result = await getComments(blogId, 1, limit);
-			console.log("[CommentSection] Initial load", result);
 			if (result.success && result.data) {
 				setComments(result.data.comments);
 				setHasMore(result.data.hasMore);
@@ -138,7 +132,6 @@ export function CommentSection({
 				comments.length > 0
 					? comments[comments.length - 1].createdAt
 					: undefined;
-			console.log("[CommentSection] Loading more", { nextPage, limit, blogId });
 			const result = await getComments(blogId, nextPage, limit, lastTimestamp);
 
 			if (result.success && result.data) {
@@ -195,7 +188,7 @@ export function CommentSection({
 							? "Loading conversation..."
 							: localTotal === 1
 								? "View full discussion"
-								: "Show all responses"}
+								: "Add a response"}
 					</Button>
 
 					{latestComment && !isLoadingMore && (

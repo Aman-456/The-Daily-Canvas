@@ -58,7 +58,7 @@ export function SiteHeader({ session }: { session: Session | null }) {
 							<SearchInput defaultValue={search} key={search} variant="editorial" />
 						</div>
 					)}
-					<Link href="/#newsletter" className="hidden sm:inline-flex">
+					<Link href="#newsletter" className="hidden sm:inline-flex">
 						<Button
 							size="sm"
 							className="rounded-xl px-5 font-headline font-bold shadow-none"

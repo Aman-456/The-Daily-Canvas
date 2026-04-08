@@ -40,8 +40,10 @@ export function BlogPostCardGrid({ blogs }: { blogs: BlogPostCardItem[] }) {
 								{blog.coverImage ? (
 									<Image
 										src={blog.coverImage}
-										alt={blog.title}
+										alt={`${blog.title} cover image`}
 										fill
+										quality={65}
+										loading="lazy"
 										sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 										className="object-cover group-hover:scale-105 transition-transform duration-500"
 									/>
@@ -71,7 +73,8 @@ export function BlogPostCardGrid({ blogs }: { blogs: BlogPostCardItem[] }) {
 											<Link
 												key={tag}
 												href={blogTagFilterHref(slugForFilter)}
-												className="text-[11px] font-medium text-primary/80 bg-primary/8 px-2 py-0.5 rounded-full hover:bg-primary/15 transition-colors"
+												aria-label={`Filter posts by tag: ${label}`}
+												className="text-[11px] font-medium text-primary/90 bg-primary/10 px-2.5 py-1 rounded-full hover:bg-primary/15 transition-colors"
 											>
 												{label}
 											</Link>

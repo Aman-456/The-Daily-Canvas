@@ -74,13 +74,26 @@ export function EditorialOverlayPostCard({
 			className={`group editorial-card-shadow relative block overflow-hidden rounded-xl bg-muted ${minHeightClass[size]} ${className}`}
 		>
 			{blog.coverImage ? (
-				<Image
-					src={blog.coverImage}
-					alt=""
-					fill
-					className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-					sizes={imageSizes}
-				/>
+				size === "hero" ? (
+					<Image
+						src={blog.coverImage}
+						alt={`${blog.title} cover image`}
+						fill
+						priority
+						className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+						sizes={imageSizes}
+					/>
+				) : (
+					<Image
+						src={blog.coverImage}
+						alt={`${blog.title} cover image`}
+						fill
+						quality={65}
+						loading="lazy"
+						className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+						sizes={imageSizes}
+					/>
+				)
 			) : (
 				<div className="absolute inset-0 bg-linear-to-br from-zinc-300 to-zinc-400 dark:from-zinc-700 dark:to-zinc-900" />
 			)}

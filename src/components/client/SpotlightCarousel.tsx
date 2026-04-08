@@ -44,17 +44,26 @@ function SpotlightCard({
 		>
 			<div className={`${aspectClass} bg-muted shrink-0`}>
 				{blog.coverImage ? (
-					<Image
-						src={blog.coverImage}
-						alt=""
-						fill
-						className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
-						sizes={
-							variant === "hero"
-								? "(max-width: 768px) 100vw, 42vw"
-								: "(max-width: 768px) 100vw, 22vw"
-						}
-					/>
+					variant === "hero" ? (
+						<Image
+							src={blog.coverImage}
+							alt={`${blog.title} cover image`}
+							fill
+							priority
+							className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
+							sizes="(max-width: 768px) 100vw, 42vw"
+						/>
+					) : (
+						<Image
+							src={blog.coverImage}
+							alt={`${blog.title} cover image`}
+							fill
+							quality={65}
+							loading="lazy"
+							className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
+							sizes="(max-width: 768px) 100vw, 22vw"
+						/>
+					)
 				) : (
 					<div className="absolute inset-0 bg-linear-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900" />
 				)}

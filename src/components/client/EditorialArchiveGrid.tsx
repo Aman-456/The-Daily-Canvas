@@ -52,8 +52,10 @@ export function EditorialArchiveGrid({
 								{blog.coverImage ? (
 									<Image
 										src={blog.coverImage}
-										alt=""
+										alt={`${blog.title} cover image`}
 										fill
+										quality={65}
+										loading="lazy"
 										className="object-cover transition-transform duration-700 group-hover:scale-105"
 										sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 									/>
@@ -64,12 +66,13 @@ export function EditorialArchiveGrid({
 							{slugForFilter ? (
 								<Link
 									href={blogTagFilterHref(slugForFilter)}
-									className="absolute left-4 top-4 z-10 inline-block rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-900 shadow-sm backdrop-blur-sm transition-colors hover:bg-white dark:bg-zinc-950/90 dark:text-zinc-100 dark:hover:bg-zinc-900"
+									aria-label={`Filter posts by topic: ${tagLabel}`}
+									className="absolute left-4 top-4 z-10 inline-flex min-h-11 items-center rounded-full bg-white/90 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-zinc-900 shadow-sm backdrop-blur-sm transition-colors hover:bg-white dark:bg-zinc-950/90 dark:text-zinc-100 dark:hover:bg-zinc-900"
 								>
 									{tagLabel}
 								</Link>
 							) : (
-								<span className="absolute left-4 top-4 z-10 inline-block rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-900 backdrop-blur-sm dark:bg-zinc-950/90 dark:text-zinc-100">
+								<span className="absolute left-4 top-4 z-10 inline-flex min-h-11 items-center rounded-full bg-white/90 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-zinc-900 backdrop-blur-sm dark:bg-zinc-950/90 dark:text-zinc-100">
 									{tagLabel}
 								</span>
 							)}

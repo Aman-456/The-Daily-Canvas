@@ -24,6 +24,8 @@ export function RelatedPosts({ posts }: { posts: BlogPostCardItem[] }) {
 										src={blog.coverImage}
 										alt={`${blog.title} cover image`}
 										fill
+										quality={65}
+										loading="lazy"
 										className="object-cover"
 										sizes="96px"
 									/>

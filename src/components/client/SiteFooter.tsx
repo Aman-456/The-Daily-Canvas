@@ -16,9 +16,9 @@ export function SiteFooter() {
 						</p>
 					</div>
 					<div>
-						<h4 className="font-headline mb-4 text-sm font-bold text-foreground">
+						<h2 className="font-headline mb-4 text-sm font-bold text-foreground">
 							Explore
-						</h4>
+						</h2>
 						<ul className="space-y-3 text-sm text-muted-foreground">
 							<li>
 								<Link
@@ -55,9 +55,9 @@ export function SiteFooter() {
 						</ul>
 					</div>
 					<div>
-						<h4 className="font-headline mb-4 text-sm font-bold text-foreground">
+						<h2 className="font-headline mb-4 text-sm font-bold text-foreground">
 							Community
-						</h4>
+						</h2>
 						<ul className="space-y-3 text-sm text-muted-foreground">
 							<li>
 								<Link
@@ -94,9 +94,9 @@ export function SiteFooter() {
 						</ul>
 					</div>
 					<div>
-						<h4 className="font-headline mb-4 text-sm font-bold text-foreground">
+						<h2 className="font-headline mb-4 text-sm font-bold text-foreground">
 							Legal
-						</h4>
+						</h2>
 						<ul className="space-y-3 text-sm text-muted-foreground">
 							<li>
 								<Link
