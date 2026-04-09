@@ -33,14 +33,24 @@ export function AdminFilters({
 	}
 
 	return (
-		<div className={className ?? "flex items-center gap-3 flex-wrap"}>
+		<div
+			className={
+				className ??
+				"flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
+			}
+		>
 			{filters.map((f) => {
 				const current = searchParams.get(f.key) ?? f.defaultValue;
 				return (
-					<label key={f.key} className="flex items-center gap-2 text-sm">
-						<span className="text-muted-foreground font-medium">{f.label}</span>
+					<label
+						key={f.key}
+						className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm sm:min-w-38 sm:flex-none sm:flex-row sm:items-center sm:gap-2"
+					>
+						<span className="shrink-0 text-xs font-medium text-muted-foreground sm:text-sm">
+							{f.label}
+						</span>
 						<select
-							className="h-9 rounded-md border bg-white dark:bg-zinc-900 px-3 text-sm shadow-sm"
+							className="h-9 w-full min-w-0 rounded-md border border-border/60 bg-background px-3 text-sm shadow-sm sm:w-auto sm:min-w-38"
 							value={current}
 							onChange={(e) => setParam(f.key, e.target.value, f.defaultValue)}
 						>

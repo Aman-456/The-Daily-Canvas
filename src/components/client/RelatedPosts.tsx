@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { BlogPostCardItem } from "@/components/client/BlogPostCardGrid";
+import type { BlogPostCardItem } from "@/types/blog-post-card";
 
 export function RelatedPosts({ posts }: { posts: BlogPostCardItem[] }) {
 	if (posts.length === 0) return null;

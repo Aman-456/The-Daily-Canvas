@@ -37,6 +37,32 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
+<h2>2026-04-09 — Admin layout cleanup &amp; dead code removal</h2>
+
+<h3>Admin</h3>
+<ul>
+<li>Shared list layout: <code>AdminListPageShell</code>, <code>AdminPageHeader</code>, <code>AdminToolbarCard</code>, and compact toolbar counts (<code>AdminToolbarCount</code>) so admin list pages stay consistent.</li>
+<li>Blogs, comments, users, newsletter, cache, and other list screens wired into the same shell/toolbar patterns; blog list/detail/edit screens cleaned up.</li>
+<li>Toolbar totals use muted inline text (same idea as the blogs list) instead of wide primary-tint badges.</li>
+<li>Contact inbox: status filtering uses a <strong>dropdown</strong> like other admin lists.</li>
+<li>Manage Pages admin route markup fixed; tables use predictable overflow behavior.</li>
+<li>Admin filter/search controls (<code>AdminFilters</code>, <code>AdminSearch</code>) adjusted for the new layouts.</li>
+</ul>
+
+<h3>Reading &amp; markdown</h3>
+<ul>
+<li>Blog post body (<code>MarkdownWithToc</code>): GitHub-style <strong>tables</strong> get a scrollable wrapper and cell borders so wide data doesn’t break the column.</li>
+<li>Markdown <strong>external</strong> links (<code>http(s)</code>, <code>mailto</code>, <code>tel</code>) open in a new tab with <code>noopener</code> / <code>noreferrer</code>; in-page <code>#anchors</code> stay same-tab.</li>
+<li>Markdown images with <strong>remote</strong> URLs render as plain <code>&lt;img&gt;</code> (lazy, <code>no-referrer</code>) so Next/Image optimizer edge cases—redirects, blocks, hotlink rules—don’t blank the post.</li>
+<li>Article <strong>cover</strong> images use the same plain <code>&lt;img&gt;</code> approach for reliable delivery from external hosts.</li>
+</ul>
+
+<h3>Code health</h3>
+<ul>
+<li>Removed unused <code>SpotlightCarousel</code>, unused <code>BlogPostCardGrid</code> component (type <code>BlogPostCardItem</code> now lives in <code>src/types/blog-post-card.ts</code>), unused UI sheet primitive, and a duplicate session-provider file.</li>
+<li>Production build verified.</li>
+</ul>
+
 <h2>2026-04-08 — Admin user roles</h2>
 
 <h3>Admin</h3>

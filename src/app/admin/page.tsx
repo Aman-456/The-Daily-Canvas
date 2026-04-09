@@ -1,9 +1,8 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
-import { getCachedStats } from "@/actions/dashboard"
-import { isAdmin } from "@/lib/utils"
+import { getCachedStats } from "@/actions/dashboard";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 
 
@@ -23,14 +22,16 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back, {session?.user?.name || "Admin"}. Here's an overview of your platform.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Dashboard"
+        description={
+          <>
+            Welcome back, {session?.user?.name || "Admin"}. Here&apos;s an overview of your platform.
+          </>
+        }
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>

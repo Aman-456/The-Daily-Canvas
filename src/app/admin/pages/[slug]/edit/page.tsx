@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { getPageBySlug, updateAdminPage } from "@/actions/page";
 import { toast } from "sonner";
 import InitializedMDXEditor from "@/components/admin/Editor/InitializedMDXEditor";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default function EditPage({ params }: { params: Promise<{ slug: string }> }) {
 	const resolvedParams = use(params);
@@ -49,13 +50,16 @@ export default function EditPage({ params }: { params: Promise<{ slug: string }>
 	}
 
 	return (
-		<div className="space-y-6 max-w-4xl">
-			<div className="flex items-center justify-between">
-				<h1 className="text-3xl font-bold tracking-tight">Edit {title}</h1>
-				<Button onClick={handleSave} disabled={saving}>
-					{saving ? "Saving..." : "Save Changes"}
-				</Button>
-			</div>
+		<div className="max-w-4xl space-y-6">
+			<AdminPageHeader
+				title={title ? `Edit: ${title}` : "Edit page"}
+				description="Update CMS page content and title."
+				actions={
+					<Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+						{saving ? "Saving…" : "Save changes"}
+					</Button>
+				}
+			/>
 
 			<div className="space-y-4">
 				<div className="space-y-2">

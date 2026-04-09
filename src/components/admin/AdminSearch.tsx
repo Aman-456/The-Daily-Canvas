@@ -4,11 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function AdminSearch({
 	placeholder = "Search...",
+	className,
 }: {
 	placeholder?: string;
+	/** Applied to the outer wrapper (e.g. w-full max-w-md) */
+	className?: string;
 }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -52,7 +56,12 @@ export function AdminSearch({
 	}, [value, pathname, router, searchParams]);
 
 	return (
-		<div className="relative max-w-sm bg-white rounded-lg">
+		<div
+			className={cn(
+				"relative w-full max-w-md rounded-lg border border-border/60 bg-background shadow-sm",
+				className,
+			)}
+		>
 			<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 			<Input
 				placeholder={placeholder}

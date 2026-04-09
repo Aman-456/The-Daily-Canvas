@@ -1,33 +1,35 @@
 import Link from "next/link";
+import type { InferSelectModel } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { pages } from "@/db/schema";
 import { getAdminPages } from "@/actions/page";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
+import { AdminListPageShell } from "@/components/admin/AdminListPageShell";
+import { AdminToolbarCount } from "@/components/admin/AdminToolbarCount";
+
+type PageRow = InferSelectModel<typeof pages>;
 
 export default async function AdminPagesPage() {
-	const { session, authorized } = await checkPermission(PERMISSIONS.MANAGE_PAGES);
+	const { authorized } = await checkPermission(PERMISSIONS.MANAGE_PAGES);
 
 	if (!authorized) {
 		return <AccessDenied requiredPermission="canManagePages" />;
 	}
 
 	const result = await getAdminPages();
-	const pages = result.success && result.data ? result.data : [];
+	const rows: PageRow[] = result.success && result.data ? result.data : [];
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Manage Pages</h1>
-					<p className="text-muted-foreground">
-						Edit Privacy, Terms, FAQ, Changelog, and other CMS-backed pages.
-					</p>
-				</div>
-			</div>
-
-			<div className="bg-white dark:bg-zinc-900 border rounded-lg shadow-sm">
-				<Table>
+		<AdminListPageShell
+			title="Manage Pages"
+			description="Edit Privacy, Terms, FAQ, Changelog, and other CMS-backed pages."
+			toolbarTitle="Overview"
+			toolbar={<AdminToolbarCount count={rows.length} unit="pages" />}
+		>
+			<div className="overflow-x-auto rounded-lg border bg-white shadow-sm dark:bg-zinc-900">
+				<Table className="min-w-[640px]">
 					<TableHeader>
 						<TableRow>
 							<TableHead>Title</TableHead>
@@ -37,14 +39,12 @@ export default async function AdminPagesPage() {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{pages.map((page: any) => (
+						{rows.map((page) => (
 							<TableRow key={page.id.toString()}>
 								<TableCell className="font-medium">{page.title}</TableCell>
 								<TableCell className="text-muted-foreground">{page.slug}</TableCell>
-								<TableCell>
-									{new Date(page.updatedAt).toLocaleDateString()}
-								</TableCell>
-								<TableCell className="text-right space-x-2">
+								<TableCell>{new Date(page.updatedAt).toLocaleDateString()}</TableCell>
+								<TableCell className="space-x-2 text-right">
 									<Link href={`/${page.slug}`} target="_blank">
 										<Button variant="outline" size="sm">
 											View
@@ -58,9 +58,9 @@ export default async function AdminPagesPage() {
 								</TableCell>
 							</TableRow>
 						))}
-						{pages.length === 0 && (
+						{rows.length === 0 && (
 							<TableRow>
-								<TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+								<TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
 									No pages found.
 								</TableCell>
 							</TableRow>
@@ -68,6 +68,6 @@ export default async function AdminPagesPage() {
 					</TableBody>
 				</Table>
 			</div>
-		</div>
+		</AdminListPageShell>
 	);
 }

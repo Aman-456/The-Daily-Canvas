@@ -1,8 +1,5 @@
-import { getAllComments } from "@/queries/comment";
 export const dynamic = "force-dynamic";
 
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { User as UserIcon, MessageSquare } from "lucide-react";
 import { CommentActionButtons } from "@/components/admin/CommentActionButtons";
@@ -12,6 +9,8 @@ import { getCachedComments } from "@/actions/comment";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
 import { AdminFilters } from "@/components/admin/AdminFilters";
+import { AdminListPageShell } from "@/components/admin/AdminListPageShell";
+import { AdminToolbarCount } from "@/components/admin/AdminToolbarCount";
 
 export default async function AdminCommentsPage({
 	searchParams,
@@ -39,52 +38,48 @@ export default async function AdminCommentsPage({
 	);
 
 	return (
-		<div className="space-y-8 animate-in fade-in duration-500">
-			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">
-						Comments Management
-					</h1>
-					<p className="text-muted-foreground mt-1">
-						Review and manage all user responses across your blog.
-					</p>
-				</div>
-				<div className="flex items-center gap-4">
-					<div className="bg-primary/5 px-4 py-2 rounded-lg border border-primary/10">
-						<p className="text-sm font-medium text-primary">
-							Total Responses: {total}
-						</p>
+		<AdminListPageShell
+			className="space-y-8 animate-in fade-in duration-500"
+			title="Comments"
+			description="Review and manage all user responses across your blog."
+			toolbar={
+				<div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
+					<div className="flex min-w-0 flex-1 flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
+						<div className="w-full min-w-0 xl:max-w-md xl:flex-1">
+							<AdminSearch
+								placeholder="Search comments or blog…"
+								className="max-w-none shadow-none"
+							/>
+						</div>
+						<AdminFilters
+							className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+							filters={[
+								{
+									key: "status",
+									label: "Status",
+									defaultValue: "all",
+									options: [
+										{ value: "all", label: "All" },
+										{ value: "approved", label: "Approved" },
+										{ value: "pending", label: "Pending" },
+									],
+								},
+								{
+									key: "sort",
+									label: "Sort by",
+									defaultValue: "created_desc",
+									options: [
+										{ value: "created_desc", label: "Newest first" },
+										{ value: "created_asc", label: "Oldest first" },
+									],
+								},
+							]}
+						/>
 					</div>
+					<AdminToolbarCount count={total} unit="responses" />
 				</div>
-			</div>
-
-			<div className="flex items-center justify-between gap-4">
-				<AdminSearch placeholder="Search comments or blog ID..." />
-				<AdminFilters
-					filters={[
-						{
-							key: "status",
-							label: "Status",
-							defaultValue: "all",
-							options: [
-								{ value: "all", label: "All" },
-								{ value: "approved", label: "Approved" },
-								{ value: "pending", label: "Pending" },
-							],
-						},
-						{
-							key: "sort",
-							label: "Sort",
-							defaultValue: "created_desc",
-							options: [
-								{ value: "created_desc", label: "Date (newest)" },
-								{ value: "created_asc", label: "Date (oldest)" },
-							],
-						},
-					]}
-				/>
-			</div>
-
+			}
+		>
 			<div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-200 dark:border-zinc-800 overflow-hidden">
 				<div className="overflow-x-auto">
 					<table className="w-full text-left border-collapse">
@@ -200,6 +195,6 @@ export default async function AdminCommentsPage({
 			</div>
 
 			<AdminPagination totalPages={totalPages} currentPage={page} />
-		</div>
+		</AdminListPageShell>
 	);
 }

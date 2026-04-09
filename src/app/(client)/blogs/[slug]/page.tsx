@@ -280,13 +280,13 @@ export default async function SingleBlogPage({
 			{blog.coverImage && (
 				<figure className="space-y-3">
 					<div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-muted shadow-sm">
-						<Image
-							src={blog.coverImage!}
+						<img
+							src={blog.coverImage}
 							alt={`${blog.title} cover image`}
-							fill
-							priority
-							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
-							className="object-cover transition-transform duration-500 hover:scale-105"
+							loading="eager"
+							decoding="async"
+							referrerPolicy="no-referrer"
+							className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
 						/>
 					</div>
 				</figure>

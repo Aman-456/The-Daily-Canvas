@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import type { BlogPostCardItem } from "@/components/client/BlogPostCardGrid";
+import type { BlogPostCardItem } from "@/types/blog-post-card";
 import { EditorialOverlayPostCard } from "@/components/client/EditorialOverlayPostCard";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";

@@ -1,11 +1,7 @@
 export const dynamic = "force-dynamic";
 
-import { auth } from "@/auth";
-
-import { isAdmin } from "@/lib/utils";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { AccessDenied } from "@/components/admin/AccessDenied";
-import { redirect } from "next/navigation";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -21,11 +17,13 @@ import { DeleteBlogButton } from "@/components/admin/DeleteBlogButton";
 import { Badge } from "@/components/ui/badge";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { AdminPagination } from "@/components/admin/AdminPagination";
-import { CopyIcon, Grid, List as ListIcon } from "lucide-react";
+import { Grid, List as ListIcon } from "lucide-react";
 import { getCachedBlogs } from "@/actions/blog";
 import Image from "next/image";
-import { Blog, BlogWithAuthor } from "@/db/schema";
+import type { BlogWithAuthor } from "@/db/schema";
 import { AdminFilters } from "@/components/admin/AdminFilters";
+import { AdminListPageShell } from "@/components/admin/AdminListPageShell";
+import { AdminToolbarCount } from "@/components/admin/AdminToolbarCount";
 
 export default async function AdminBlogsPage({
 	searchParams,
@@ -72,81 +70,126 @@ export default async function AdminBlogsPage({
 	const totalPages = Math.ceil((total as any) / limit);
 	const view = (params.view as string) || "table";
 
+	const viewQuery = `page=${page}&search=${encodeURIComponent(search)}&status=${status}&sort=${sort}`;
+
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Manage Blogs</h1>
-					<p className="text-muted-foreground">
-						Create, edit, and delete blog posts.
-					</p>
-				</div>
-				<Link href="/admin/blogs/new">
-					<Button>Create Post</Button>
+		<AdminListPageShell
+			title="Manage Blogs"
+			description="Create, edit, and delete posts."
+			actions={
+				<Link href="/admin/blogs/new" className="block sm:inline-block">
+					<Button className="w-full whitespace-nowrap sm:w-auto">
+						Create Post
+					</Button>
 				</Link>
-			</div>
-
-			<div className="flex items-center justify-between gap-4">
-				<AdminSearch placeholder="Search blogs..." />
-				<div className="flex items-center gap-4">
-					<AdminFilters
-						className="hidden md:flex items-center gap-3"
-						filters={[
-							{
-								key: "status",
-								label: "Status",
-								defaultValue: "all",
-								options: [
-									{ value: "all", label: "All" },
-									{ value: "published", label: "Published" },
-									{ value: "draft", label: "Draft" },
-								],
-							},
-							{
-								key: "sort",
-								label: "Sort",
-								defaultValue: "created_desc",
-								options: [
-									{ value: "created_desc", label: "Date (newest)" },
-									{ value: "created_asc", label: "Date (oldest)" },
-									{ value: "views_desc", label: "Views (high→low)" },
-									{ value: "comments_desc", label: "Comments (high→low)" },
-								],
-							},
-						]}
-					/>
-					<div className="flex border rounded-md overflow-hidden bg-white dark:bg-zinc-900 shadow-sm">
-						<Link href={`?page=${page}&search=${search}&status=${status}&sort=${sort}&view=table`}>
-							<Button variant={view === "table" ? "secondary" : "ghost"} size="icon" className="rounded-none w-10 h-10">
-								<ListIcon className="h-4 w-4" />
-							</Button>
-						</Link>
-						<Link href={`?page=${page}&search=${search}&status=${status}&sort=${sort}&view=grid`}>
-							<Button variant={view === "grid" ? "secondary" : "ghost"} size="icon" className="rounded-none w-10 h-10 border-l">
-								<Grid className="h-4 w-4" />
-							</Button>
-						</Link>
+			}
+			toolbar={
+				<div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
+					<div className="w-full min-w-0 xl:max-w-md xl:flex-1">
+						<AdminSearch
+							placeholder="Search by title…"
+							className="max-w-none shadow-none"
+						/>
 					</div>
-					<div className="text-sm text-muted-foreground mr-2">Total: {total}</div>
+					<div className="flex min-w-0 flex-1 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+						<AdminFilters
+							className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+							filters={[
+								{
+									key: "status",
+									label: "Status",
+									defaultValue: "all",
+									options: [
+										{ value: "all", label: "All" },
+										{ value: "published", label: "Published" },
+										{ value: "draft", label: "Draft" },
+									],
+								},
+								{
+									key: "sort",
+									label: "Sort by",
+									defaultValue: "created_desc",
+									options: [
+										{ value: "created_desc", label: "Newest first" },
+										{ value: "created_asc", label: "Oldest first" },
+										{ value: "views_desc", label: "Most views" },
+										{ value: "comments_desc", label: "Most comments" },
+									],
+								},
+							]}
+						/>
+						<div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-3 sm:border-0 sm:pt-0 lg:flex-nowrap">
+							<AdminToolbarCount count={total} unit="posts" />
+							<div className="flex items-center gap-2">
+								<span className="hidden text-xs text-muted-foreground xl:inline">
+									Layout
+								</span>
+								<div
+									className="flex shrink-0 overflow-hidden rounded-md border border-border/60 bg-background shadow-sm"
+									role="group"
+									aria-label="View layout"
+								>
+									<Link
+										href={`?${viewQuery}&view=table`}
+										prefetch={false}
+									>
+										<Button
+											type="button"
+											variant={view === "table" ? "secondary" : "ghost"}
+											size="sm"
+											className="gap-1.5 rounded-none px-3"
+										>
+											<ListIcon className="size-4" />
+											<span className="hidden sm:inline">Table</span>
+										</Button>
+									</Link>
+									<Link
+										href={`?${viewQuery}&view=grid`}
+										prefetch={false}
+									>
+										<Button
+											type="button"
+											variant={view === "grid" ? "secondary" : "ghost"}
+											size="sm"
+											className="gap-1.5 rounded-none border-l px-3"
+										>
+											<Grid className="size-4" />
+											<span className="hidden sm:inline">Grid</span>
+										</Button>
+									</Link>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
-			</div>
-
+			}
+		>
 			{view === "table" ? (
-				<div className="bg-white dark:bg-zinc-900 border rounded-lg shadow-sm">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Title</TableHead>
-								<TableHead>Author</TableHead>
-								<TableHead>Status</TableHead>
-								<TableHead>Date</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{blogs.map((blog: BlogWithAuthor) => (
-								<TableRow key={blog.id}>
-									<TableCell className="font-medium">{blog.title}</TableCell>
+				<div className="overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-900">
+					<div className="w-full overflow-x-auto">
+						<Table className="min-w-[720px]">
+							<TableHeader>
+								<TableRow>
+									<TableHead className="min-w-[200px]">Title</TableHead>
+									<TableHead className="min-w-[140px]">Author</TableHead>
+									<TableHead className="min-w-[100px]">Status</TableHead>
+									<TableHead className="min-w-[110px]">Date</TableHead>
+									<TableHead className="min-w-[200px] text-right">
+										Actions
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{blogs.map((blog: BlogWithAuthor) => (
+									<TableRow key={blog.id}>
+										<TableCell className="font-medium">
+											<div
+												className="max-w-[340px] truncate md:max-w-[420px]"
+												title={blog.title}
+											>
+												{blog.title}
+											</div>
+										</TableCell>
 									<TableCell>{blog.authorId.name || "Deleted User"}</TableCell>
 									<TableCell>
 										{blog.isPublished ? (
@@ -163,24 +206,20 @@ export default async function AdminBlogsPage({
 									<TableCell>
 										{new Date(blog.createdAt).toLocaleDateString()}
 									</TableCell>
-									<TableCell className="text-right space-x-2">
-										<Link href={`/admin/blogs/${blog.id}`}>
-											<Button
-												variant="outline"
-												size="sm"
-											>
-												Details
-											</Button>
-										</Link>
-										<Link href={`/admin/blogs/${blog.id}/edit`}>
-											<Button
-												variant="outline"
-												size="sm"
-											>
-												Edit
-											</Button>
-										</Link>
-										<DeleteBlogButton blogId={blog.id} />
+									<TableCell className="text-right">
+										<div className="flex flex-wrap justify-end gap-2">
+											<Link href={`/admin/blogs/${blog.id}`}>
+												<Button variant="outline" size="sm">
+													Details
+												</Button>
+											</Link>
+											<Link href={`/admin/blogs/${blog.id}/edit`}>
+												<Button variant="outline" size="sm">
+													Edit
+												</Button>
+											</Link>
+											<DeleteBlogButton blogId={blog.id} />
+										</div>
 									</TableCell>
 								</TableRow>
 							))}
@@ -194,8 +233,9 @@ export default async function AdminBlogsPage({
 									</TableCell>
 								</TableRow>
 							)}
-						</TableBody>
-					</Table>
+							</TableBody>
+						</Table>
+					</div>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-stretch">
@@ -253,6 +293,6 @@ export default async function AdminBlogsPage({
 			)}
 
 			<AdminPagination totalPages={totalPages} currentPage={page} />
-		</div>
+		</AdminListPageShell>
 	);
 }

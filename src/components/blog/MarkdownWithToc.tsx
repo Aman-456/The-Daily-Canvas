@@ -25,6 +25,82 @@ export function MarkdownWithToc({
 	};
 
 	const components = {
+		table: ({ children, ...props }: ComponentPropsWithoutRef<"table">) => (
+			<div className="not-prose my-6 w-full overflow-x-auto rounded-lg border border-border/60">
+				<table
+					className="m-0 w-full min-w-[36rem] border-collapse text-sm"
+					{...props}
+				>
+					{children}
+				</table>
+			</div>
+		),
+		thead: ({ children, ...props }: ComponentPropsWithoutRef<"thead">) => (
+			<thead className="bg-muted/40" {...props}>
+				{children}
+			</thead>
+		),
+		th: ({ children, ...props }: ComponentPropsWithoutRef<"th">) => (
+			<th
+				className="border border-border/80 px-3 py-3 text-left font-semibold align-middle first:pl-4 last:pr-4"
+				{...props}
+			>
+				{children}
+			</th>
+		),
+		td: ({ children, ...props }: ComponentPropsWithoutRef<"td">) => (
+			<td
+				className="border border-border/70 px-3 py-2 align-top first:pl-4 last:pr-4"
+				{...props}
+			>
+				{children}
+			</td>
+		),
+		tbody: ({ children, ...props }: ComponentPropsWithoutRef<"tbody">) => (
+			<tbody {...props}>{children}</tbody>
+		),
+		tr: ({ children, ...props }: ComponentPropsWithoutRef<"tr">) => (
+			<tr className="even:bg-muted/20" {...props}>
+				{children}
+			</tr>
+		),
+		a: ({
+			href,
+			children,
+			rel,
+			target,
+			...props
+		}: ComponentPropsWithoutRef<"a">) => {
+			const rawHref = typeof href === "string" ? href : undefined;
+			const isHashLink = !!rawHref && rawHref.startsWith("#");
+			const isExternal =
+				!!rawHref &&
+				(/^(https?:)?\/\//i.test(rawHref) ||
+					/^mailto:/i.test(rawHref) ||
+					/^tel:/i.test(rawHref));
+
+			if (isExternal && !isHashLink) {
+				const combinedRel = [rel, "noopener", "noreferrer"]
+					.filter(Boolean)
+					.join(" ");
+				return (
+					<a
+						href={rawHref}
+						target={target ?? "_blank"}
+						rel={combinedRel}
+						{...props}
+					>
+						{children}
+					</a>
+				);
+			}
+
+			return (
+				<a href={rawHref} target={target} rel={rel} {...props}>
+					{children}
+				</a>
+			);
+		},
 		h2: ({ children, className, ...props }: ComponentPropsWithoutRef<"h2">) => (
 			<h2
 				id={takeId(2)}
@@ -57,6 +133,25 @@ export function MarkdownWithToc({
 				(alt && alt.trim()) ||
 				(title && title.trim()) ||
 				"Blog image";
+
+			// Use a plain <img> for remote URLs to avoid Next/Image optimization
+			// edge-cases (redirects, rate limits, hotlink protections) breaking posts.
+			const isRemote = /^https?:\/\//i.test(src);
+			if (isRemote) {
+				return (
+					<span className="block my-6">
+						<img
+							src={src}
+							alt={fallbackAlt}
+							loading="lazy"
+							decoding="async"
+							referrerPolicy="no-referrer"
+							className="h-auto w-full rounded-xl"
+							{...props}
+						/>
+					</span>
+				);
+			}
 
 			const w =
 				typeof width === "number"

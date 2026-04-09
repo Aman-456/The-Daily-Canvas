@@ -12,6 +12,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import type { NewsletterSubscriber } from "@/db/schema";
+import { AdminListPageShell } from "@/components/admin/AdminListPageShell";
+import { AdminToolbarCount } from "@/components/admin/AdminToolbarCount";
 
 function formatSubscribedAt(d: Date) {
 	return d.toLocaleString(undefined, {
@@ -46,27 +48,25 @@ export default async function AdminNewsletterPage({
 	const totalPages = Math.max(1, Math.ceil(total / limit));
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Newsletter</h1>
-					<p className="text-muted-foreground">
-						Public signups from the site (unique emails).
-					</p>
+		<AdminListPageShell
+			title="Newsletter"
+			description="Public signups from the site (unique emails)."
+			toolbarTitle="Search & filters"
+			toolbar={
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+					<div className="w-full max-w-md min-w-0">
+						<AdminSearch
+							placeholder="Search by email…"
+							className="max-w-none shadow-none"
+						/>
+					</div>
+					<AdminToolbarCount count={total} unit="subscribers" />
 				</div>
-				<div className="rounded-lg border border-primary/10 bg-primary/5 px-4 py-2">
-					<p className="text-sm font-medium text-primary">
-						Subscribers: {total}
-					</p>
-				</div>
-			</div>
-
-			<div className="flex items-center justify-between gap-4">
-				<AdminSearch placeholder="Search by email…" />
-			</div>
-
-			<div className="rounded-lg border bg-white shadow-sm dark:bg-zinc-900">
-				<Table>
+			}
+		>
+			<div className="overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-900">
+				<div className="w-full overflow-x-auto">
+				<Table className="min-w-[520px]">
 					<TableHeader>
 						<TableRow>
 							<TableHead>Email</TableHead>
@@ -95,9 +95,10 @@ export default async function AdminNewsletterPage({
 						)}
 					</TableBody>
 				</Table>
+				</div>
 			</div>
 
 			<AdminPagination totalPages={totalPages} currentPage={page} />
-		</div>
+		</AdminListPageShell>
 	);
 }

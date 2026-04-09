@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Flame, Sparkles } from "lucide-react";
-import type { BlogPostCardItem } from "@/components/client/BlogPostCardGrid";
+import type { BlogPostCardItem } from "@/types/blog-post-card";
 import { blogTagLabel } from "@/lib/blog-tags";
 import { cn } from "@/lib/utils";
 

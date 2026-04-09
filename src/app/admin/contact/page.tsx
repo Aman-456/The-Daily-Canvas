@@ -9,11 +9,12 @@ import { AdminPagination } from "@/components/admin/AdminPagination";
 import type { ContactSubmission } from "@/db/schema";
 import {
 	CONTACT_SUBMISSION_STATUS_FILTER_OPTIONS,
-	adminContactListHref,
 	parseContactSubmissionStatusFilter,
 } from "@/lib/contact-submission-status";
 import type { ContactSubmissionStatus } from "@/lib/contact-submission-status";
-import { cn } from "@/lib/utils";
+import { AdminListPageShell } from "@/components/admin/AdminListPageShell";
+import { AdminToolbarCountLabeled } from "@/components/admin/AdminToolbarCount";
+import { AdminFilters } from "@/components/admin/AdminFilters";
 
 function toRow(r: ContactSubmission) {
 	const status = (r.status ?? "new") as ContactSubmissionStatus;
@@ -85,62 +86,59 @@ export default async function AdminContactPage({
 	}
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Contact messages</h1>
-					<p className="text-muted-foreground">
-						Submissions from the public{" "}
-						<Link href="/contact" className="text-primary hover:underline" target="_blank">
-							contact form
-						</Link>
-						. Set status as you triage (new → read → contacted → resolved). Filter by status
-						below; long messages open in a dialog.
-					</p>
-				</div>
-				{result.success ? (
-					<div className="rounded-lg border border-primary/10 bg-primary/5 px-4 py-2">
-						<p className="text-sm font-medium text-primary">
-							{search.trim() || statusFilter !== "all"
-								? "Matching messages"
-								: "Total messages"}
-							: {total}
-						</p>
-					</div>
-				) : null}
-			</div>
-
-			{result.success ? (
+		<AdminListPageShell
+			title="Contact messages"
+			description={
 				<>
-					<div className="flex flex-wrap items-center gap-2">
-						<span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-							Status
-						</span>
-						{CONTACT_SUBMISSION_STATUS_FILTER_OPTIONS.map(({ value, label }) => (
-							<Link
-								key={value}
-								href={adminContactListHref({
-									search,
-									status: value,
-									page: 1,
-								})}
-								className={cn(
-									"rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-									statusFilter === value
-										? "border-primary bg-primary text-primary-foreground"
-										: "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-								)}
-							>
-								{label}
-							</Link>
-						))}
-					</div>
-					<div className="flex items-center justify-between gap-4">
-						<AdminSearch placeholder="Search name, email, or message…" />
-					</div>
+					Submissions from the public{" "}
+					<Link
+						href="/contact"
+						className="text-primary hover:underline"
+						target="_blank"
+					>
+						contact form
+					</Link>
+					. Triage with status (new → read → contacted → resolved). Long messages open in a
+					dialog.
 				</>
-			) : null}
-
+			}
+			toolbarTitle="Filter & search"
+			toolbar={
+				result.success ? (
+					<div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
+						<div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 xl:flex-row xl:items-end xl:gap-6">
+							<div className="w-full min-w-0 sm:max-w-md xl:flex-1">
+								<AdminSearch
+									placeholder="Search name, email, or message…"
+									className="max-w-none shadow-none"
+								/>
+							</div>
+							<AdminFilters
+								className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+								filters={[
+									{
+										key: "status",
+										label: "Status",
+										defaultValue: "all",
+										options: CONTACT_SUBMISSION_STATUS_FILTER_OPTIONS.map(
+											({ value, label }) => ({ value, label }),
+										),
+									},
+								]}
+							/>
+						</div>
+						<AdminToolbarCountLabeled
+							label={
+								search.trim() || statusFilter !== "all"
+									? "Matching messages"
+									: "Total messages"
+							}
+							value={total}
+						/>
+					</div>
+				) : undefined
+			}
+		>
 			{!result.success ? (
 				<div
 					className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive"
@@ -155,6 +153,6 @@ export default async function AdminContactPage({
 					<AdminPagination totalPages={totalPages} currentPage={page} />
 				</>
 			)}
-		</div>
+		</AdminListPageShell>
 	);
 }

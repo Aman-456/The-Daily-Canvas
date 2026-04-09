@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { isAdmin } from "@/lib/utils";
 import { AccessDenied } from "@/components/admin/AccessDenied";
 import { CacheManagerClient } from "./CacheManagerClient";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function CachePage() {
     const session = await auth();
@@ -13,10 +14,10 @@ export default async function CachePage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Cache Manager</h1>
-                <p className="text-muted-foreground">Force revalidation of static content and highly cached API endpoints.</p>
-            </div>
+            <AdminPageHeader
+                title="Cache manager"
+                description="Force revalidation of static content and highly cached API endpoints."
+            />
             <CacheManagerClient />
         </div>
     );

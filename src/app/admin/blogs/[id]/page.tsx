@@ -8,6 +8,7 @@ import { DeleteAllCommentsButton } from "@/components/admin/DeleteAllCommentsBut
 import { getLatestRootComment } from "@/queries/comment";
 import { getCachedAdminBlogDetails } from "@/actions/blog";
 import { blogTagLabel } from "@/lib/blog-tags";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function AdminBlogDetailsPage({
 	params,
@@ -27,38 +28,33 @@ export default async function AdminBlogDetailsPage({
 
 	return (
 		<div className="mx-auto space-y-8 pb-20">
-			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">{blog.title}</h1>
-					<p className="text-muted-foreground mt-1">
+			<AdminPageHeader
+				className="border-b border-border/60 pb-6"
+				title={blog.title}
+				description={
+					<>
 						By {blog.authorId?.name} •{" "}
 						{new Date(blog.createdAt).toLocaleDateString()}
-					</p>
-				</div>
-				<div className="flex flex-wrap items-center gap-3">
-					<Link href={`/blogs/${blog.slug}`} target="_blank">
-						<Button
-							variant="outline"
-							size="sm"
-							className="gap-2"
-						>
-							<ExternalLink className="h-4 w-4" />
-							Live View
-						</Button>
-					</Link>
-					<Link href={`/admin/blogs/${id}/edit`}>
-						<Button
-							variant="outline"
-							size="sm"
-							className="gap-2"
-						>
-							<Edit2 className="h-4 w-4" />
-							Edit Post
-						</Button>
-					</Link>
-					<DeleteAllCommentsButton blogId={id} slug={blog.slug} />
-				</div>
-			</div>
+					</>
+				}
+				actions={
+					<div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+						<Link href={`/blogs/${blog.slug}`} target="_blank">
+							<Button variant="outline" size="sm" className="gap-2">
+								<ExternalLink className="h-4 w-4" />
+								Live view
+							</Button>
+						</Link>
+						<Link href={`/admin/blogs/${id}/edit`}>
+							<Button variant="outline" size="sm" className="gap-2">
+								<Edit2 className="h-4 w-4" />
+								Edit post
+							</Button>
+						</Link>
+						<DeleteAllCommentsButton blogId={id} slug={blog.slug} />
+					</div>
+				}
+			/>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 				<div className="lg:col-span-2 space-y-8">

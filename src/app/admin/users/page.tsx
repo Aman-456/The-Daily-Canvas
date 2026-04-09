@@ -1,5 +1,3 @@
-import { auth } from "@/auth";
-import { redirect } from "next/navigation";
 import {
 	Table,
 	TableBody,
@@ -21,6 +19,8 @@ import { UserPermissionsModal } from "@/components/admin/UserPermissionsModal";
 import { DeleteUserButton } from "@/components/admin/DeleteUserButton";
 import { AdminFilters } from "@/components/admin/AdminFilters";
 import { ToggleUserDisabledButton } from "@/components/admin/ToggleUserDisabledButton";
+import { AdminListPageShell } from "@/components/admin/AdminListPageShell";
+import { AdminToolbarCountLabeled } from "@/components/admin/AdminToolbarCount";
 
 export default async function AdminUsersPage({
 	searchParams,
@@ -52,52 +52,52 @@ export default async function AdminUsersPage({
 	const totalPages = Math.ceil(total / limit);
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between gap-4">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Users</h1>
-					<p className="text-muted-foreground">
-						View all users and sub-admins.
-					</p>
+		<AdminListPageShell
+			title="Users"
+			description="View all users and sub-admins."
+			toolbar={
+				<div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
+					<div className="flex min-w-0 flex-1 flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
+						<div className="w-full min-w-0 xl:max-w-md xl:flex-1">
+							<AdminSearch
+								placeholder="Search name or email…"
+								className="max-w-none shadow-none"
+							/>
+						</div>
+						<AdminFilters
+							className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+							filters={[
+								{
+									key: "status",
+									label: "Status",
+									defaultValue: "all",
+									options: [
+										{ value: "all", label: "All" },
+										{ value: "active", label: "Active" },
+										{ value: "disabled", label: "Disabled" },
+									],
+								},
+								{
+									key: "sort",
+									label: "Sort by",
+									defaultValue: "joined_desc",
+									options: [
+										{ value: "joined_desc", label: "Joined (newest)" },
+										{ value: "joined_asc", label: "Joined (oldest)" },
+										{ value: "name_asc", label: "Name (A→Z)" },
+										{ value: "email_asc", label: "Email (A→Z)" },
+									],
+								},
+							]}
+						/>
+					</div>
+					<AdminToolbarCountLabeled label="Total users" value={total} />
 				</div>
-				<div className="bg-primary/5 px-4 py-2 rounded-lg border border-primary/10">
-					<p className="text-sm font-medium text-primary">
-						Total Users: {total}
-					</p>
-				</div>
-			</div>
-
-			<div className="flex items-center justify-between gap-4">
-				<AdminSearch placeholder="Search name or email..." />
-				<AdminFilters
-					filters={[
-						{
-							key: "status",
-							label: "Status",
-							defaultValue: "all",
-							options: [
-								{ value: "all", label: "All" },
-								{ value: "active", label: "Active" },
-								{ value: "disabled", label: "Disabled" },
-							],
-						},
-						{
-							key: "sort",
-							label: "Sort",
-							defaultValue: "joined_desc",
-							options: [
-								{ value: "joined_desc", label: "Joined (newest)" },
-								{ value: "joined_asc", label: "Joined (oldest)" },
-								{ value: "name_asc", label: "Name (A→Z)" },
-								{ value: "email_asc", label: "Email (A→Z)" },
-							],
-						},
-					]}
-				/>
-			</div>
-
-			<div className="bg-white dark:bg-zinc-900 border rounded-lg shadow-sm">
-				<Table>
+			}
+		>
+			<div className="overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-zinc-900">
+				<div className="w-full overflow-x-auto">
+					<Table className="min-w-[720px]">
 					<TableHeader>
 						<TableRow>
 							<TableHead>User</TableHead>
@@ -182,9 +182,10 @@ export default async function AdminUsersPage({
 						)}
 					</TableBody>
 				</Table>
+				</div>
 			</div>
 
 			<AdminPagination totalPages={totalPages} currentPage={page} />
-		</div>
+		</AdminListPageShell>
 	);
 }

@@ -1,8 +1,8 @@
 
 import { notFound } from "next/navigation";
 import { BlogForm } from "@/components/admin/BlogForm";
-import { auth } from "@/auth";
 import { getCachedAdminBlogEdit } from "@/actions/blog";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
 export default async function EditBlogPage({
 	params,
@@ -21,12 +21,10 @@ export default async function EditBlogPage({
 
 	return (
 		<div className="mx-auto space-y-6">
-			<div>
-				<h1 className="text-3xl font-bold tracking-tight">Edit Blog</h1>
-				<p className="text-muted-foreground">
-					Update the contents of your blog post.
-				</p>
-			</div>
+			<AdminPageHeader
+				title="Edit blog"
+				description="Update the contents of your blog post."
+			/>
 
 			<div className="bg-white dark:bg-zinc-900 border rounded-lg p-6 shadow-sm">
 				<BlogForm initialData={initialData} blogId={id} />
