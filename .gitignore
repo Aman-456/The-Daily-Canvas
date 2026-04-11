@@ -37,12 +37,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-# data and utility scripts
-blog.blogs.json
-scripts/populate-blogs.ts
-scripts/list-users.ts
-scripts/verify-blogs.ts
-
 # docs and scripts (ignored for now)
 docs/
 scripts/

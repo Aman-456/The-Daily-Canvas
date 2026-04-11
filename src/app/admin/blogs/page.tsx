@@ -84,44 +84,46 @@ export default async function AdminBlogsPage({
 				</Link>
 			}
 			toolbar={
-				<div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-6">
-					<div className="w-full min-w-0 xl:max-w-md xl:flex-1">
+				<div className="flex w-full min-w-0 flex-col gap-4">
+					<div className="w-full min-w-0">
 						<AdminSearch
 							placeholder="Search by title…"
 							className="max-w-none shadow-none"
 						/>
 					</div>
-					<div className="flex min-w-0 flex-1 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
-						<AdminFilters
-							className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
-							filters={[
-								{
-									key: "status",
-									label: "Status",
-									defaultValue: "all",
-									options: [
-										{ value: "all", label: "All" },
-										{ value: "published", label: "Published" },
-										{ value: "draft", label: "Draft" },
-									],
-								},
-								{
-									key: "sort",
-									label: "Sort by",
-									defaultValue: "created_desc",
-									options: [
-										{ value: "created_desc", label: "Newest first" },
-										{ value: "created_asc", label: "Oldest first" },
-										{ value: "views_desc", label: "Most views" },
-										{ value: "comments_desc", label: "Most comments" },
-									],
-								},
-							]}
-						/>
-						<div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-3 sm:border-0 sm:pt-0 lg:flex-nowrap">
+					<div className="flex min-w-0 w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+						<div className="min-w-0 lg:flex-1">
+							<AdminFilters
+								className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+								filters={[
+									{
+										key: "status",
+										label: "Status",
+										defaultValue: "all",
+										options: [
+											{ value: "all", label: "All" },
+											{ value: "published", label: "Published" },
+											{ value: "draft", label: "Draft" },
+										],
+									},
+									{
+										key: "sort",
+										label: "Sort by",
+										defaultValue: "created_desc",
+										options: [
+											{ value: "created_desc", label: "Newest first" },
+											{ value: "created_asc", label: "Oldest first" },
+											{ value: "views_desc", label: "Most views" },
+											{ value: "comments_desc", label: "Most comments" },
+										],
+									},
+								]}
+							/>
+						</div>
+						<div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3 lg:w-auto lg:shrink-0 lg:flex-nowrap lg:justify-end">
 							<AdminToolbarCount count={total} unit="posts" />
-							<div className="flex items-center gap-2">
-								<span className="hidden text-xs text-muted-foreground xl:inline">
+							<div className="flex shrink-0 items-center gap-2">
+								<span className="hidden text-xs text-muted-foreground sm:inline">
 									Layout
 								</span>
 								<div

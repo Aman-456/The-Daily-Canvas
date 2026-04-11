@@ -105,36 +105,40 @@ export default async function AdminContactPage({
 			toolbarTitle="Filter & search"
 			toolbar={
 				result.success ? (
-					<div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
-						<div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 xl:flex-row xl:items-end xl:gap-6">
-							<div className="w-full min-w-0 sm:max-w-md xl:flex-1">
-								<AdminSearch
-									placeholder="Search name, email, or message…"
-									className="max-w-none shadow-none"
-								/>
-							</div>
-							<AdminFilters
-								className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
-								filters={[
-									{
-										key: "status",
-										label: "Status",
-										defaultValue: "all",
-										options: CONTACT_SUBMISSION_STATUS_FILTER_OPTIONS.map(
-											({ value, label }) => ({ value, label }),
-										),
-									},
-								]}
+					<div className="flex w-full min-w-0 flex-col gap-4">
+						<div className="w-full min-w-0">
+							<AdminSearch
+								placeholder="Search name, email, or message…"
+								className="max-w-none shadow-none"
 							/>
 						</div>
-						<AdminToolbarCountLabeled
-							label={
-								search.trim() || statusFilter !== "all"
-									? "Matching messages"
-									: "Total messages"
-							}
-							value={total}
-						/>
+						<div className="flex min-w-0 w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+							<div className="min-w-0 lg:flex-1">
+								<AdminFilters
+									className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-3"
+									filters={[
+										{
+											key: "status",
+											label: "Status",
+											defaultValue: "all",
+											options: CONTACT_SUBMISSION_STATUS_FILTER_OPTIONS.map(
+												({ value, label }) => ({ value, label }),
+											),
+										},
+									]}
+								/>
+							</div>
+							<div className="w-full shrink-0 lg:w-auto">
+								<AdminToolbarCountLabeled
+									label={
+										search.trim() || statusFilter !== "all"
+											? "Matching messages"
+											: "Total messages"
+									}
+									value={total}
+								/>
+							</div>
+						</div>
 					</div>
 				) : undefined
 			}
