@@ -37,6 +37,16 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
+<h2>2026-04-11 — Comments: Reddit-style thread &amp; deferred load</h2>
+
+<h3>Reading &amp; comments</h3>
+<ul>
+<li>Blog post comments use a <strong>Reddit-style</strong> layout: thread header and count, <strong>composer first</strong> (signed-in users post; guests see a disabled box plus <strong>Log in to comment</strong>).</li>
+<li>The <strong>first page of comments loads when you scroll near</strong> the section (not on every page load), keeping long articles lighter until readers reach the thread.</li>
+<li>Inline <strong>Reply</strong> on each comment; guests get the same pattern with <strong>Log in to reply</strong>.</li>
+<li>Shared comment types live in <code>src/types/comment.ts</code>; thread UI is split into focused components under <code>src/components/client/comments/</code> with small hooks for viewport detection and pagination.</li>
+</ul>
+
 <h2>2026-04-09 — Admin layout cleanup &amp; dead code removal</h2>
 
 <h3>Admin</h3>
@@ -60,6 +70,7 @@ const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading exper
 <h3>Code health</h3>
 <ul>
 <li>Removed unused <code>SpotlightCarousel</code>, unused <code>BlogPostCardGrid</code> component (type <code>BlogPostCardItem</code> now lives in <code>src/types/blog-post-card.ts</code>), unused UI sheet primitive, and a duplicate session-provider file.</li>
+<li>Scripts: single changelog sync (<code>scripts/sync-changelog-from-default.ts</code> via <code>npm run db:sync-changelog</code>); removed duplicate <code>sync-changelog-default-to-db.ts</code> and unused <code>upload-anime-covers-to-blob.ts</code>.</li>
 <li>Production build verified.</li>
 </ul>
 

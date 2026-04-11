@@ -117,7 +117,6 @@ export default async function AdminBlogDetailsPage({
 						<CommentSection
 							blogId={id}
 							slug={blog.slug}
-							initialComments={[]}
 							initialHasMore={totalComments > 0}
 							total={totalComments}
 							limit={10}

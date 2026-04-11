@@ -336,7 +336,6 @@ export default async function SingleBlogPage({
 				blogId={blog.id}
 				slug={blog.slug}
 				blogAuthorId={blog.authorId?.id}
-				initialComments={[]}
 				initialHasMore={totalComments > 0}
 				total={totalComments}
 				limit={commentLimit}
