@@ -30,7 +30,7 @@ export function CommentItemInlineReply({
 	const isLoggedIn = Boolean(sessionUser);
 
 	return (
-		<div className="ml-11 mt-2 space-y-2 border-l-2 border-border/50 pl-3">
+		<div className="mt-2 space-y-2 border-t border-border/40 pt-3">
 			{isLoggedIn ? (
 				<form onSubmit={onSubmit} className="space-y-2">
 					<Textarea

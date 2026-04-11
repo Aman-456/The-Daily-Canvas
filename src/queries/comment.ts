@@ -246,6 +246,59 @@ export async function getAllComments(
 	};
 }
 
+/** Single approved comment on a blog, with direct-child count (for permalink thread view). */
+export async function getApprovedCommentForPublicThread(
+	blogId: string,
+	commentId: string,
+) {
+	const row = await db
+		.select({
+			id: comments.id,
+			content: comments.content,
+			blogId: comments.blogId,
+			parentId: comments.parentId,
+			isApproved: comments.isApproved,
+			isEdited: comments.isEdited,
+			isDeleted: comments.isDeleted,
+			createdAt: comments.createdAt,
+			updatedAt: comments.updatedAt,
+			_id: comments.id,
+			userId: {
+				_id: users.id,
+				name: users.name,
+				image: users.image,
+			},
+		})
+		.from(comments)
+		.leftJoin(users, eq(comments.userId, users.id))
+		.where(
+			and(
+				eq(comments.id, commentId),
+				eq(comments.blogId, blogId),
+				eq(comments.isApproved, true),
+			),
+		)
+		.limit(1);
+
+	const c = row[0];
+	if (!c) return null;
+
+	const [countRow] = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(comments)
+		.where(
+			and(eq(comments.parentId, commentId), eq(comments.isApproved, true)),
+		);
+
+	const replyCount = Number(countRow?.count ?? 0);
+
+	return {
+		...c,
+		replies: [] as unknown[],
+		replyCount,
+	};
+}
+
 export const getLatestRootComment = async (blogId: string) => {
 	const fetchWithCache = unstable_cache(
 		async () => {

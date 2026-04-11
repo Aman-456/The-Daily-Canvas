@@ -40,9 +40,9 @@ export function CommentThreadList({
 
 	return (
 		<div className="space-y-6">
-			<div className="space-y-1 divide-y divide-border/40">
+			<div className="space-y-6">
 				{comments.map((comment) => (
-					<div key={comment._id} className="pt-4 first:pt-0">
+					<div key={comment._id}>
 						<CommentItem
 							comment={comment}
 							blogId={blogId}
