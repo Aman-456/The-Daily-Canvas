@@ -1,5 +1,5 @@
 import { db } from "@/db/index";
-import { blogs, users } from "@/db/schema";
+import { blogs, users, articleVotes } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import {
 	eq,
@@ -11,6 +11,7 @@ import {
 	and,
 	arrayContains,
 	arrayOverlaps,
+	not,
 	notInArray,
 } from "drizzle-orm";
 import { isBlogTagSlug } from "@/lib/blog-tags";
@@ -61,6 +62,8 @@ function orderByForBlogList(sort: BlogListSort) {
 	switch (sort) {
 		case "oldest":
 			return [asc(blogs.createdAt)];
+		case "most-viewed":
+			return [desc(blogs.viewCount), desc(blogs.createdAt)];
 		case "most-commented":
 			return [desc(blogs.commentsCount), desc(blogs.createdAt)];
 		case "title":
@@ -68,6 +71,113 @@ function orderByForBlogList(sort: BlogListSort) {
 		default:
 			return [desc(blogs.createdAt)];
 	}
+}
+
+export async function getBlogsForSearch2(params: {
+	page: number;
+	limit: number;
+	search?: string;
+	includeTags?: string[];
+	excludeTags?: string[];
+	authorUsername?: string;
+	minScore?: number;
+	sort?: BlogListSort;
+}) {
+	const sort = parseBlogListSort(params.sort);
+	const safePage = Math.max(1, Number.isFinite(params.page) ? params.page : 1);
+	const safeLimit = Math.min(50, Math.max(1, Number.isFinite(params.limit) ? params.limit : 12));
+	const offset = (safePage - 1) * safeLimit;
+
+	const includeTags = [...new Set((params.includeTags ?? []).filter(isBlogTagSlug))].sort();
+	const excludeTags = [...new Set((params.excludeTags ?? []).filter(isBlogTagSlug))].sort();
+	const authorUsername = (params.authorUsername ?? "").trim().toLowerCase();
+	const hasSearch = Boolean(params.search?.trim());
+	const minScoreRaw = params.minScore;
+	const minScore =
+		typeof minScoreRaw === "number" && Number.isFinite(minScoreRaw) ? Math.floor(minScoreRaw) : undefined;
+
+	const conditions: any[] = [eq(blogs.isPublished, true), eq(blogs.isHidden, false)];
+
+	if (hasSearch) {
+		conditions.push(ilike(blogs.title, `%${params.search!.trim()}%`));
+	}
+	for (const t of includeTags) {
+		conditions.push(arrayContains(blogs.tags, [t]));
+	}
+	if (excludeTags.length > 0) {
+		conditions.push(not(arrayOverlaps(blogs.tags, excludeTags)));
+	}
+	if (authorUsername) {
+		conditions.push(eq(users.username, authorUsername));
+		conditions.push(eq(users.isDisabled, false));
+	}
+
+	const whereClause = and(...conditions);
+
+	// Votes aggregate (used for sort=top or minScore).
+	const votesAgg = db
+		.select({
+			blogId: articleVotes.blogId,
+			score: sql<number>`coalesce(sum(${articleVotes.value}), 0)`,
+		})
+		.from(articleVotes)
+		.groupBy(articleVotes.blogId)
+		.as("votes");
+
+	const baseFrom = db
+		.select(blogSummarySelector)
+		.from(blogs)
+		.leftJoin(users, eq(blogs.authorId, users.id))
+		.where(whereClause)
+		.$dynamic();
+
+	const baseCount = db
+		.select({ count: sql<number>`count(*)` })
+		.from(blogs)
+		.leftJoin(users, eq(blogs.authorId, users.id))
+		.where(whereClause)
+		.$dynamic();
+
+	const needsVotes = sort === "top" || typeof minScore === "number";
+
+	const listQuery = needsVotes
+		? baseFrom
+				.leftJoin(votesAgg, eq(votesAgg.blogId, blogs.id))
+				.where(
+					typeof minScore === "number"
+						? and(whereClause, sql`coalesce(${votesAgg.score}, 0) >= ${minScore}`)
+						: whereClause,
+				)
+		: baseFrom;
+
+	const countQuery = needsVotes
+		? baseCount
+				.leftJoin(votesAgg, eq(votesAgg.blogId, blogs.id))
+				.where(
+					typeof minScore === "number"
+						? and(whereClause, sql`coalesce(${votesAgg.score}, 0) >= ${minScore}`)
+						: whereClause,
+				)
+		: baseCount;
+
+	const orderBy =
+		sort === "top"
+			? [desc(sql`coalesce(${votesAgg.score}, 0)`), desc(blogs.createdAt)]
+			: orderByForBlogList(sort);
+
+	const [totalResult, blogsData] = await Promise.all([
+		countQuery,
+		listQuery.orderBy(...orderBy).limit(safeLimit).offset(offset),
+	]);
+
+	const total = Number(totalResult[0]?.count ?? 0);
+	return {
+		blogs: blogsData,
+		total,
+		totalPages: Math.ceil(total / safeLimit),
+		page: safePage,
+		limit: safeLimit,
+	};
 }
 
 export const getBlogsCached = async (

@@ -12,7 +12,7 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 <details>
 <summary>What is Daily Thoughts?</summary>
-<p>An editorial blog for essays, stories, and ideas. Browse the home page, archive, or search by title; narrow with topic filters where available.</p>
+<p>An editorial blog for stories, guides, and ideas. Browse the home page, archive, or search by title; narrow with topic filters where available.</p>
 </details>
 
 <details>

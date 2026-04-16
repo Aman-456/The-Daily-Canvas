@@ -49,7 +49,7 @@ export function NewsletterFeatureBand() {
 						Delivered weekly.
 					</h2>
 					<p className="text-lg leading-relaxed text-background/65">
-						Get our best essays and ideas in your inbox — no noise, just
+						Get our best stories and ideas in your inbox — no noise, just
 						thoughtful reading.
 					</p>
 				</div>

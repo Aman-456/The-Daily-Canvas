@@ -11,7 +11,7 @@ export function SiteFooter() {
 							Daily Thoughts
 						</span>
 						<p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
-							A publication for curious readers — essays, craft, and ideas worth
+							A publication for curious readers — stories, craft, and ideas worth
 							slowing down for.
 						</p>
 					</div>

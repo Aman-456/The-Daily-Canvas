@@ -98,3 +98,29 @@ export async function getAuthorStats(authorId: string) {
 	};
 }
 
+export async function getPublicAuthorsForFilter(limit = 250) {
+	const safeLimit = Math.min(500, Math.max(1, Number.isFinite(limit) ? limit : 250));
+	const rows = await db
+		.select({
+			username: users.username,
+			name: users.name,
+			image: users.image,
+			articleCount: sql<number>`count(${blogs.id})::int`,
+		})
+		.from(users)
+		.innerJoin(blogs, eq(blogs.authorId, users.id))
+		.where(and(eq(users.isDisabled, false), eq(blogs.isPublished, true), eq(blogs.isHidden, false)))
+		.groupBy(users.username, users.name, users.image)
+		.orderBy(desc(sql`count(${blogs.id})`), desc(sql`max(${blogs.createdAt})`))
+		.limit(safeLimit);
+
+	return rows
+		.filter((r) => typeof r.username === "string" && r.username.trim())
+		.map((r) => ({
+			username: (r.username as string).trim(),
+			name: r.name,
+			image: r.image,
+			articleCount: Number(r.articleCount ?? 0),
+		}));
+}
+

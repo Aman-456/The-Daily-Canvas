@@ -150,7 +150,7 @@ export default async function BlogsPage({
 					Daily Thoughts
 				</h1>
 				<p className="text-lg leading-relaxed text-muted-foreground sm:text-xl">
-					Essays, craft, and ideas at the intersection of design, technology,
+					Stories, craft, and ideas at the intersection of design, technology,
 					and how we read on the web.
 				</p>
 			</header>
@@ -249,9 +249,9 @@ export default async function BlogsPage({
 			<JsonLd
 				data={jsonLdGraph([
 					webPageJsonLd({
-						name: "Daily Thoughts — Stories and essays",
+						name: "Daily Thoughts — Stories and ideas",
 						description:
-							"Essays, craft, and ideas at the intersection of design, technology, and how we read on the web.",
+							"Stories, craft, and ideas at the intersection of design, technology, and how we read on the web.",
 						path: "/",
 					}),
 				])}

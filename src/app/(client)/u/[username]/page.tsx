@@ -42,7 +42,7 @@ export default async function AuthorProfilePage({
 
 	const [{ articleCount, topTags }, { articles }] = await Promise.all([
 		getAuthorStats(author.id),
-		getPublishedArticlesByAuthorId(author.id, 1, 9),
+		getPublishedArticlesByAuthorId(author.id, 1, 3),
 	]);
 
 	return (
@@ -97,6 +97,14 @@ export default async function AuthorProfilePage({
 								className="font-medium text-primary underline-offset-4 hover:underline"
 							>
 								← Archive
+							</Link>
+						</p>
+						<p className="text-sm">
+							<Link
+								href={`/u/${encodeURIComponent(author.username || username)}/articles`}
+								className="font-medium text-primary underline-offset-4 hover:underline"
+							>
+								→ Author archive
 							</Link>
 						</p>
 					</div>
