@@ -7,7 +7,7 @@ export async function pingIndexNow(blogSlug: string) {
 			return;
 		}
 
-		const urlToPing = `${appUrl}/blogs/${blogSlug}`;
+		const urlToPing = `${appUrl}/articles/${blogSlug}`;
 		const apiKey = "df3ccbb1d0a942fc882435bcb0ae6acd";
 
 		const response = await fetch("https://api.indexnow.org/indexnow", {

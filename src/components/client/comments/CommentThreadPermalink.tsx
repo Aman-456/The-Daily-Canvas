@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { CommentItem } from "@/components/client/comments/CommentItem";
 import type { PublicComment } from "@/types/comment";
+import type { Session } from "next-auth";
 
 export type CommentThreadPermalinkProps = {
 	blogId: string;
@@ -11,6 +13,7 @@ export type CommentThreadPermalinkProps = {
 	blogTitle: string;
 	blogAuthorId?: string;
 	initialComment: PublicComment;
+	initialSessionUser?: Session["user"] | null;
 };
 
 export function CommentThreadPermalink({
@@ -19,8 +22,15 @@ export function CommentThreadPermalink({
 	blogTitle,
 	blogAuthorId,
 	initialComment,
+	initialSessionUser = null,
 }: CommentThreadPermalinkProps) {
-	const { data: session } = useSession();
+	const { data: session, status } = useSession();
+	const sessionUser = useMemo(() => {
+		if (status === "unauthenticated") return undefined;
+		if (session?.user?.id) return session.user;
+		if (initialSessionUser?.id) return initialSessionUser;
+		return undefined;
+	}, [session?.user, initialSessionUser, status]);
 
 	return (
 		<section
@@ -33,7 +43,7 @@ export function CommentThreadPermalink({
 				</Link>
 				<span className="px-1.5">/</span>
 				<Link
-					href={`/blogs/${slug}`}
+					href={`/articles/${slug}`}
 					className="hover:text-foreground hover:underline"
 				>
 					{blogTitle}
@@ -45,7 +55,7 @@ export function CommentThreadPermalink({
 			<p className="text-sm text-muted-foreground">
 				You are viewing a single comment thread.{" "}
 				<Link
-					href={`/blogs/${slug}#comments`}
+					href={`/articles/${slug}#comments`}
 					className="font-medium text-primary underline-offset-4 hover:underline"
 				>
 					See all comments on this post
@@ -57,7 +67,7 @@ export function CommentThreadPermalink({
 				comment={initialComment}
 				blogId={blogId}
 				slug={slug}
-				user={session?.user}
+				user={sessionUser}
 				depth={0}
 				blogAuthorId={blogAuthorId}
 				hidePermalink

@@ -9,6 +9,7 @@ import { getLatestRootComment } from "@/queries/comment";
 import { getCachedAdminBlogDetails } from "@/actions/blog";
 import { blogTagLabel } from "@/lib/blog-tags";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { auth } from "@/auth";
 
 export default async function AdminBlogDetailsPage({
 	params,
@@ -25,6 +26,7 @@ export default async function AdminBlogDetailsPage({
 	const totalComments = (blog as any).commentsCount || 0;
 	const latestComment =
 		totalComments > 0 ? await getLatestRootComment((blog as any)._id) : null;
+	const session = await auth();
 
 	return (
 		<div className="mx-auto space-y-8 pb-20">
@@ -39,10 +41,16 @@ export default async function AdminBlogDetailsPage({
 				}
 				actions={
 					<div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
-						<Link href={`/blogs/${blog.slug}`} target="_blank">
+						<Link href={`/articles/${blog.slug}`} target="_blank">
 							<Button variant="outline" size="sm" className="gap-2">
 								<ExternalLink className="h-4 w-4" />
 								Live view
+							</Button>
+						</Link>
+						<Link href={`/admin/blogs/${id}/preview`}>
+							<Button variant="outline" size="sm" className="gap-2">
+								<Eye className="h-4 w-4" />
+								Preview
 							</Button>
 						</Link>
 						<Link href={`/admin/blogs/${id}/edit`}>
@@ -121,6 +129,7 @@ export default async function AdminBlogDetailsPage({
 							total={totalComments}
 							limit={10}
 							latestComment={latestComment}
+							initialSessionUser={session?.user ?? null}
 						/>
 					</div>
 				</div>

@@ -3,6 +3,7 @@ import { blogs, users } from "./schema";
 export const userMinimalSelector = {
   id: users.id,
   name: users.name,
+  username: users.username,
   image: users.image,
 };
 

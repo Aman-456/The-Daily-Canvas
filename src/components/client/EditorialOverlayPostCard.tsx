@@ -70,7 +70,7 @@ export function EditorialOverlayPostCard({
 
 	return (
 		<Link
-			href={`/blogs/${blog.slug}`}
+			href={`/articles/${blog.slug}`}
 			className={`group editorial-card-shadow relative block overflow-hidden rounded-xl bg-muted ${minHeightClass[size]} ${className}`}
 		>
 			{blog.coverImage ? (

@@ -15,10 +15,13 @@ export type PublicComment = {
 	isApproved: boolean;
 	isEdited: boolean;
 	isDeleted: boolean;
+	isHidden?: boolean;
 	createdAt: string | Date;
 	updatedAt?: string | Date | null;
 	userId: CommentAuthor | null;
 	replies?: PublicComment[];
 	/** Omitted on some preview payloads (e.g. latest-comment teaser). */
 	replyCount?: number;
+	voteScore?: number;
+	myVote?: 1 | -1 | 0;
 };

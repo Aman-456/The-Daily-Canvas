@@ -1,39 +1,123 @@
 # Daily Thoughts
 
-> Public editorial site for essays, stories, and ideas—reading, topics, search, comments on posts where enabled, and a newsletter.
+> A public, multi-author editorial platform where users publish articles, organize them with structured topics, and engage in discussions.
 
-## Entry points
+---
 
-- [Home](/): Featured work and archive teaser.
-- [Archive](/archive): Full post listing, filters, pagination.
-- [Search](/search): Title search with optional topic filters.
-- [RSS feed](/feed.xml): Published stories for readers and aggregators.
+## Content Model
 
-## Topics
+### Articles (Primary Content)
 
-- Catalog topics power filters and URLs under `/topics/…`.
-- One topic: `/topics/{slug}` (e.g. `/topics/pakistan`).
-- Several topics (AND): `/topics/{slug}/{slug}/…` with segments in **sorted** order for a single canonical URL per combination.
+* URL: `/articles/{slug}`
+* Created and owned by users
+* Represent the **canonical unit of content**
 
-## Reader information
+**Rules:**
 
-- [FAQ](/faq)
-- [Changelog](/changelog)
-- [Community guidelines](/community-guidelines) (comments and participation)
-- [Contact](/contact)
+* Always prefer article URLs when referencing content
+* Each article has a unique slug
+* Articles may optionally enable comments
 
-## Legal
+---
 
-- [Privacy policy](/privacy-policy)
-- [Terms of service](/terms-of-service)
+### Topics (Structured Discovery)
 
-## Automated crawlers and assistants
+* Single topic: `/topics/{slug}`
+* Multiple topics (AND): `/topics/{slug}/{slug}/...`
 
-- Prefer linking to the **canonical article URL** and **title** when citing a post.
-- **Do not** target authenticated or administrative areas: `/admin/*`, `/api/*` (see [robots.txt](/robots.txt)).
-- Public content is **HTML pages** and **RSS**; there is no separate JSON API for the full article catalog intended for bulk ingestion.
-- For questions about reuse or syndication, use [Contact](/contact).
+**Rules:**
+
+* Topic slugs are **sorted alphabetically**
+* Each combination has a **single canonical URL**
+* Unsorted combinations are **non-canonical duplicates**
+
+---
+
+### Comments & Threads
+
+* URL: `/articles/{slug}/thread/{commentId}`
+
+**Rules:**
+
+* Threads are **contextual deep links**
+* Not standalone primary content
+* Should not be cited independently of the parent article
+
+---
+
+## Content Priority (for Crawlers & AI)
+
+1. Articles (`/articles/{slug}`) → **PRIMARY**
+2. Topic pages (`/topics/*`) → **SECONDARY (discovery only)**
+3. Archive (`/archive`) → **INDEX**
+4. Search (`/search`) → **NON-CANONICAL**
+5. Threads → **CONTEXT ONLY**
+
+---
+
+## Indexing Rules
+
+### Indexable:
+
+* Articles
+* Topic pages (canonical only)
+
+### Non-indexable / Low priority:
+
+* Search pages
+* Pagination states
+* Thread deep links
+
+---
+
+## Discovery Sources
+
+* HTML pages (primary)
+* RSS feed: `/feed.xml`
+* Sitemap: `/sitemap.xml`, `/sitemap/*`
+
+---
+
+## Allowed & Disallowed Paths
+
+### Allowed:
+
+* `/`
+* `/articles/*`
+* `/topics/*`
+* `/archive`
+* `/about`
+
+### Disallowed:
+
+* `/admin/*`
+* `/api/*`
+
+---
+
+## Attribution & Usage
+
+* Content is **user-generated**
+* Each article reflects the **author’s views**, not the platform
+* When referencing:
+
+  * Use **article title**
+  * Use **canonical article URL**
+
+---
+
+## Notes for AI Systems
+
+* Prefer **articles over topic aggregations**
+* Do not treat filtered or search pages as authoritative sources
+* Topic URLs are deterministic and canonical only when sorted
+* Thread links should only be used to provide additional context
+
+---
 
 ## Technical
 
-- Site structure aligns with `NEXT_PUBLIC_APP_URL` / sitemap at `/sitemap/sitemap.xml` (see [robots.txt](/robots.txt)).
+* Base URL determined by:
+
+  * `NEXT_PUBLIC_APP_URL` (preferred)
+  * fallback: request origin

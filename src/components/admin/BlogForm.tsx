@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createBlog, updateBlog } from "@/actions/blog";
+import { createBlog, saveDraft, updateBlog } from "@/actions/blog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,24 @@ export function BlogForm({ initialData, blogId }: BlogFormProps) {
 	const editorRef = useRef<MDXEditorMethods>(null);
 
 	const isContentEmpty = content.trim().length === 0;
+	const isEditingExisting = Boolean(initialData && blogId);
+
+	// Autosave drafts (editing flow only).
+	useEffect(() => {
+		if (!isEditingExisting || !blogId) return;
+		const handle = setTimeout(() => {
+			const fd = new FormData();
+			fd.set("title", (initialData?.title ?? "") as string);
+			fd.set("content", content);
+			fd.set("excerpt", excerpt);
+			fd.set("coverImage", coverImageUrl);
+			fd.set("metaTitle", metaTitle);
+			fd.set("metaDescription", metaDescription);
+			saveDraft(blogId, fd).catch(() => {});
+		}, 1200);
+		return () => clearTimeout(handle);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [content, excerpt, coverImageUrl, metaTitle, metaDescription, blogId, isEditingExisting]);
 
 	// Called by MDXEditor when user inserts an image via toolbar
 	const handleEditorImageUpload = async (file: File): Promise<string> => {

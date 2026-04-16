@@ -45,7 +45,7 @@ export function EditorialArchiveGrid({
 					<article key={blog.slug} className="group">
 						<div className="editorial-card-shadow relative mb-5 aspect-[16/10] overflow-hidden rounded-2xl">
 							<Link
-								href={`/blogs/${blog.slug}`}
+								href={`/articles/${blog.slug}`}
 								className="absolute inset-0 z-0 block"
 								aria-label={blog.title}
 							>
@@ -77,7 +77,7 @@ export function EditorialArchiveGrid({
 								</span>
 							)}
 						</div>
-						<Link href={`/blogs/${blog.slug}`} className="block space-y-3">
+						<Link href={`/articles/${blog.slug}`} className="block space-y-3">
 							<div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
 								<span>{date}</span>
 								<span className="size-1 rounded-full bg-border" />

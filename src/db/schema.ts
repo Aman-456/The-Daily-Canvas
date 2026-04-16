@@ -6,15 +6,18 @@ import {
   integer,
   boolean,
   json,
+  uniqueIndex,
 } from "drizzle-orm/pg-core"
 import type { AdapterAccountType } from "next-auth/adapters"
 
 export const users = pgTable("user", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
+  username: text("username").unique(),
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  bio: text("bio"),
   isDisabled: boolean("isDisabled").default(false).notNull(),
   role: text("role").$type<"USER" | "ADMIN">().default("USER").notNull(),
   permissions: json("permissions").$type<{
@@ -96,6 +99,8 @@ export const blogs = pgTable("blog", {
   coverImage: text("coverImage"),
   authorId: text("authorId").notNull().references(() => users.id, { onDelete: "cascade" }),
   isPublished: boolean("isPublished").default(false).notNull(),
+  /** Moderation hide: content stays in DB but is not shown publicly. */
+  isHidden: boolean("isHidden").default(false).notNull(),
   tags: text("tags").array().default([]),
   metaTitle: text("metaTitle"),
   metaDescription: text("metaDescription"),
@@ -117,9 +122,116 @@ export const comments = pgTable("comment", {
   isApproved: boolean("isApproved").default(true).notNull(),
   isEdited: boolean("isEdited").default(false).notNull(),
   isDeleted: boolean("isDeleted").default(false).notNull(),
+  /** Moderation hide: preserves thread structure without deleting. */
+  isHidden: boolean("isHidden").default(false).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
 });
+
+export const articleVotes = pgTable(
+  "article_vote",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    blogId: text("blogId")
+      .notNull()
+      .references(() => blogs.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** +1 for upvote, -1 for downvote */
+    value: integer("value").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => ({
+    blogUserUnique: uniqueIndex("article_vote_blog_user_unique").on(
+      t.blogId,
+      t.userId,
+    ),
+  }),
+);
+
+export const commentVotes = pgTable(
+  "comment_vote",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    commentId: text("commentId")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** +1 for upvote, -1 for downvote */
+    value: integer("value").notNull(),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => ({
+    commentUserUnique: uniqueIndex("comment_vote_comment_user_unique").on(
+      t.commentId,
+      t.userId,
+    ),
+  }),
+);
+
+export const articleReports = pgTable(
+  "article_report",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    blogId: text("blogId")
+      .notNull()
+      .references(() => blogs.id, { onDelete: "cascade" }),
+    reporterUserId: text("reporterUserId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull().default("other"),
+    details: text("details"),
+    status: text("status").notNull().default("open"),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => ({
+    blogReporterUnique: uniqueIndex("article_report_blog_reporter_unique").on(
+      t.blogId,
+      t.reporterUserId,
+    ),
+  }),
+);
+
+export const commentReports = pgTable(
+  "comment_report",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    commentId: text("commentId")
+      .notNull()
+      .references(() => comments.id, { onDelete: "cascade" }),
+    reporterUserId: text("reporterUserId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull().default("other"),
+    details: text("details"),
+    status: text("status").notNull().default("open"),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => ({
+    commentReporterUnique: uniqueIndex(
+      "comment_report_comment_reporter_unique",
+    ).on(t.commentId, t.reporterUserId),
+  }),
+);
 
 export const pages = pgTable("page", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),

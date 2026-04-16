@@ -22,7 +22,7 @@ export async function GET() {
 		const publishedAt = row.createdAt;
 		return {
 			title: row.title,
-			url: `${base}/blogs/${row.slug}`,
+			url: `${base}/articles/${row.slug}`,
 			publishedAt,
 			description,
 		};

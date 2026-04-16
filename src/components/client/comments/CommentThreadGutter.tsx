@@ -68,7 +68,7 @@ export function ThreadCollapseToggle({
 			onClick={() => void onToggle()}
 			disabled={isLoadingReplies}
 			className={cn(
-				"absolute z-10 flex shrink-0 items-center justify-center rounded-full border bg-background text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-60",
+				"absolute z-10 flex shrink-0 cursor-pointer items-center justify-center rounded-full border bg-background text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-60",
 				THREAD_BORDER_CLASS,
 			)}
 			style={{

@@ -157,7 +157,7 @@ export default async function AdminCommentsPage({
 										</td>
 										<td className="p-4 align-top">
 											<Link
-												href={`/blogs/${comment.blogId?.slug}`}
+												href={`/articles/${comment.blogId?.slug}`}
 												className="text-xs font-medium text-primary hover:underline transition-all flex items-center gap-1.5 truncate max-w-[150px]"
 											>
 												<MessageSquare size={12} className="shrink-0" />

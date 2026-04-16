@@ -25,7 +25,7 @@ function shareTitleForPath(pathname: string): string {
 		return `Daily Thoughts — ${label}`;
 	}
 
-	if (pathname.startsWith("/blogs/")) return "Daily Thoughts — Article";
+	if (pathname.startsWith("/articles/")) return "Daily Thoughts — Article";
 
 	return "Daily Thoughts";
 }
@@ -40,7 +40,7 @@ export function HeaderShareStrip() {
 	const [articleHeadline, setArticleHeadline] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (!pathname.startsWith("/blogs/")) {
+		if (!pathname.startsWith("/articles/")) {
 			return;
 		}
 
@@ -69,7 +69,7 @@ export function HeaderShareStrip() {
 	}, [pathname]);
 
 	const title = useMemo(() => {
-		if (pathname.startsWith("/blogs/") && articleHeadline) {
+		if (pathname.startsWith("/articles/") && articleHeadline) {
 			return `${articleHeadline} — Daily Thoughts`;
 		}
 		return shareTitleForPath(pathname);

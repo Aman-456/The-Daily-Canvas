@@ -116,7 +116,7 @@ export async function addComment(formData: FormData) {
 			console.error("[addComment] Failed to create notification:", notifErr);
 		}
 
-		if (slug) revalidatePath(`/blogs/${slug}`);
+		if (slug) revalidatePath(`/articles/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
 		revalidateTag("comments", "max");
@@ -209,6 +209,10 @@ export async function updateComment(
 		const comment = commentResult[0];
 		if (!comment) return { success: false, error: "Comment not found" };
 
+		if (comment.isDeleted) {
+			return { success: false, error: "Cannot edit a deleted comment" };
+		}
+
 		if (comment.userId !== session.user.id) {
 			return {
 				success: false,
@@ -218,7 +222,7 @@ export async function updateComment(
 
 		await db.update(comments).set({ content: parsed.data.content, isEdited: true }).where(eq(comments.id, commentId));
 
-		if (slug) revalidatePath(`/blogs/${slug}`);
+		if (slug) revalidatePath(`/articles/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
 		revalidateTag("comments", "max");
@@ -273,7 +277,7 @@ export async function deleteComment(
 			await db.delete(comments).where(eq(comments.id, commentId));
 		}
 
-		if (slug) revalidatePath(`/blogs/${slug}`);
+		if (slug) revalidatePath(`/articles/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
 		revalidateTag("comments", "max");
@@ -306,7 +310,7 @@ export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
 
 		await updateBlogCommentCount(blogId);
 
-		if (slug) revalidatePath(`/blogs/${slug}`);
+		if (slug) revalidatePath(`/articles/${slug}`);
 		revalidatePath("/");
 		revalidateTag("blogs", "max");
 		revalidateTag("comments", "max");
@@ -329,7 +333,14 @@ export async function getComments(
 	lastTimestamp?: string,
 ) {
 	try {
-		const result = await getBlogComments(blogId, page, limit, lastTimestamp);
+		const session = await auth();
+		const result = await getBlogComments(
+			blogId,
+			page,
+			limit,
+			lastTimestamp,
+			session?.user?.id,
+		);
 		return { success: true, data: result };
 	} catch (error: any) {
 		return { success: false, error: error.message };
@@ -343,11 +354,13 @@ export async function getReplies(
 	lastTimestamp?: string,
 ) {
 	try {
+		const session = await auth();
 		const result = await getCommentReplies(
 			parentId,
 			page,
 			limit,
 			lastTimestamp,
+			session?.user?.id,
 		);
 		return { success: true, data: result };
 	} catch (error: any) {

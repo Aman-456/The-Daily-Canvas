@@ -8,6 +8,7 @@ import {
 	FileText,
 	MessageSquare,
 	Users,
+	User,
 	Files,
 	ArrowLeft,
 	ChevronLeft,
@@ -16,6 +17,7 @@ import {
 	Database,
 	Mail,
 	Send,
+	ShieldAlert,
 	type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -88,12 +90,24 @@ export function AdminSidebar({ user }: { user: any }) {
 						icon: MessageSquare,
 						show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_COMMENTS),
 					},
+					{
+						name: "Moderation",
+						href: "/admin/moderation",
+						icon: ShieldAlert,
+						show: isAdmin(role) || hasPermission(user, PERMISSIONS.MANAGE_COMMENTS),
+					},
 				],
 			},
 			{
 				id: "audience",
 				label: "Audience",
 				items: [
+					{
+						name: "Profile",
+						href: "/admin/profile",
+						icon: User,
+						show: true,
+					},
 					{
 						name: "Users",
 						href: "/admin/users",
@@ -388,7 +402,7 @@ export function AdminSidebar({ user }: { user: any }) {
 
 			{/* Desktop Sidebar */}
 			<aside
-				className={`hidden md:flex flex-col shrink-0 sticky top-0 h-[100dvh] max-h-[100dvh] self-start bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-zinc-800/50 p-4 shadow-sm relative transition-all duration-300 ease-in-out z-40 ${isMinimized ? "w-[80px]" : "w-[260px]"
+				className={`hidden md:flex flex-col shrink-0 sticky top-0 h-dvh max-h-dvh self-start bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-zinc-800/50 p-4 shadow-sm transition-all duration-300 ease-in-out z-40 ${isMinimized ? "w-[80px]" : "w-[260px]"
 					}`}
 			>
 				<button
@@ -405,7 +419,7 @@ export function AdminSidebar({ user }: { user: any }) {
 						}`}
 				>
 					{!isMinimized ? (
-						<h2 className="text-2xl font-black tracking-tighter bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+						<h2 className="text-2xl font-black tracking-tighter bg-linear-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
 							Workspace<span className="text-primary">.</span>
 						</h2>
 					) : (

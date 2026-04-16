@@ -184,9 +184,9 @@ export default async function AdminBlogsPage({
 							<TableBody>
 								{blogs.map((blog: BlogWithAuthor) => (
 									<TableRow key={blog.id}>
-										<TableCell className="font-medium">
+										<TableCell className="font-medium max-w-[300px]">
 											<div
-												className="max-w-[340px] truncate md:max-w-[420px]"
+												className="truncate max-w-[300px]"
 												title={blog.title}
 											>
 												{blog.title}
@@ -206,7 +206,9 @@ export default async function AdminBlogsPage({
 										)}
 									</TableCell>
 									<TableCell>
-										{new Date(blog.createdAt).toLocaleDateString()}
+										<div className="truncate max-w-[100px]" title={new Date(blog.createdAt).toLocaleDateString()}>
+											{new Date(blog.createdAt).toLocaleDateString()}
+										</div>
 									</TableCell>
 									<TableCell className="text-right">
 										<div className="flex flex-wrap justify-end gap-2">

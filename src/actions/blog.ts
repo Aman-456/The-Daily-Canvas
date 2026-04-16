@@ -3,6 +3,7 @@
 import { db } from "@/db/index";
 import { blogs, users, comments, notifications, type Blog, type NewBlog } from "@/db/schema";
 import { auth } from "@/auth";
+import { isAdmin } from "@/lib/utils";
 import { revalidatePath, revalidateTag } from "next/cache";
 import slugify from "slugify";
 import { unstable_cache } from "next/cache";
@@ -386,7 +387,7 @@ export async function updateBlog(id: string, formData: FormData) {
 		}
 
 		revalidatePath("/");
-		revalidatePath(`/blogs/${newSlug}`);
+		revalidatePath(`/articles/${newSlug}`);
 		revalidatePath("/admin/blogs");
 		revalidateTag("blogs", "max");
 
@@ -401,5 +402,50 @@ export async function updateBlog(id: string, formData: FormData) {
 			success: false,
 			error: error.message || "An unexpected error occurred",
 		};
+	}
+}
+
+export async function saveDraft(blogId: string, formData: FormData) {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+		const blog = await db.query.blogs.findFirst({
+			where: eq(blogs.id, blogId),
+		});
+		if (!blog) return { success: false, error: "Blog not found" };
+		if (blog.authorId !== session.user.id && !isAdmin(session.user.role)) {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		const title = (formData.get("title") as string | null)?.trim() || blog.title;
+		const content = (formData.get("content") as string | null) ?? blog.content;
+		const excerpt = (formData.get("excerpt") as string | null) ?? blog.excerpt;
+		const coverImage = (formData.get("coverImage") as string | null) ?? blog.coverImage;
+		const metaTitle = (formData.get("metaTitle") as string | null) ?? blog.metaTitle;
+		const metaDescription =
+			(formData.get("metaDescription") as string | null) ?? blog.metaDescription;
+
+		await db
+			.update(blogs)
+			.set({
+				title,
+				content,
+				excerpt,
+				coverImage,
+				metaTitle,
+				metaDescription,
+				isPublished: false,
+				updatedAt: new Date(),
+			})
+			.where(eq(blogs.id, blogId));
+
+		revalidatePath(`/admin/blogs/${blogId}/edit`);
+		revalidateTag("blogs", "max");
+
+		return { success: true };
+	} catch (error: any) {
+		console.error("[saveDraft] Error:", error);
+		return { success: false, error: error.message || "An unexpected error occurred" };
 	}
 }

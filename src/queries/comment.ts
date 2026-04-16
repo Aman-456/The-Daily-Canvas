@@ -1,5 +1,5 @@
 import { db } from "@/db/index";
-import { comments, users, blogs } from "@/db/schema";
+import { comments, users, blogs, commentVotes } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import { eq, and, desc, asc, isNull, inArray, sql, like } from "drizzle-orm";
 
@@ -8,18 +8,24 @@ export async function getBlogComments(
 	page = 1,
 	limit = 10,
 	lastTimestamp?: string,
+	viewerUserId?: string,
 ) {
 	const skip = lastTimestamp ? 0 : (page - 1) * limit;
 
 	let rootConditions = [
 		eq(comments.blogId, blogId),
 		isNull(comments.parentId),
-		eq(comments.isApproved, true)
+		eq(comments.isApproved, true),
+		eq(comments.isHidden, false)
 	];
 
 	if (lastTimestamp) {
 		rootConditions.push(sql`${comments.createdAt} < ${new Date(lastTimestamp)}`);
 	}
+
+	const viewerVoteSql = viewerUserId
+		? sql<number>`(select ${commentVotes.value} from ${commentVotes} where ${commentVotes.commentId} = ${comments.id} and ${commentVotes.userId} = ${viewerUserId} limit 1)`
+		: sql<number>`null`;
 
 	const rootQuery = db.select({
 			id: comments.id,
@@ -29,9 +35,12 @@ export async function getBlogComments(
 			isApproved: comments.isApproved,
 			isEdited: comments.isEdited,
 			isDeleted: comments.isDeleted,
+			isHidden: comments.isHidden,
 			createdAt: comments.createdAt,
 			updatedAt: comments.updatedAt,
 			_id: comments.id,
+			voteScore: sql<number>`(select coalesce(sum(${commentVotes.value}), 0) from ${commentVotes} where ${commentVotes.commentId} = ${comments.id})`,
+			myVote: viewerVoteSql,
 			userId: {
 				_id: users.id,
 				name: users.name,
@@ -52,7 +61,7 @@ export async function getBlogComments(
 
 	const totalResult = await db.select({ count: sql<number>`count(*)` })
 		.from(comments)
-		.where(and(eq(comments.blogId, blogId), isNull(comments.parentId), eq(comments.isApproved, true)));
+		.where(and(eq(comments.blogId, blogId), isNull(comments.parentId), eq(comments.isApproved, true), eq(comments.isHidden, false)));
 
 	const totalRoots = totalResult[0].count;
 
@@ -91,12 +100,14 @@ export async function getCommentReplies(
 	page = 1,
 	limit = 10,
 	lastTimestamp?: string,
+	viewerUserId?: string,
 ) {
 	const skip = lastTimestamp ? 0 : (page - 1) * limit;
 
 	let replyConditions = [
 		eq(comments.parentId, parentId),
-		eq(comments.isApproved, true)
+		eq(comments.isApproved, true),
+		eq(comments.isHidden, false)
 	];
 
 	if (lastTimestamp) {
@@ -105,9 +116,13 @@ export async function getCommentReplies(
 
 	const totalResult = await db.select({ count: sql<number>`count(*)` })
 		.from(comments)
-		.where(and(eq(comments.parentId, parentId), eq(comments.isApproved, true)));
+		.where(and(eq(comments.parentId, parentId), eq(comments.isApproved, true), eq(comments.isHidden, false)));
 
 	const total = totalResult[0].count;
+
+	const viewerVoteSql = viewerUserId
+		? sql<number>`(select ${commentVotes.value} from ${commentVotes} where ${commentVotes.commentId} = ${comments.id} and ${commentVotes.userId} = ${viewerUserId} limit 1)`
+		: sql<number>`null`;
 
 	const fetchedReplies = await db.select({
 			id: comments.id,
@@ -117,9 +132,12 @@ export async function getCommentReplies(
 			isApproved: comments.isApproved,
 			isEdited: comments.isEdited,
 			isDeleted: comments.isDeleted,
+			isHidden: comments.isHidden,
 			createdAt: comments.createdAt,
 			updatedAt: comments.updatedAt,
 			_id: comments.id,
+			voteScore: sql<number>`(select coalesce(sum(${commentVotes.value}), 0) from ${commentVotes} where ${commentVotes.commentId} = ${comments.id})`,
+			myVote: viewerVoteSql,
 			userId: {
 				_id: users.id,
 				name: users.name,

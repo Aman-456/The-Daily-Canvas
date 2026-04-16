@@ -15,7 +15,7 @@ export function RelatedPosts({ posts }: { posts: BlogPostCardItem[] }) {
 				{posts.map((blog) => (
 					<li key={blog.slug}>
 						<Link
-							href={`/blogs/${blog.slug}`}
+							href={`/articles/${blog.slug}`}
 							className="group flex gap-3 rounded-xl border border-border/50 p-3 hover:border-primary/30 hover:bg-muted/30 transition-colors"
 						>
 							<div className="relative w-24 h-16 rounded-lg overflow-hidden bg-muted shrink-0">

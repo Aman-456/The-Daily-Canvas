@@ -4,6 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { addComment, updateComment, deleteComment } from "@/actions/comment";
+import { toggleCommentVote } from "@/actions/vote";
+import { reportComment } from "@/actions/report";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,18 +18,23 @@ import {
 import { toast } from "sonner";
 import {
 	Copy,
+	Edit2,
 	ExternalLink,
+	Flag,
 	Loader2,
 	MessageSquare,
 	Minus,
+	MoreHorizontal,
 	Plus,
 	Share2,
+	Trash2,
 } from "lucide-react";
 import { cn, isAdmin } from "@/lib/utils";
 import type { Session } from "next-auth";
 import { useCommentReplies } from "@/hooks/useCommentReplies";
 import { CommentItemMeta } from "@/components/client/comments/CommentItemMeta";
 import { CommentItemInlineReply } from "@/components/client/comments/CommentItemInlineReply";
+import { VoteButtons } from "@/components/client/engagement/VoteButtons";
 import {
 	ThreadCollapseToggle,
 	ThreadConnector,
@@ -36,7 +43,24 @@ import {
 	THREAD_STEP_PX,
 } from "@/components/client/comments/CommentThreadGutter";
 import { absoluteUrl } from "@/lib/json-ld";
+import {
+	redditActionButtonClass,
+	redditActionButtonDangerClass,
+} from "@/lib/reddit-action-styles";
 import type { PublicComment } from "@/types/comment";
+
+function authorIdFromComment(comment: PublicComment): string | undefined {
+	const uid = comment.userId as unknown;
+	if (typeof uid === "string") {
+		const t = uid.trim();
+		return t || undefined;
+	}
+	if (!uid || typeof uid !== "object") return undefined;
+	const o = uid as { _id?: string | null; id?: string | null };
+	const a = typeof o._id === "string" ? o._id.trim() : "";
+	const b = typeof o.id === "string" ? o.id.trim() : "";
+	return a || b || undefined;
+}
 
 type Props = {
 	comment: PublicComment;
@@ -73,6 +97,8 @@ export function CommentItem({
 	const [replyContent, setReplyContent] = useState("");
 	const [editContent, setEditContent] = useState(comment.content);
 	const [lastSavedBody, setLastSavedBody] = useState<string | null>(null);
+	const [localSoftDeleted, setLocalSoftDeleted] = useState(false);
+	const [localHardRemoved, setLocalHardRemoved] = useState(false);
 	const [isPending, startTransition] = useTransition();
 
 	const {
@@ -100,15 +126,12 @@ export function CommentItem({
 		replies.length,
 	);
 
-	const isOwner =
-		Boolean(user?.id) &&
-		(user!.id === comment.userId?._id ||
-			user!.id === (comment.userId as { id?: string })?.id);
+	const authorId = authorIdFromComment(comment);
+	const isOwner = Boolean(user?.id && authorId && user.id === authorId);
 	const isAdminRole = isAdmin(user?.role);
-	const showEditInDropdown =
-		isOwner && !isEditing && !comment.isDeleted;
-	const showDeleteInDropdown =
-		(isOwner || isAdminRole) && !isEditing && !comment.isDeleted;
+	const displayDeleted = comment.isDeleted || localSoftDeleted;
+	const showOwnerOrAdminActions =
+		(isOwner || isAdminRole) && !isEditing && !displayDeleted;
 
 	const handleReply = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -163,8 +186,15 @@ export function CommentItem({
 				const result = await deleteComment(comment._id, blogId, slug);
 				if (result.success) {
 					toast.success("Comment deleted");
-					onDelete?.();
-					onTotalChange?.(-1);
+					const hasReplies =
+						(comment.replyCount ?? 0) > 0 || replies.length > 0;
+					if (hasReplies) {
+						setLocalSoftDeleted(true);
+					} else {
+						onDelete?.();
+						if (onDelete === undefined) setLocalHardRemoved(true);
+						onTotalChange?.(-1);
+					}
 				} else {
 					toast.error(result.error || "Failed to delete");
 				}
@@ -180,7 +210,7 @@ export function CommentItem({
 
 	const showEarlyContinueThread =
 		!hidePermalink &&
-		!comment.isDeleted &&
+		!displayDeleted &&
 		showReplyToggle &&
 		depth >= maxInlineDepth - 1;
 
@@ -188,8 +218,8 @@ export function CommentItem({
 		? `Expand ${visibleReplyCount} ${visibleReplyCount === 1 ? "reply" : "replies"}`
 		: `Collapse ${visibleReplyCount} ${visibleReplyCount === 1 ? "reply" : "replies"}`;
 
-	const threadHref = `/blogs/${slug}/thread/${comment._id}`;
-	const showShare = !hidePermalink && !comment.isDeleted;
+	const threadHref = `/articles/${slug}/thread/${comment._id}`;
+	const showShare = !hidePermalink && !displayDeleted;
 	const absoluteThreadUrl = useMemo(() => {
 		const fromEnv = absoluteUrl(threadHref);
 		if (fromEnv.startsWith("http://") || fromEnv.startsWith("https://"))
@@ -208,6 +238,32 @@ export function CommentItem({
 		}
 	};
 
+	const runReportComment = () => {
+		const reason =
+			(window.prompt("Report reason (e.g. spam, abuse, other):", "spam") || "")
+				.trim() || "other";
+		const details =
+			(window.prompt("Optional details (can be blank):", "") || "").trim();
+		startTransition(async () => {
+			const fd = new FormData();
+			fd.set("commentId", comment._id);
+			fd.set("slug", slug);
+			fd.set("reason", reason);
+			if (details) fd.set("details", details);
+			const res = await reportComment(fd);
+			if (!res.success) {
+				toast.error(res.error || "Could not submit report");
+				return;
+			}
+			const count = res.data?.reportsCount ?? 0;
+			if (res.data?.hidden) {
+				toast.success(`Reported. Auto-hidden at ${count} reports.`);
+			} else {
+				toast.success(`Reported. (${count} open reports)`);
+			}
+		});
+	};
+
 	const toggleIcon = isLoadingReplies ? (
 		<Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
 	) : isCollapsed ? (
@@ -217,6 +273,10 @@ export function CommentItem({
 	);
 
 	const hasGutter = showReplyToggle || depth > 0;
+
+	if (localHardRemoved) {
+		return null;
+	}
 
 	return (
 		<div className="group/thread relative min-w-0 py-1">
@@ -239,34 +299,28 @@ export function CommentItem({
 			<div style={hasGutter ? { paddingLeft: THREAD_STEP_PX } : undefined}>
 				<div className="space-y-2">
 					<div className="flex min-w-0 items-start gap-2">
-						<Avatar className="mt-0.5 h-8 w-8 shrink-0 border border-border/50">
-							<AvatarImage
-								src={
-									comment.isDeleted
-										? undefined
-										: (comment.userId?.image ?? undefined)
-								}
-								alt=""
-							/>
-							<AvatarFallback>
-								{comment.isDeleted
-									? "—"
-									: (comment.userId?.name?.charAt(0) ?? "?")}
-							</AvatarFallback>
-						</Avatar>
+								<Avatar className="mt-0.5 h-8 w-8 shrink-0 border border-border/50">
+									<AvatarImage
+										src={
+											displayDeleted
+												? undefined
+												: (comment.userId?.image ?? undefined)
+										}
+										alt=""
+									/>
+									<AvatarFallback>
+										{displayDeleted
+											? "—"
+											: (comment.userId?.name?.charAt(0) ?? "?")}
+									</AvatarFallback>
+								</Avatar>
 
-						<div className="min-w-0 flex-1 space-y-2">
+								<div className="min-w-0 flex-1 space-y-2">
 							<CommentItemMeta
 								comment={comment}
 								blogAuthorId={blogAuthorId}
-								showEditInDropdown={showEditInDropdown}
-								showDeleteInDropdown={showDeleteInDropdown}
 								showAvatar={false}
-								onEditRequest={() => {
-									setEditContent(lastSavedBody ?? comment.content);
-									setIsEditing(true);
-								}}
-								onDeleteRequest={handleDelete}
+								treatAsDeleted={localSoftDeleted}
 							>
 								{isEditing ? (
 									<form onSubmit={handleUpdate} className="space-y-2">
@@ -311,17 +365,43 @@ export function CommentItem({
 									</form>
 								) : (
 									<p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-										{displayContent}
+										{displayDeleted ? "[deleted]" : displayContent}
 									</p>
 								)}
 
-								{!isEditing && !comment.isDeleted && (
-									<div className="flex flex-wrap items-center gap-x-1 gap-y-1 pt-0.5">
+								{!isEditing && !displayDeleted && (
+									<div className="flex flex-wrap items-center pt-1.5">
+										<span className="mr-3 inline-flex items-center">
+											{isOwner ? (
+												<VoteButtons
+													readOnly
+													variant="bare"
+													size="xs"
+													score={Number(comment.voteScore ?? 0)}
+													myVote={0}
+												/>
+											) : (
+												<VoteButtons
+													variant="bare"
+													size="xs"
+													score={Number(comment.voteScore ?? 0)}
+													myVote={(comment.myVote ?? 0) as 1 | -1 | 0}
+													onVote={(value) =>
+														toggleCommentVote({
+															commentId: comment._id,
+															value,
+															slug,
+														})
+													}
+												/>
+											)}
+										</span>
+										<div className="flex flex-wrap items-center gap-x-0.5 gap-y-1">
 										<Button
 											type="button"
 											variant="ghost"
-											size="sm"
-											className="h-7 rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+											size="xs"
+											className={redditActionButtonClass}
 											onClick={() => {
 												if (isReplying) {
 													setIsReplying(false);
@@ -336,7 +416,7 @@ export function CommentItem({
 												setIsReplying(true);
 											}}
 										>
-											<MessageSquare className="mr-1 h-3.5 w-3.5" />
+											<MessageSquare className="size-3.5" />
 											Reply
 										</Button>
 										{showShare && (
@@ -345,10 +425,10 @@ export function CommentItem({
 													<Button
 														type="button"
 														variant="ghost"
-														size="sm"
-														className="h-7 rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+														size="xs"
+														className={redditActionButtonClass}
 													>
-														<Share2 className="mr-1 h-3.5 w-3.5" />
+														<Share2 className="size-3.5" />
 														Share
 													</Button>
 												</DropdownMenuTrigger>
@@ -376,30 +456,120 @@ export function CommentItem({
 												</DropdownMenuContent>
 											</DropdownMenu>
 										)}
+										{isOwner && showOwnerOrAdminActions ? (
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														type="button"
+														variant="ghost"
+														size="xs"
+														disabled={isPending}
+														className={cn(
+															redditActionButtonClass,
+															"px-1.5",
+														)}
+														aria-label="More options"
+													>
+														<MoreHorizontal className="size-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="start" className="min-w-40">
+													<DropdownMenuItem
+														onClick={() => {
+															setEditContent(
+																lastSavedBody ?? comment.content,
+															);
+															setIsEditing(true);
+														}}
+													>
+														<Edit2 className="mr-2 h-4 w-4" />
+														Edit
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														className={redditActionButtonDangerClass}
+														onClick={() => void handleDelete()}
+													>
+														<Trash2 className="mr-2 h-4 w-4" />
+														Delete
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										) : !isOwner && isAdminRole && showOwnerOrAdminActions ? (
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														type="button"
+														variant="ghost"
+														size="xs"
+														disabled={isPending}
+														className={cn(
+															redditActionButtonClass,
+															"px-1.5",
+														)}
+														aria-label="More options"
+													>
+														<MoreHorizontal className="size-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="start" className="min-w-40">
+													<DropdownMenuItem
+														className={redditActionButtonDangerClass}
+														onClick={() => void handleDelete()}
+													>
+														<Trash2 className="mr-2 h-4 w-4" />
+														Delete
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										) : (
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														type="button"
+														variant="ghost"
+														size="xs"
+														className={cn(
+															redditActionButtonClass,
+															"px-1.5",
+														)}
+														aria-label="More options"
+													>
+														<MoreHorizontal className="size-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="start" className="min-w-40">
+													<DropdownMenuItem onClick={() => runReportComment()}>
+														<Flag className="mr-2 h-4 w-4" />
+														Report
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										)}
 										{showEarlyContinueThread && (
 											<Button
 												type="button"
-												variant="outline"
-												size="sm"
-												className="h-7 rounded-md border-zinc-400/55 px-2.5 text-xs font-medium dark:border-zinc-500/60"
+												variant="ghost"
+												size="xs"
+												className={redditActionButtonClass}
 												asChild
 											>
 												<Link href={threadHref}>
 													<ExternalLink
-														className="mr-1 h-3.5 w-3.5"
+														className="size-3.5"
 														aria-hidden
 													/>
 													Continue this thread
 												</Link>
 											</Button>
 										)}
+										</div>
 									</div>
 								)}
 							</CommentItemMeta>
 
 							{isReplying &&
 								!isEditing &&
-								!comment.isDeleted &&
+								!displayDeleted &&
 								(!isCollapsed || !showReplyToggle) && (
 									<CommentItemInlineReply
 										replyName={comment.userId?.name}
@@ -415,8 +585,8 @@ export function CommentItem({
 										signInHref={signInHref}
 									/>
 								)}
-						</div>
-					</div>
+								</div>
+							</div>
 
 					{showReplyToggle ? (
 						<div
@@ -461,16 +631,16 @@ export function CommentItem({
 												</p>
 												<Button
 													type="button"
-													variant="outline"
-													size="sm"
-													className="h-7 border-zinc-400/55 text-xs dark:border-zinc-500/60"
+													variant="ghost"
+													size="xs"
+													className={redditActionButtonClass}
 													asChild
 												>
 													<Link
-														href={`/blogs/${slug}/thread/${reply._id}`}
+														href={`/articles/${slug}/thread/${reply._id}`}
 													>
 														<ExternalLink
-															className="mr-1 h-3.5 w-3.5"
+															className="size-3.5"
 															aria-hidden
 														/>
 														Continue this thread
@@ -484,8 +654,11 @@ export function CommentItem({
 										<Button
 											type="button"
 											variant="ghost"
-											size="sm"
-											className="h-7 rounded-md px-2 text-xs text-primary"
+											size="xs"
+											className={cn(
+												redditActionButtonClass,
+												"text-primary hover:bg-primary/10 hover:text-primary",
+											)}
 											onClick={() =>
 												void loadMoreReplies()
 											}

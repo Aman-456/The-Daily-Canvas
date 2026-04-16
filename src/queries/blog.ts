@@ -28,11 +28,11 @@ const _getCachedBlogsList = unstable_cache(
 		const [totalResult, blogsData] = await Promise.all([
 			db.select({ count: sql<number>`count(*)` })
 				.from(blogs)
-				.where(eq(blogs.isPublished, true)),
+				.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false))),
 			db.select(blogSummarySelector)
 				.from(blogs)
 				.leftJoin(users, eq(blogs.authorId, users.id))
-				.where(eq(blogs.isPublished, true))
+				.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false)))
 				.orderBy(desc(blogs.createdAt))
 				.limit(limit)
 				.offset(offset)
@@ -86,7 +86,7 @@ export const getBlogsCached = async (
 
 	if (hasSearch || hasTagFilter) {
 		const offset = (page - 1) * limit;
-		const conditions = [eq(blogs.isPublished, true)];
+		const conditions = [eq(blogs.isPublished, true), eq(blogs.isHidden, false)];
 		if (hasSearch) {
 			conditions.push(ilike(blogs.title, `%${search!.trim()}%`));
 		}
@@ -122,6 +122,7 @@ export const getBlogsCached = async (
 		const offset = (page - 1) * limit;
 		const whereClause = and(
 			eq(blogs.isPublished, true),
+			eq(blogs.isHidden, false),
 			notInArray(blogs.slug, excludeSlugs),
 		);
 
@@ -150,11 +151,11 @@ export const getBlogsCached = async (
 		const [totalResult, blogsData] = await Promise.all([
 			db.select({ count: sql<number>`count(*)` })
 				.from(blogs)
-				.where(eq(blogs.isPublished, true)),
+				.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false))),
 			db.select(blogSummarySelector)
 				.from(blogs)
 				.leftJoin(users, eq(blogs.authorId, users.id))
-				.where(eq(blogs.isPublished, true))
+				.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false)))
 				.orderBy(...orderBy)
 				.limit(limit)
 				.offset(offset),
@@ -179,14 +180,14 @@ const _getBlogSingleShared = async (idOrSlug: string, onlyPublished = true) => {
 		.leftJoin(users, eq(blogs.authorId, users.id));
 
 	const byIdWhere = onlyPublished
-		? and(eq(blogs.id, idOrSlug), eq(blogs.isPublished, true))
+		? and(eq(blogs.id, idOrSlug), eq(blogs.isPublished, true), eq(blogs.isHidden, false))
 		: eq(blogs.id, idOrSlug);
 
 	const byId = await baseQuery.where(byIdWhere);
 	if (byId[0]) return byId[0];
 
 	const bySlugWhere = onlyPublished
-		? and(eq(blogs.slug, idOrSlug), eq(blogs.isPublished, true))
+		? and(eq(blogs.slug, idOrSlug), eq(blogs.isPublished, true), eq(blogs.isHidden, false))
 		: eq(blogs.slug, idOrSlug);
 
 	const bySlug = await baseQuery.where(bySlugWhere);
@@ -195,7 +196,7 @@ const _getBlogSingleShared = async (idOrSlug: string, onlyPublished = true) => {
 
 const _getBlogBySlugCached = unstable_cache(
 	async (slug: string) => _getBlogSingleShared(slug, true),
-	["blog-single"],
+	["blog-single-v2"],
 	{ revalidate: cacheTTL, tags: ["blogs"] },
 );
 
@@ -203,7 +204,7 @@ export const getBlogBySlugCached = (slug: string) => _getBlogBySlugCached(slug);
 
 const _getBlogByIdCached = unstable_cache(
 	async (id: string) => _getBlogSingleShared(id, false),
-	["blog-id"],
+	["blog-id-v2"],
 	{ revalidate: cacheTTL, tags: ["blogs"] },
 );
 
@@ -222,7 +223,7 @@ const _getSpotlightStrip = unstable_cache(
 			.select(blogSummarySelector)
 			.from(blogs)
 			.leftJoin(users, eq(blogs.authorId, users.id))
-			.where(eq(blogs.isPublished, true))
+			.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false)))
 			.orderBy(desc(blogs.commentsCount), desc(blogs.createdAt))
 			.limit(8);
 
@@ -253,6 +254,7 @@ export async function getRelatedBlogs(
 		.where(
 			and(
 				eq(blogs.isPublished, true),
+				eq(blogs.isHidden, false),
 				ne(blogs.id, excludeId),
 				arrayOverlaps(blogs.tags, tagSlugs),
 			),
@@ -273,7 +275,7 @@ export async function getRecentBlogsForFeed(limit = 100) {
 			createdAt: blogs.createdAt,
 		})
 		.from(blogs)
-		.where(eq(blogs.isPublished, true))
+		.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false)))
 		.orderBy(desc(blogs.createdAt))
 		.limit(limit);
 }
@@ -285,7 +287,7 @@ export const getAllBlogSlugs = async () => {
 		createdAt: blogs.createdAt,
 	})
 		.from(blogs)
-		.where(eq(blogs.isPublished, true));
+		.where(and(eq(blogs.isPublished, true), eq(blogs.isHidden, false)));
 
 	return result.map((blog) => ({
 		slug: blog.slug,

@@ -1,6 +1,9 @@
 import { getAllBlogSlugs } from "@/queries/blog";
 import { BLOG_TAGS } from "@/lib/blog-tags";
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db/index";
+import { blogs, users } from "@/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +51,24 @@ function buildStaticRoutes(origin: string): StaticRoute[] {
 			priority: 0.75,
 		})),
 	];
+}
+
+async function getPublicAuthorUsernames(): Promise<string[]> {
+	const rows = await db
+		.select({ username: users.username })
+		.from(blogs)
+		.leftJoin(users, eq(blogs.authorId, users.id))
+		.where(
+			and(
+				eq(blogs.isPublished, true),
+				eq(users.isDisabled, false),
+				sql`${users.username} is not null`,
+				sql`${users.username} <> ''`,
+			),
+		)
+		.groupBy(users.username);
+
+	return rows.map((r) => (r.username ?? "").trim()).filter(Boolean);
 }
 
 function isSitemapIndexPath(pathname: string, sitemap_route: string[]): boolean {
@@ -117,7 +138,7 @@ export async function GET(
 			.map(
 				(blog) => `
   <url>
-    <loc>${origin}/blogs/${blog.slug}</loc>
+    <loc>${origin}/articles/${blog.slug}</loc>
     <lastmod>${blog.updatedAt ? new Date(blog.updatedAt).toISOString() : new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -127,6 +148,7 @@ export async function GET(
 
 		let staticUrls = "";
 		if (id === 0) {
+			const authorUsernames = await getPublicAuthorUsernames();
 			staticUrls = staticRoutes
 				.map(
 					(route) => `
@@ -138,6 +160,20 @@ export async function GET(
   </url>`,
 				)
 				.join("");
+
+			const authorsXml = authorUsernames
+				.map(
+					(u) => `
+  <url>
+    <loc>${origin}/u/${encodeURIComponent(u)}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>`,
+				)
+				.join("");
+
+			staticUrls = staticUrls + authorsXml;
 		}
 
 		const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

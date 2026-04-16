@@ -147,10 +147,72 @@ export async function updateUserProfile(formData: FormData) {
 		const session = await auth();
 		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-		const name = formData.get("name") as string;
+		const rawName = (formData.get("name") as string | null) ?? "";
+		const rawUsername = (formData.get("username") as string | null) ?? "";
+		const rawBio = (formData.get("bio") as string | null) ?? "";
 
-		await db.update(users).set({ name }).where(eq(users.id, session.user.id));
+		const name = rawName.trim() || null;
+		const bio = rawBio.trim() ? rawBio.trim().slice(0, 800) : null;
 
+		const normalizeUsername = (input: string) =>
+			input
+				.trim()
+				.toLowerCase()
+				.replace(/['"]/g, "")
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-+|-+$/g, "")
+				.replace(/--+/g, "-");
+
+		const desiredUsername = rawUsername.trim()
+			? normalizeUsername(rawUsername).slice(0, 32)
+			: "";
+
+		if (desiredUsername && (desiredUsername.length < 3 || desiredUsername.length > 32)) {
+			return {
+				success: false,
+				error: "Username must be 3–32 characters.",
+			};
+		}
+		if (desiredUsername && !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(desiredUsername)) {
+			return {
+				success: false,
+				error: "Username may include lowercase letters, numbers, and dashes.",
+			};
+		}
+
+		const existing = await db.query.users.findFirst({
+			where: eq(users.id, session.user.id),
+		});
+		if (!existing) return { success: false, error: "User not found" };
+
+		// Policy: usernames are locked after first set.
+		if (existing.username && desiredUsername && existing.username !== desiredUsername) {
+			return {
+				success: false,
+				error: "Username is already set and cannot be changed.",
+			};
+		}
+
+		if (!existing.username && desiredUsername) {
+			const conflict = await db.query.users.findFirst({
+				where: and(eq(users.username, desiredUsername), sql`${users.id} <> ${session.user.id}`),
+			});
+			if (conflict) {
+				return { success: false, error: "That username is already taken." };
+			}
+		}
+
+		await db
+			.update(users)
+			.set({
+				...(name !== null ? { name } : {}),
+				...(bio !== null ? { bio } : {}),
+				...(!existing.username && desiredUsername ? { username: desiredUsername } : {}),
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, session.user.id));
+
+		revalidatePath("/admin/profile");
 		revalidatePath("/admin");
 
 		return { success: true };

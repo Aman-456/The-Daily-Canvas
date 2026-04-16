@@ -21,6 +21,7 @@ import { CommentThreadList } from "@/components/client/comments/CommentThreadLis
 import { CommentThreadSkeleton } from "@/components/client/comments/CommentThreadSkeleton";
 import { LatestCommentPreview } from "@/components/client/comments/LatestCommentPreview";
 import type { PublicComment } from "@/types/comment";
+import type { Session } from "next-auth";
 
 export type BlogCommentThreadProps = {
 	blogId: string;
@@ -30,6 +31,8 @@ export type BlogCommentThreadProps = {
 	limit?: number;
 	latestComment?: PublicComment | null;
 	blogAuthorId?: string;
+	/** From `auth()` on the server so owner actions work before `useSession` hydrates. */
+	initialSessionUser?: Session["user"] | null;
 };
 
 export function BlogCommentThread({
@@ -40,8 +43,15 @@ export function BlogCommentThread({
 	limit = 10,
 	latestComment,
 	blogAuthorId,
+	initialSessionUser = null,
 }: BlogCommentThreadProps) {
-	const { data: session } = useSession();
+	const { data: session, status } = useSession();
+	const sessionUser = useMemo(() => {
+		if (status === "unauthenticated") return undefined;
+		if (session?.user?.id) return session.user;
+		if (initialSessionUser?.id) return initialSessionUser;
+		return undefined;
+	}, [session?.user, initialSessionUser, status]);
 	const pathname = usePathname();
 	const signInHref = useMemo(
 		() =>
@@ -96,7 +106,7 @@ export function BlogCommentThread({
 
 	const handleSubmitLoggedIn = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (!content.trim() || !session?.user) return;
+		if (!content.trim() || !sessionUser) return;
 
 		startTransition(async () => {
 			try {
@@ -137,7 +147,7 @@ export function BlogCommentThread({
 			/>
 
 			<CommentComposer
-				sessionUser={session?.user}
+				sessionUser={sessionUser}
 				content={content}
 				onContentChange={setContent}
 				isPending={isPending}
@@ -156,7 +166,7 @@ export function BlogCommentThread({
 					comments={comments}
 					blogId={blogId}
 					slug={slug}
-					sessionUser={session?.user}
+					sessionUser={sessionUser}
 					blogAuthorId={blogAuthorId}
 					hasMore={hasMore}
 					isLoadingMore={isLoadingMore}
