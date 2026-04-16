@@ -138,10 +138,7 @@ export function BlogCommentThread({
 			className="mx-auto mt-12 max-w-3xl scroll-mt-24 space-y-6"
 			aria-label="Comments"
 		>
-			<CommentThreadHeader
-				count={localTotal}
-				onJumpToComposer={scrollToComposer}
-			/>
+			<CommentThreadHeader count={localTotal} />
 
 			<CommentComposer
 				sessionUser={sessionUser}

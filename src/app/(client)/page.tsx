@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getBlogsCached, getSpotlightStrip } from "@/queries/blog";
+import {
+	getBlogsCached,
+	getHomeSpotlightAndTeaserCached,
+} from "@/queries/blog";
 import { HomeFeaturedMosaic } from "@/components/client/HomeFeaturedMosaic";
 import {
 	TopicFilterChips,
@@ -108,27 +111,20 @@ export default async function BlogsPage({
 	}
 
 	const isCleanHome = activeTags.length === 0;
-	const spotlightStrip = isCleanHome ? await getSpotlightStrip() : null;
 	const teaserLimit = homeArchiveTeaserCount();
 	/** Only exclude posts shown in the featured mosaic (4), not the full spotlight strip (8). */
 	const featuredMosaicCount = 4;
-	const excludeSpotlightSlugs =
-		spotlightStrip?.items?.length && isCleanHome
-			? spotlightStrip.items.slice(0, featuredMosaicCount).map((b) => b.slug)
-			: undefined;
+	const { spotlight, teaser } = isCleanHome
+		? await getHomeSpotlightAndTeaserCached({
+				teaserLimit,
+				sort,
+				featuredMosaicCount,
+			})
+		: { spotlight: null, teaser: await getBlogsCached(1, teaserLimit, "", activeTags, { sort }) };
 
-	const { blogs, total } = await getBlogsCached(
-		1,
-		teaserLimit,
-		"",
-		activeTags,
-		{
-			...(excludeSpotlightSlugs
-				? { excludeSlugs: excludeSpotlightSlugs }
-				: {}),
-			sort,
-		},
-	);
+	const spotlightStrip = isCleanHome ? spotlight : null;
+	const blogs = teaser.blogs;
+	const total = teaser.total;
 
 	const archiveMoreHref = archiveListingHref({ tags: activeTags, sort });
 	const hasMoreInArchive = total > blogs.length;

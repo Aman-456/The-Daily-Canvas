@@ -58,6 +58,111 @@ export type GetBlogsListOptions = {
 	sort?: BlogListSort;
 };
 
+function normalizeSlugList(slugs: string[] | undefined): string[] {
+	return [...new Set((slugs ?? []).map((s) => s.trim()).filter(Boolean))].sort();
+}
+
+/**
+ * Home teaser list excluding a small set of slugs (e.g. featured mosaic).
+ * Cached so home doesn't hit DB per request when excluding featured items.
+ */
+const _getHomeTeaserExcludingSlugsCached = unstable_cache(
+	async (limit: number, sort: BlogListSort, excludeSlugsSortedCsv: string) => {
+		const excludeSlugs =
+			excludeSlugsSortedCsv.trim().length > 0
+				? excludeSlugsSortedCsv.split(",").filter(Boolean)
+				: [];
+		const orderBy = orderByForBlogList(sort);
+		const whereClause =
+			excludeSlugs.length > 0
+				? and(
+						eq(blogs.isPublished, true),
+						eq(blogs.isHidden, false),
+						notInArray(blogs.slug, excludeSlugs),
+					)
+				: and(eq(blogs.isPublished, true), eq(blogs.isHidden, false));
+
+		const [totalResult, blogsData] = await Promise.all([
+			db.select({ count: sql<number>`count(*)` }).from(blogs).where(whereClause),
+			db.select(blogSummarySelector)
+				.from(blogs)
+				.leftJoin(users, eq(blogs.authorId, users.id))
+				.where(whereClause)
+				.orderBy(...orderBy)
+				.limit(limit),
+		]);
+
+		return {
+			blogs: blogsData,
+			total: Number(totalResult[0]?.count ?? 0),
+		};
+	},
+	["home-teaser-excluding-slugs-v1"],
+	{ revalidate: 3600, tags: ["blogs"] },
+);
+
+export async function getHomeTeaserExcludingSlugsCached(params: {
+	limit: number;
+	sort?: BlogListSort;
+	excludeSlugs?: string[];
+}) {
+	const sort = parseBlogListSort(params.sort);
+	const limit = Math.min(50, Math.max(1, Math.floor(params.limit)));
+	const excludeSlugsSorted = normalizeSlugList(params.excludeSlugs);
+	return _getHomeTeaserExcludingSlugsCached(limit, sort, excludeSlugsSorted.join(","));
+}
+
+/**
+ * One-call home payload so `page.tsx` doesn't do multiple awaits.
+ * Returns spotlight strip plus a teaser list that excludes the featured mosaic items.
+ */
+const _getHomeSpotlightAndTeaserCached = unstable_cache(
+	async (params: {
+		teaserLimit: number;
+		sort: BlogListSort;
+		featuredMosaicCount: number;
+	}) => {
+		const spotlight = await _getSpotlightStrip();
+		const featuredMosaicCount = Math.min(
+			8,
+			Math.max(0, Math.floor(params.featuredMosaicCount)),
+		);
+		const excludeSlugs =
+			featuredMosaicCount > 0
+				? (spotlight.items ?? [])
+						.slice(0, featuredMosaicCount)
+						.map((b) => b.slug)
+						.filter(Boolean)
+				: [];
+		const teaser = await _getHomeTeaserExcludingSlugsCached(
+			Math.min(50, Math.max(1, Math.floor(params.teaserLimit))),
+			params.sort,
+			normalizeSlugList(excludeSlugs).join(","),
+		);
+		return { spotlight, teaser };
+	},
+	["home-spotlight-and-teaser-v1"],
+	{ revalidate: 3600, tags: ["blogs"] },
+);
+
+export async function getHomeSpotlightAndTeaserCached(params: {
+	teaserLimit: number;
+	sort?: BlogListSort;
+	featuredMosaicCount?: number;
+}) {
+	const teaserLimit = Math.min(50, Math.max(1, Math.floor(params.teaserLimit)));
+	const sort = parseBlogListSort(params.sort);
+	const featuredMosaicCount =
+		typeof params.featuredMosaicCount === "number"
+			? params.featuredMosaicCount
+			: 4;
+	return _getHomeSpotlightAndTeaserCached({
+		teaserLimit,
+		sort,
+		featuredMosaicCount,
+	});
+}
+
 function orderByForBlogList(sort: BlogListSort) {
 	switch (sort) {
 		case "oldest":

@@ -1,13 +1,8 @@
-"use client";
-
-import { Button } from "@/components/ui/button";
-
 type Props = {
 	count: number;
-	onJumpToComposer: () => void;
 };
 
-export function CommentThreadHeader({ count, onJumpToComposer }: Props) {
+export function CommentThreadHeader({ count }: Props) {
 	const label = count === 1 ? "comment" : "comments";
 
 	return (
@@ -16,15 +11,6 @@ export function CommentThreadHeader({ count, onJumpToComposer }: Props) {
 				{count}{" "}
 				<span className="font-semibold text-muted-foreground">{label}</span>
 			</h3>
-			<Button
-				type="button"
-				variant="outline"
-				size="sm"
-				className="h-8 rounded-full px-3 text-xs font-semibold"
-				onClick={onJumpToComposer}
-			>
-				Jump to comment box
-			</Button>
 		</div>
 	);
 }
