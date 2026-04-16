@@ -9,7 +9,6 @@ import { getLatestRootComment } from "@/queries/comment";
 import { getCachedAdminBlogDetails } from "@/actions/blog";
 import { blogTagLabel } from "@/lib/blog-tags";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { auth } from "@/auth";
 
 export default async function AdminBlogDetailsPage({
 	params,
@@ -26,7 +25,6 @@ export default async function AdminBlogDetailsPage({
 	const totalComments = (blog as any).commentsCount || 0;
 	const latestComment =
 		totalComments > 0 ? await getLatestRootComment((blog as any)._id) : null;
-	const session = await auth();
 
 	return (
 		<div className="mx-auto space-y-8 pb-20">

@@ -1,6 +1,5 @@
 import { ContactPageClient } from "@/components/client/ContactPageClient";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { auth } from "@/auth";
 import {
 	breadcrumbListJsonLd,
 	jsonLdGraph,
@@ -23,26 +22,10 @@ export const metadata = {
 	},
 };
 
-export const dynamic = "force-dynamic";
-
-export default async function ContactPage() {
-	const session = await auth();
-	const u = session?.user;
-	const sessionEmail = u?.email?.trim() ?? null;
-	const prefilledName =
-		(u?.name?.trim() && u.name.trim().length > 0
-			? u.name.trim()
-			: sessionEmail
-				? sessionEmail.split("@")[0]
-				: null) ?? null;
-
+export default function ContactPage() {
 	return (
 		<>
-			<ContactPageClient
-				identityLocked={!!sessionEmail}
-				prefilledName={prefilledName}
-				prefilledEmail={sessionEmail}
-			/>
+			<ContactPageClient />
 			<JsonLd
 				data={jsonLdGraph([
 					webPageJsonLd({
