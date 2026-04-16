@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { CommentItem } from "@/components/client/comments/CommentItem";
 import type { PublicComment } from "@/types/comment";
-import type { Session } from "next-auth";
 
 export type CommentThreadPermalinkProps = {
 	blogId: string;
@@ -13,7 +12,6 @@ export type CommentThreadPermalinkProps = {
 	blogTitle: string;
 	blogAuthorId?: string;
 	initialComment: PublicComment;
-	initialSessionUser?: Session["user"] | null;
 };
 
 export function CommentThreadPermalink({
@@ -22,15 +20,13 @@ export function CommentThreadPermalink({
 	blogTitle,
 	blogAuthorId,
 	initialComment,
-	initialSessionUser = null,
 }: CommentThreadPermalinkProps) {
 	const { data: session, status } = useSession();
 	const sessionUser = useMemo(() => {
 		if (status === "unauthenticated") return undefined;
 		if (session?.user?.id) return session.user;
-		if (initialSessionUser?.id) return initialSessionUser;
 		return undefined;
-	}, [session?.user, initialSessionUser, status]);
+	}, [session?.user, status]);
 
 	return (
 		<section

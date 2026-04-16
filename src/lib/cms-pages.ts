@@ -37,6 +37,20 @@ const FAQ_DEFAULT_BODY = `<p>Quick answers about reading and using the site. Edi
 
 const CHANGELOG_DEFAULT_BODY = `<p>Notable updates to the site and reading experience. Edit this page in <strong>Admin → Manage Pages → Changelog</strong>. Use one <code>&lt;h2&gt;</code> per release (date and title); optional <code>&lt;h3&gt;</code> subheadings group related bullets inside that release.</p>
 
+<h2>2026-04-16 — Performance: faster header + article pages</h2>
+
+<h3>Performance</h3>
+<ul>
+<li>Public layout no longer fetches server session for the header; session UI hydrates on the client with a small skeleton fallback.</li>
+<li>Removed <code>force-dynamic</code> from cacheable public listing pages where safe (home, search, archive, topics, author pages) to enable better caching behavior.</li>
+<li>Article detail pages no longer fetch <code>auth()</code> during SSR; vote/report UI hydrates on the client.</li>
+</ul>
+
+<h3>Engagement</h3>
+<ul>
+<li>When logged out, vote and report/flag controls are hidden on articles and comments.</li>
+</ul>
+
 <h2>2026-04-11 — Comments: Reddit-style thread &amp; deferred load</h2>
 
 <h3>Reading &amp; comments</h3>

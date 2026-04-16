@@ -5,8 +5,6 @@ import { getBlogBySlugCached } from "@/queries/blog";
 import { getApprovedCommentForPublicThread } from "@/queries/comment";
 import { CommentThreadPermalink } from "@/components/client/comments/CommentThreadPermalink";
 import type { PublicComment } from "@/types/comment";
-import { auth } from "@/auth";
-
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
@@ -39,7 +37,6 @@ export default async function ArticleCommentThreadPage({
 	if (!row) notFound();
 
 	const initialComment = JSON.parse(JSON.stringify(row)) as PublicComment;
-	const session = await auth();
 
 	return (
 		<div className="mx-auto max-w-3xl pb-16 pt-6">
@@ -57,7 +54,6 @@ export default async function ArticleCommentThreadPage({
 				blogTitle={blog.title}
 				blogAuthorId={blog.authorId?.id}
 				initialComment={initialComment}
-				initialSessionUser={session?.user ?? null}
 			/>
 		</div>
 	);

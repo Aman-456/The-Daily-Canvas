@@ -129,7 +129,6 @@ export default async function AdminBlogDetailsPage({
 							total={totalComments}
 							limit={10}
 							latestComment={latestComment}
-							initialSessionUser={session?.user ?? null}
 						/>
 					</div>
 				</div>

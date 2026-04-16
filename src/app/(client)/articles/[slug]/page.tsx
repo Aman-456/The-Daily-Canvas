@@ -29,9 +29,11 @@ import {
 	jsonLdGraph,
 	siteBaseUrl,
 } from "@/lib/json-ld";
-import { auth } from "@/auth";
 import { getArticleVoteSummary } from "@/queries/vote";
-import { ArticleEngagementBar } from "@/components/client/engagement/ArticleEngagementBar";
+import {
+	ArticleEngagementHydrator,
+	OwnerVoteScoreInline,
+} from "@/components/client/engagement/ArticleEngagementHydrator";
 
 export const revalidate = 3600;
 
@@ -173,14 +175,8 @@ export default async function SingleArticlePage({
 	const postUrl = absoluteUrl(`/articles/${blog.slug}`);
 	const cover = blog.coverImage ? absoluteUrl(blog.coverImage) : undefined;
 
-	const session = await auth();
-	const { score: articleScore, myVote: myArticleVote } =
-		await getArticleVoteSummary(blog.id, session?.user?.id);
-	const viewerId = session?.user?.id;
+	const { score: articleScore } = await getArticleVoteSummary(blog.id);
 	const authorUserId = blog.authorId?.id;
-	const isArticleOwner = Boolean(
-		viewerId && authorUserId && viewerId === authorUserId,
-	);
 
 	return (
 		<div
@@ -288,21 +284,18 @@ export default async function SingleArticlePage({
 											slug={blog.slug}
 											initialCount={initialViewCount}
 										/>
-										{isArticleOwner ? (
-											<>
-												<span className="text-[10px]">•</span>
-												<span>{articleScore} votes</span>
-											</>
-										) : null}
+										<OwnerVoteScoreInline
+											score={articleScore}
+											authorUserId={authorUserId}
+										/>
 									</div>
 								</div>
 							</div>
-							<ArticleEngagementBar
+							<ArticleEngagementHydrator
 								score={articleScore}
-								myVote={myArticleVote}
 								blogId={blog.id}
 								slug={blog.slug}
-								isOwner={isArticleOwner}
+								authorUserId={authorUserId}
 							/>
 						</div>
 					</div>
@@ -368,7 +361,6 @@ export default async function SingleArticlePage({
 						total={totalComments}
 						limit={commentLimit}
 						latestComment={latestComment}
-						initialSessionUser={session?.user ?? null}
 					/>
 				</article>
 			</div>

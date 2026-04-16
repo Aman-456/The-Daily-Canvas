@@ -371,31 +371,33 @@ export function CommentItem({
 
 								{!isEditing && !displayDeleted && (
 									<div className="flex flex-wrap items-center pt-1.5">
-										<span className="mr-3 inline-flex items-center">
-											{isOwner ? (
-												<VoteButtons
-													readOnly
-													variant="bare"
-													size="xs"
-													score={Number(comment.voteScore ?? 0)}
-													myVote={0}
-												/>
-											) : (
-												<VoteButtons
-													variant="bare"
-													size="xs"
-													score={Number(comment.voteScore ?? 0)}
-													myVote={(comment.myVote ?? 0) as 1 | -1 | 0}
-													onVote={(value) =>
-														toggleCommentVote({
-															commentId: comment._id,
-															value,
-															slug,
-														})
-													}
-												/>
-											)}
-										</span>
+										{user ? (
+											<span className="mr-3 inline-flex items-center">
+												{isOwner ? (
+													<VoteButtons
+														readOnly
+														variant="bare"
+														size="xs"
+														score={Number(comment.voteScore ?? 0)}
+														myVote={0}
+													/>
+												) : (
+													<VoteButtons
+														variant="bare"
+														size="xs"
+														score={Number(comment.voteScore ?? 0)}
+														myVote={(comment.myVote ?? 0) as 1 | -1 | 0}
+														onVote={(value) =>
+															toggleCommentVote({
+																commentId: comment._id,
+																value,
+																slug,
+															})
+														}
+													/>
+												)}
+											</span>
+										) : null}
 										<div className="flex flex-wrap items-center gap-x-0.5 gap-y-1">
 										<Button
 											type="button"
@@ -522,6 +524,7 @@ export function CommentItem({
 												</DropdownMenuContent>
 											</DropdownMenu>
 										) : (
+											user ? (
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
 													<Button
@@ -544,6 +547,7 @@ export function CommentItem({
 													</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
+											) : null
 										)}
 										{showEarlyContinueThread && (
 											<Button
