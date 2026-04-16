@@ -1,9 +1,6 @@
 import {
 	getBlogBySlugCached,
-	getBlogViewCountBySlug,
-	getRelatedBlogs,
 } from "@/queries/blog";
-import { getLatestRootComment } from "@/queries/comment";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,7 +10,6 @@ import { Metadata } from "next";
 import { MarkdownWithToc } from "@/components/blog/MarkdownWithToc";
 import { extractTocFromMarkdown } from "@/lib/markdown-toc";
 import { TableOfContents } from "@/components/client/TableOfContents";
-import { RelatedPosts } from "@/components/client/RelatedPosts";
 import { BlogViewTracker } from "@/components/client/BlogViewTracker";
 import CommentSection from "@/components/client/CommentSectionLazy";
 import {
@@ -34,6 +30,7 @@ import {
 	ArticleEngagementHydrator,
 	OwnerVoteScoreInline,
 } from "@/components/client/engagement/ArticleEngagementHydrator";
+import { RelatedPostsHydrator } from "@/components/client/RelatedPostsHydrator";
 
 export const revalidate = 3600;
 
@@ -154,22 +151,12 @@ export default async function SingleArticlePage({
 	const blog = await getBlogBySlugCached(slug);
 	if (!blog) notFound();
 
-	const initialViewCount = await getBlogViewCountBySlug(slug);
-
 	const commentLimit = 10;
 	const totalComments = blog.commentsCount || 0;
 
 	const readTime = calculateReadTime(blog.content);
 
-	const latestComment =
-		totalComments > 0 ? await getLatestRootComment(blog.id) : null;
-
 	const toc = extractTocFromMarkdown(blog.content);
-	const related = await getRelatedBlogs(
-		blog.id,
-		(blog.tags ?? []).filter(Boolean),
-		4,
-	);
 
 	const base = siteBaseUrl();
 	const postUrl = absoluteUrl(`/articles/${blog.slug}`);
@@ -282,7 +269,6 @@ export default async function SingleArticlePage({
 										<span className="text-[10px]">•</span>
 										<BlogViewTracker
 											slug={blog.slug}
-											initialCount={initialViewCount}
 										/>
 										<OwnerVoteScoreInline
 											score={articleScore}
@@ -331,7 +317,11 @@ export default async function SingleArticlePage({
 						className="prose prose-md sm:prose-base md:prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-28 prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-xl prose-pre:bg-zinc-900 prose-pre:shadow-lg leading-relaxed antialiased blog-content wrap-break-word "
 					/>
 
-					<RelatedPosts posts={related} />
+					<RelatedPostsHydrator
+						blogId={blog.id}
+						tags={(blog.tags ?? []).filter(Boolean)}
+						limit={4}
+					/>
 
 					<div className="pt-12 border-t flex flex-col items-center gap-6">
 						<div className="text-center space-y-2">
@@ -360,7 +350,6 @@ export default async function SingleArticlePage({
 						initialHasMore={totalComments > 0}
 						total={totalComments}
 						limit={commentLimit}
-						latestComment={latestComment}
 					/>
 				</article>
 			</div>

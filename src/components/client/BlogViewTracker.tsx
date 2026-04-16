@@ -27,9 +27,11 @@ export function BlogViewTracker({
 	initialCount,
 }: {
 	slug: string;
-	initialCount: number;
+	initialCount?: number;
 }) {
-	const [count, setCount] = useState(initialCount);
+	const [count, setCount] = useState<number | null>(
+		typeof initialCount === "number" ? initialCount : null,
+	);
 
 	useEffect(() => {
 		if (!shouldSendViewBeacon(slug)) return;
@@ -56,16 +58,20 @@ export function BlogViewTracker({
 		};
 	}, [slug]);
 
-	const exact = `${count.toLocaleString("en-US")} views`;
+	const exact = count === null ? undefined : `${count.toLocaleString("en-US")} views`;
 
 	return (
 		<span
 			className="tabular-nums text-muted-foreground"
 			aria-live="polite"
-			aria-label={exact}
-			title={exact}
+			aria-label={count === null ? "Loading views" : exact}
+			title={count === null ? "Loading views" : exact}
 		>
-			{formatCompactNumber(count)} views
+			{count === null ? (
+				<span className="inline-block h-4 w-14 animate-pulse rounded bg-muted/70 align-middle" />
+			) : (
+				`${formatCompactNumber(count)} views`
+			)}
 		</span>
 	);
 }
