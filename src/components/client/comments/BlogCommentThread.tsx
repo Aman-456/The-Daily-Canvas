@@ -87,10 +87,12 @@ export function BlogCommentThread({
 	});
 
 	useEffect(() => {
-		if (hasBeenNear) {
+		// Avoid fetching comments when the stored aggregate is 0.
+		// The thread can still load after the first comment is posted.
+		if (hasBeenNear && total > 0) {
 			void loadFirstPage();
 		}
-	}, [hasBeenNear, loadFirstPage]);
+	}, [hasBeenNear, loadFirstPage, total]);
 
 	const scrollToComposer = useCallback(() => {
 		document.getElementById("comment-form")?.scrollIntoView({

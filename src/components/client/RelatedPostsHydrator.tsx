@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { BlogPostCardItem } from "@/types/blog-post-card";
 import { getRelatedBlogsAction } from "@/actions/related";
 import { RelatedPosts } from "@/components/client/RelatedPosts";
+import { useNearViewportOnce } from "@/hooks/useNearViewportOnce";
 
 export function RelatedPostsHydrator(props: {
 	blogId: string;
@@ -18,7 +19,14 @@ export function RelatedPostsHydrator(props: {
 	);
 	const key = useMemo(() => `${props.blogId}:${tags.join(",")}:${props.limit ?? 4}`, [props.blogId, tags, props.limit]);
 
+	const { ref, hasBeenNear } = useNearViewportOnce({
+		resetKey: key,
+		// Match the comment thread behavior: only fetch when the reader scrolls near.
+		rootMargin: "0px 0px 400px 0px",
+	});
+
 	useEffect(() => {
+		if (!hasBeenNear) return;
 		let cancelled = false;
 		(async () => {
 			if (!props.blogId || tags.length === 0) {
@@ -41,11 +49,14 @@ export function RelatedPostsHydrator(props: {
 			cancelled = true;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [key]);
+	}, [key, hasBeenNear]);
 
 	if (posts === null) {
+		if (!hasBeenNear) {
+			return <div ref={ref as any} />;
+		}
 		return (
-			<section className="pt-10 border-t space-y-4">
+			<section ref={ref as any} className="pt-10 border-t space-y-4">
 				<div className="h-5 w-32 animate-pulse rounded bg-muted/70" />
 				<div className="h-4 w-72 animate-pulse rounded bg-muted/70" />
 				<ul className="grid sm:grid-cols-2 gap-4">
