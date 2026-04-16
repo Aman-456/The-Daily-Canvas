@@ -19,8 +19,6 @@ import {
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
-export const dynamic = "force-dynamic";
-
 export async function generateMetadata({
 	params,
 }: {

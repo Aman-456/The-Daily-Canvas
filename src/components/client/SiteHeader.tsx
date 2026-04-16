@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
-import type { Session } from "next-auth";
 import { Button } from "@/components/ui/button";
-import { UserNav } from "@/components/client/UserNav";
+import { HeaderSessionSlot } from "@/components/client/HeaderSessionSlot";
 import { ThemeToggle } from "@/components/client/ThemeToggle";
 import SearchInput from "@/components/client/SearchInput";
 import { listingTitleQueryFromUrlSearchParams } from "@/lib/blog-tags";
@@ -17,15 +15,10 @@ function navLinkClass(active: boolean) {
 		: "text-muted-foreground hover:text-foreground transition-colors font-bold text-sm tracking-tight";
 }
 
-export function SiteHeader({ session }: { session: Session | null }) {
+export function SiteHeader() {
 	const pathname = usePathname();
 	const sp = useSearchParams();
 	const search = listingTitleQueryFromUrlSearchParams(sp);
-	const signInCallbackUrl = useMemo(() => {
-		const qs = sp.toString();
-		return qs ? `${pathname}?${qs}` : pathname;
-	}, [pathname, sp]);
-	const signInHref = `/signin?callbackUrl=${encodeURIComponent(signInCallbackUrl)}`;
 	const archiveActive = pathname === "/archive";
 	const aboutActive = pathname === "/about";
 	const hideNavSearch = pathname === "/search";
@@ -33,7 +26,7 @@ export function SiteHeader({ session }: { session: Session | null }) {
 	return (
 		<header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 shadow-[0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-md dark:shadow-[0_8px_24px_rgba(0,0,0,0.2)]">
 			<HeaderShareStrip />
-			<div className="mx-auto flex h-20 max-w-screen-2xl items-center justify-between gap-4 bg-background/85 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/70 sm:px-8">
+			<div className="mx-auto flex h-20 max-w-screen-2xl items-center justify-between gap-4 bg-background/85 px-4 backdrop-blur-md supports-backdrop-filter:bg-background/70 sm:px-8">
 				<div className="flex min-w-0 items-center gap-8 lg:gap-10">
 					<Link
 						href="/"
@@ -67,13 +60,7 @@ export function SiteHeader({ session }: { session: Session | null }) {
 						</Button>
 					</Link>
 					<ThemeToggle />
-					{session?.user ? (
-						<UserNav user={session.user} />
-					) : (
-						<Button variant="ghost" size="sm" className="font-medium" asChild>
-							<Link href={signInHref}>Sign in</Link>
-						</Button>
-					)}
+					<HeaderSessionSlot />
 				</div>
 			</div>
 			{!hideNavSearch && (

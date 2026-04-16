@@ -31,8 +31,6 @@ import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
-export const dynamic = "force-dynamic";
-
 type PageProps = {
 	params: Promise<{ segments?: string[] }>;
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

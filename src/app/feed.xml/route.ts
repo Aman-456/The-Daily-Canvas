@@ -3,8 +3,6 @@ import { getRecentBlogsForFeed } from "@/queries/blog";
 import { siteBaseUrl } from "@/lib/json-ld";
 import { buildBlogRssXml } from "@/lib/rss-feed";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
 	const base = siteBaseUrl();
 	if (!base) {

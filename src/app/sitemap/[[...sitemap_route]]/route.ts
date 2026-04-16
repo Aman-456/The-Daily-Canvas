@@ -5,8 +5,6 @@ import { db } from "@/db/index";
 import { blogs, users } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 
-export const dynamic = "force-dynamic";
-
 const sitemapSize = 10000;
 
 function resolveSiteOrigin(request: NextRequest): string {
