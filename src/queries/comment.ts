@@ -2,6 +2,7 @@ import { db } from "@/db/index";
 import { comments, users, blogs, commentVotes } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import { eq, and, desc, asc, isNull, inArray, sql, like } from "drizzle-orm";
+import type { UserPermissions } from "@/lib/constants";
 
 export async function getBlogComments(
 	blogId: string,
@@ -192,7 +193,7 @@ export async function getAllComments(
 	search?: string,
 	userId?: string,
 	role?: string,
-	permissions?: any,
+	permissions?: UserPermissions | null,
 	filters?: { status?: string; sort?: string },
 ) {
 	let queryConditions: any[] = [];

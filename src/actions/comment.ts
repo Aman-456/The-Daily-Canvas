@@ -9,6 +9,7 @@ import { isAdmin } from "@/lib/utils";
 import { commentSchema } from "@/lib/validations/comment";
 import { getBlogComments, getCommentReplies, getAllComments } from "@/queries/comment";
 import { eq, sql } from "drizzle-orm";
+import type { UserPermissions } from "@/lib/constants";
 
 const _getCachedAdminCommentsList = unstable_cache(
 	async (
@@ -17,7 +18,7 @@ const _getCachedAdminCommentsList = unstable_cache(
 		search?: string,
 		userId?: string,
 		role?: string,
-		permissions?: any,
+		permissions?: UserPermissions | null,
 		filters?: { status?: string; sort?: string },
 	) => getAllComments(page, limit, search, userId, role, permissions, filters),
 	["admin-comments-list"],
@@ -30,7 +31,7 @@ export const getCachedComments = async (
 	search: string,
 	userId?: string,
 	role?: string,
-	permissions?: any,
+	permissions?: UserPermissions | null,
 	filters?: { status?: string; sort?: string },
 ) => {
 	const isAdminLevel = role === "ADMIN";

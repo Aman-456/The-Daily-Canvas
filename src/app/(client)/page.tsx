@@ -1,138 +1,57 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import {
-	getBlogsCached,
-	getHomeSpotlightAndTeaserCached,
-} from "@/queries/blog";
+import { getHomeSpotlightAndTeaserCached } from "@/queries/blog";
 import { HomeFeaturedMosaic } from "@/components/client/HomeFeaturedMosaic";
 import {
 	TopicFilterChips,
 	TopicFilterChipsFallback,
 } from "@/components/client/TopicFilterChips";
 import { EditorialArchiveGrid } from "@/components/client/EditorialArchiveGrid";
-import {
-	archiveListingHref,
-	blogListingHref,
-	blogTagLabel,
-	parseListingTitleQuery,
-	parseTagSlugsFromSearchParams,
-	searchListingHref,
-	topicListingHref,
-} from "@/lib/blog-tags";
-import { parseSortFromSearchParams } from "@/lib/blog-list-sort";
-import { ListingSortBar } from "@/components/client/ListingSortBar";
 import { EditorialListingEmptyState } from "@/components/client/EditorialListingEmptyState";
 import { homeArchiveTeaserCount } from "@/lib/home-blog-grid";
 import { JsonLd } from "@/components/seo/JsonLd";
-import {
-	jsonLdGraph,
-	webPageJsonLd,
-} from "@/lib/json-ld";
+import { jsonLdGraph, webPageJsonLd } from "@/lib/json-ld";
 import type { Metadata } from "next";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
-export async function generateMetadata({
-	searchParams,
-}: {
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}): Promise<Metadata> {
-	const params = await searchParams;
-	const tags = parseTagSlugsFromSearchParams(params);
-	const messy = tags.length > 1;
+/**
+ * Home is a fully static, canonical landing page.
+ *
+ * Search, topic filters, sort, and pagination all live on dedicated routes
+ * (`/search`, `/topics/[slug]`, `/archive`). Keeping `/` free of `searchParams`
+ * lets Next render it statically and serve from the CDN; the underlying data
+ * queries are still revalidated via the `blogs` cache tag on mutations.
+ */
+export const dynamic = "force-static";
 
-	const title = "Explore Blogs | Daily Thoughts";
-	const description =
-		"Read the latest stories, blog posts, and insights.";
+const HOME_TITLE = "Explore Blogs | Daily Thoughts";
+const HOME_DESCRIPTION = "Read the latest stories, blog posts, and insights.";
 
-	return {
-		title,
-		description,
-		keywords: ["blog", "stories", "insights", "daily thoughts", "reading"],
-		alternates: {
-			canonical: `${baseUrl}/`,
-		},
-		openGraph: {
-			title,
-			description,
-			url: `${baseUrl}/`,
-		},
-		...(messy && {
-			robots: { index: false, follow: true },
-		}),
-	};
-}
+export const metadata: Metadata = {
+	title: HOME_TITLE,
+	description: HOME_DESCRIPTION,
+	keywords: ["blog", "stories", "insights", "daily thoughts", "reading"],
+	alternates: { canonical: `${baseUrl}/` },
+	openGraph: {
+		title: HOME_TITLE,
+		description: HOME_DESCRIPTION,
+		url: `${baseUrl}/`,
+	},
+};
 
-export default async function BlogsPage({
-	searchParams,
-}: {
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-	const params = await searchParams;
-	const page = typeof params.page === "string" ? Number(params.page) : 1;
-	const titleQuery = parseListingTitleQuery(params);
-	const activeTags = parseTagSlugsFromSearchParams(params);
-	const sort = parseSortFromSearchParams(params);
+const FEATURED_MOSAIC_COUNT = 4;
 
-	if (titleQuery) {
-		redirect(
-			searchListingHref({
-				tags: activeTags,
-				search: titleQuery,
-				page,
-				sort,
-			}),
-		);
-	}
-
-	if (activeTags.length === 1) {
-		redirect(topicListingHref({ slug: activeTags[0], page, sort }));
-	}
-
-	if (activeTags.length > 1) {
-		redirect(
-			archiveListingHref({
-				tags: activeTags,
-				page,
-				sort,
-			}),
-		);
-	}
-
-	if (page > 1) {
-		redirect(
-			archiveListingHref({
-				page,
-				tags: activeTags,
-				sort,
-			}),
-		);
-	}
-
-	const isCleanHome = activeTags.length === 0;
+export default async function BlogsPage() {
 	const teaserLimit = homeArchiveTeaserCount();
-	/** Only exclude posts shown in the featured mosaic (4), not the full spotlight strip (8). */
-	const featuredMosaicCount = 4;
-	const { spotlight, teaser } = isCleanHome
-		? await getHomeSpotlightAndTeaserCached({
-				teaserLimit,
-				sort,
-				featuredMosaicCount,
-			})
-		: { spotlight: null, teaser: await getBlogsCached(1, teaserLimit, "", activeTags, { sort }) };
+	const { spotlight, teaser } = await getHomeSpotlightAndTeaserCached({
+		teaserLimit,
+		featuredMosaicCount: FEATURED_MOSAIC_COUNT,
+	});
 
-	const spotlightStrip = isCleanHome ? spotlight : null;
 	const blogs = teaser.blogs;
-	const total = teaser.total;
-
-	const archiveMoreHref = archiveListingHref({ tags: activeTags, sort });
-	const hasMoreInArchive = total > blogs.length;
-
-	const featuredSlice =
-		spotlightStrip?.items?.length && page === 1
-			? spotlightStrip.items.slice(0, featuredMosaicCount)
-			: [];
+	const hasMoreInArchive = teaser.total > blogs.length;
+	const featuredSlice = spotlight?.items?.slice(0, FEATURED_MOSAIC_COUNT) ?? [];
 
 	return (
 		<div className="space-y-14 sm:space-y-16">
@@ -175,50 +94,15 @@ export default async function BlogsPage({
 					</div>
 				</div>
 
-				{isCleanHome ? (
-					<Suspense fallback={<TopicFilterChipsFallback />}>
-						<TopicFilterChips variant="editorial" />
-					</Suspense>
-				) : (
-					<Suspense
-						fallback={
-							<div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] md:items-end md:gap-6">
-								<TopicFilterChipsFallback />
-								<div className="flex w-full min-w-0 flex-col gap-2 md:max-w-[240px]">
-									<div className="h-3 w-14 animate-pulse rounded bg-muted/70" />
-									<div className="h-11 w-full animate-pulse rounded-xl bg-muted/70" />
-								</div>
-							</div>
-						}
-					>
-						<div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_minmax(200px,240px)] md:items-end md:gap-6">
-							<TopicFilterChips variant="editorial" />
-							<ListingSortBar />
-						</div>
-					</Suspense>
-				)}
-
-				{activeTags.length > 0 && (
-					<p className="text-sm text-muted-foreground">
-						Showing posts that include{" "}
-						<span className="font-medium text-foreground">
-							{activeTags.map((s) => blogTagLabel(s)).join(", ")}
-						</span>
-						.{" "}
-						<Link
-							href={blogListingHref({ sort })}
-							className="font-medium text-primary underline-offset-4 hover:underline"
-						>
-							Clear topics
-						</Link>
-					</p>
-				)}
+				<Suspense fallback={<TopicFilterChipsFallback />}>
+					<TopicFilterChips variant="editorial" />
+				</Suspense>
 			</section>
 
 			{blogs.length === 0 ? (
 				<EditorialListingEmptyState
 					title="Nothing to show yet"
-					description="No posts match these filters on the home teaser. Try another topic or open the archive for the full list."
+					description="No posts are available on the home teaser yet. Open the archive for the full list."
 				/>
 			) : (
 				<EditorialArchiveGrid blogs={blogs} />
@@ -227,7 +111,7 @@ export default async function BlogsPage({
 			{blogs.length > 0 && (
 				<div className="flex flex-col items-center gap-2 pt-8">
 					<Link
-						href={archiveMoreHref}
+						href="/archive"
 						className="font-headline inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-10 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
 					>
 						Show more

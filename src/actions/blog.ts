@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db/index";
-import { blogs, users, comments, notifications, type Blog, type NewBlog } from "@/db/schema";
+import { blogs, users, notifications } from "@/db/schema";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/utils";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/validations/blog";
 import { UploadService } from "@/lib/upload";
 import { pingIndexNow } from "@/lib/indexnow";
+import type { UserPermissions } from "@/lib/constants";
 
 interface BlogQuery {
 	authorId?: string;
@@ -30,7 +31,7 @@ async function fetchBlogsList(
 	limit: number,
 	userId?: string,
 	role?: string,
-	permissions?: any,
+	permissions?: UserPermissions | null,
 	sort: "created_desc" | "created_asc" | "views_desc" | "comments_desc" = "created_desc",
 ) {
 
@@ -90,7 +91,7 @@ const _getCachedAdminBlogsList = unstable_cache(
 		limit: number,
 		userId?: string,
 		role?: string,
-		permissions?: any,
+		permissions?: UserPermissions | null,
 		sort?: "created_desc" | "created_asc" | "views_desc" | "comments_desc",
 	) => fetchBlogsList(query, skip, limit, userId, role, permissions, sort),
 	["admin-blogs-list"],
@@ -103,7 +104,7 @@ export const getCachedBlogs = async (
 	limit: number,
 	userId?: string,
 	role?: string,
-	permissions?: any,
+	permissions?: UserPermissions | null,
 	sort?: "created_desc" | "created_asc" | "views_desc" | "comments_desc",
 ): Promise<[any[], number]> => {
 	const isAdminLevel = role === "ADMIN";
@@ -233,27 +234,34 @@ export async function deleteBlog(id: string) {
 			};
 		}
 
-		if (blog.coverImage) {
-			await UploadService.delete(blog.coverImage);
-		}
-
 		const slugToPing = blog.slug;
+		const coverImageToDelete = blog.coverImage;
 
-		await db.delete(blogs).where(eq(blogs.id, id));
-		await db.delete(comments).where(eq(comments.blogId, id));
+		// DB writes run in a transaction so we never end up with a half-deleted
+		// blog (e.g. blog row gone, notification missing). Comments and votes
+		// cascade-delete via their FKs (see src/db/schema.ts).
+		await db.transaction(async (tx) => {
+			await tx.delete(blogs).where(eq(blogs.id, id));
 
-		if (!isOwner) {
-			try {
-				await db.insert(notifications).values({
+			if (!isOwner) {
+				await tx.insert(notifications).values({
 					message: `Your blog "${blog.title}" was deleted by an administrator.`,
 					link: "/admin/blogs",
 					blogLink: "/admin/blogs",
 					type: "BLOG_DELETE",
-					userId: session.user.id,
+					userId: session.user!.id!,
 					targetAuthorId: blog.authorId
 				});
+			}
+		});
+
+		// Best-effort blob cleanup *after* the commit: a stray file is cheaper
+		// than losing a successful delete to a blob outage.
+		if (coverImageToDelete) {
+			try {
+				await UploadService.delete(coverImageToDelete);
 			} catch (err) {
-				console.error("Failed to notify author of deletion:", err);
+				console.error("[deleteBlog] Failed to delete cover image from blob:", err);
 			}
 		}
 
@@ -339,17 +347,15 @@ export async function updateBlog(id: string, formData: FormData) {
 			await UploadService.delete(oldCoverImage);
 		}
 
-		const newSlug =
-			slugify(title, { lower: true, strict: true }) +
-			"-" +
-			blogId.slice(-4);
+		// Slug is frozen after creation so external links, RSS, sitemap, and
+		// IndexNow history keep working even when the title is edited.
+		const existingSlug = blog.slug;
 
 		const keywordsArr = keywords;
 		const tagsArr = tags;
 
 		const updateResult = await db.update(blogs).set({
 			title,
-			slug: newSlug,
 			content,
 			excerpt,
 			coverImage,
@@ -387,12 +393,12 @@ export async function updateBlog(id: string, formData: FormData) {
 		}
 
 		revalidatePath("/");
-		revalidatePath(`/articles/${newSlug}`);
+		revalidatePath(`/articles/${existingSlug}`);
 		revalidatePath("/admin/blogs");
 		revalidateTag("blogs", "max");
 
 		if (isPublished) {
-			await pingIndexNow(newSlug);
+			await pingIndexNow(existingSlug);
 		}
 
 		return { success: true, data: { ...updatedBlog, _id: updatedBlog.id } };

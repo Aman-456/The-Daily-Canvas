@@ -4,9 +4,10 @@ import { db } from "@/db/index";
 import { users, blogs, comments } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import { eq, inArray, count } from "drizzle-orm";
+import type { UserPermissions } from "@/lib/constants";
 
 export const getCachedStats = unstable_cache(
-  async (userId?: string, role?: string, permissions?: any) => {
+  async (userId?: string, role?: string, permissions?: UserPermissions | null) => {
     const isNonAdmin = role === "USER";
     const lacksStatsPermission = !permissions?.canSeeStats;
 
