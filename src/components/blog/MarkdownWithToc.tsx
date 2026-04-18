@@ -2,17 +2,27 @@ import type { ComponentPropsWithoutRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { extractTocFromMarkdown } from "@/lib/markdown-toc";
+import {
+	extractTocFromMarkdown,
+	type TocItem,
+} from "@/lib/markdown-toc";
 import Image from "next/image";
 
 export function MarkdownWithToc({
 	content,
+	toc: tocFromProps,
 	className,
 }: {
 	content: string;
+	/**
+	 * Pre-parsed TOC. When omitted we extract it here, but callers that already
+	 * parsed it (e.g. the article page) should pass it in to avoid parsing
+	 * the same markdown twice on every render.
+	 */
+	toc?: TocItem[];
 	className?: string;
 }) {
-	const toc = extractTocFromMarkdown(content);
+	const toc = tocFromProps ?? extractTocFromMarkdown(content);
 	let ptr = 0;
 
 	const takeId = (level: 2 | 3) => {

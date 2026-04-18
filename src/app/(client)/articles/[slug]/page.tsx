@@ -4,6 +4,7 @@ import {
 import { notFound } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import Link from "next/link";
 import { SocialShare } from "@/components/client/SocialShare";
 import { Metadata } from "next";
@@ -25,7 +26,6 @@ import {
 	jsonLdGraph,
 	siteBaseUrl,
 } from "@/lib/json-ld";
-import { getArticleVoteSummary } from "@/queries/vote";
 import {
 	ArticleEngagementHydrator,
 	OwnerVoteScoreInline,
@@ -162,7 +162,6 @@ export default async function SingleArticlePage({
 	const postUrl = absoluteUrl(`/articles/${blog.slug}`);
 	const cover = blog.coverImage ? absoluteUrl(blog.coverImage) : undefined;
 
-	const { score: articleScore } = await getArticleVoteSummary(blog.id);
 	const authorUserId = blog.authorId?.id;
 
 	return (
@@ -271,14 +270,13 @@ export default async function SingleArticlePage({
 											slug={blog.slug}
 										/>
 										<OwnerVoteScoreInline
-											score={articleScore}
+											blogId={blog.id}
 											authorUserId={authorUserId}
 										/>
 									</div>
 								</div>
 							</div>
 							<ArticleEngagementHydrator
-								score={articleScore}
 								blogId={blog.id}
 								slug={blog.slug}
 								authorUserId={authorUserId}
@@ -289,13 +287,13 @@ export default async function SingleArticlePage({
 					{blog.coverImage && (
 						<figure className="space-y-3">
 							<div className="relative aspect-video rounded-xl overflow-hidden bg-muted shadow-sm">
-								<img
+								<Image
 									src={blog.coverImage}
 									alt={`${blog.title} cover image`}
-									loading="eager"
-									decoding="async"
-									referrerPolicy="no-referrer"
-									className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+									fill
+									priority
+									sizes="(max-width: 768px) 100vw, (max-width: 1280px) 768px, 832px"
+									className="object-cover transition-transform duration-500 hover:scale-105"
 								/>
 							</div>
 						</figure>
@@ -314,6 +312,7 @@ export default async function SingleArticlePage({
 
 					<MarkdownWithToc
 						content={blog.content}
+						toc={toc}
 						className="prose prose-md sm:prose-base md:prose-lg dark:prose-invert max-w-none prose-headings:scroll-mt-28 prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-img:rounded-xl prose-pre:bg-zinc-900 prose-pre:shadow-lg leading-relaxed antialiased blog-content wrap-break-word "
 					/>
 

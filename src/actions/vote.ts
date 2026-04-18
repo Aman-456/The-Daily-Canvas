@@ -5,6 +5,11 @@ import { db } from "@/db/index";
 import { articleVotes, commentVotes, comments, blogs } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import {
+	ARTICLE_VOTES_TAG,
+	getArticleScoreCached,
+	getMyArticleVoteValue,
+} from "@/queries/vote";
 
 function normalizeVoteValue(value: number): 1 | -1 | null {
 	if (value === 1) return 1;
@@ -12,7 +17,8 @@ function normalizeVoteValue(value: number): 1 | -1 | null {
 	return null;
 }
 
-async function getArticleScore(blogId: string): Promise<number> {
+/** Uncached: used right after a write so the returned score reflects the mutation. */
+async function readArticleScoreFresh(blogId: string): Promise<number> {
 	const [row] = await db
 		.select({ score: sql<number>`coalesce(sum(${articleVotes.value}), 0)` })
 		.from(articleVotes)
@@ -82,11 +88,12 @@ export async function toggleArticleVote(params: {
 			myVote = normalized;
 		}
 
-		const score = await getArticleScore(params.blogId);
+		const score = await readArticleScoreFresh(params.blogId);
 
 		if (params.slug) {
 			revalidatePath(`/articles/${params.slug}`);
 		}
+		revalidateTag(ARTICLE_VOTES_TAG, "max");
 		revalidateTag("blogs", "max");
 
 		return { success: true, data: { score, myVote } };
@@ -164,18 +171,30 @@ export async function toggleCommentVote(params: {
 	}
 }
 
-export async function getMyArticleVote(blogId: string) {
+/**
+ * Public article score — used by the owner's byline chip. Cached at the
+ * query layer so repeated reads cost a single in-memory cache hit.
+ */
+export async function getArticleScore(blogId: string) {
+	const score = await getArticleScoreCached(blogId);
+	return { success: true as const, data: { score } };
+}
+
+/**
+ * Combined vote state for the article engagement bar: public (cached) score
+ * plus the viewer's own vote. Logged-out viewers get `myVote = 0` without
+ * hitting the DB for the per-user query.
+ */
+export async function getArticleVoteState(blogId: string) {
 	const session = await auth();
-	if (!session?.user?.id) return { success: true, data: { myVote: 0 as 0 } };
-	const [row] = await db
-		.select({ value: articleVotes.value })
-		.from(articleVotes)
-		.where(and(eq(articleVotes.blogId, blogId), eq(articleVotes.userId, session.user.id)))
-		.limit(1);
-	return {
-		success: true,
-		data: { myVote: (row?.value === 1 ? 1 : row?.value === -1 ? -1 : 0) as 1 | -1 | 0 },
-	};
+	const userId = session?.user?.id ?? null;
+	const [score, myVote] = await Promise.all([
+		getArticleScoreCached(blogId),
+		userId
+			? getMyArticleVoteValue(blogId, userId)
+			: Promise.resolve(0 as 0),
+	]);
+	return { success: true as const, data: { score, myVote } };
 }
 
 export async function getMyCommentVote(commentId: string) {
