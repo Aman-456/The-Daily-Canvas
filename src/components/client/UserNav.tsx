@@ -13,6 +13,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
+import { clearSessionCache } from "nextauth-session-dedupe";
 import Link from "next/link";
 import { isAdmin } from "@/lib/utils";
 
@@ -63,7 +64,14 @@ export function UserNav({ user }: UserNavProps) {
 
 				<DropdownMenuItem
 					className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
-					onClick={() => signOut()}
+					onClick={() => {
+						// Wipe the 1.5s fetch-layer cache BEFORE signOut so the
+						// broadcast-echo re-fetch that NextAuth fires mid-signout
+						// misses the cache and hits the network, returning the
+						// fresh signed-out session instead of a stale one.
+						clearSessionCache();
+						void signOut();
+					}}
 				>
 					<LogOut className="mr-2 h-4 w-4" />
 					<span>Log out</span>

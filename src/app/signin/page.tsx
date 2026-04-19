@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getProviders, signIn } from "next-auth/react";
 import type { SignInResponse } from "next-auth/react";
+import { clearSessionCache } from "nextauth-session-dedupe";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -125,6 +126,10 @@ function SignInForm() {
 			}
 
 			if (res.ok) {
+				// Drop the fetch-layer session cache so any render that happens
+				// before the full-page navigation reads the newly authenticated
+				// session instead of a stale "signed out" response.
+				clearSessionCache();
 				window.location.href = res.url ?? callbackUrl;
 				return;
 			}
