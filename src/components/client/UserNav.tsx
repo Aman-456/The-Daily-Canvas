@@ -13,7 +13,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
-import { clearSessionCache } from "nextauth-session-dedupe";
+import { clearCoalescerCache } from "fetch-coalescer";
 import Link from "next/link";
 import { isAdmin } from "@/lib/utils";
 
@@ -69,7 +69,7 @@ export function UserNav({ user }: UserNavProps) {
 						// broadcast-echo re-fetch that NextAuth fires mid-signout
 						// misses the cache and hits the network, returning the
 						// fresh signed-out session instead of a stale one.
-						clearSessionCache();
+						clearCoalescerCache();
 						void signOut();
 					}}
 				>

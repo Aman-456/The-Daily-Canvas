@@ -1,7 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import "nextauth-session-dedupe/auto";
+import "fetch-coalescer/auto";
 
 /**
  * Wraps the app with NextAuth's SessionProvider.
@@ -13,12 +13,12 @@ import "nextauth-session-dedupe/auto";
  *     window focus and from polling every few minutes. This was the main
  *     source of redundant calls on production.
  *
- *  2. `nextauth-session-dedupe/auto` — dedupes the well-known second
+ *  2. `fetch-coalescer/auto` — dedupes the well-known second
  *     `/api/auth/session` request that NextAuth v5 fires on mount due to its
  *     internal same-tab `BroadcastChannel` echo. The side-effect import
  *     installs a thin fetch-layer cache before any component mounts, with
  *     default options (1.5s TTL on `/api/auth/session`).
- *     See https://www.npmjs.com/package/nextauth-session-dedupe
+ *     See https://www.npmjs.com/package/fetch-coalescer
  *
  * Components that need a forced session refresh should call `update()` from
  * `useSession()` explicitly.
