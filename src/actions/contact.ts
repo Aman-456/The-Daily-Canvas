@@ -30,6 +30,7 @@ import {
 	isContactSubmissionStatus,
 } from "@/lib/contact-submission-status";
 import { revalidatePath } from "next/cache";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 export type ContactFormState = {
 	success: boolean;
@@ -46,6 +47,15 @@ export async function submitContactMessage(
 	formData: FormData,
 ): Promise<ContactFormState> {
 	const session = await auth();
+
+	const ip = await getClientIp();
+	const limit = await rateLimit(`contact:${ip}`, 3, 3600);
+	if (!limit.success) {
+		return {
+			success: false,
+			error: "Too many messages. Please try again later.",
+		};
+	}
 
 	let name = formString(formData, "name");
 	let email = formString(formData, "email");

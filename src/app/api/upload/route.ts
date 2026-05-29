@@ -1,11 +1,20 @@
 import { put } from "@vercel/blob";
 import { auth } from "@/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
 	const session = await auth();
 	if (!session?.user?.id) {
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	const limit = await rateLimit(`upload:${session.user.id}`, 30, 3600);
+	if (!limit.success) {
+		return NextResponse.json(
+			{ error: "Too many uploads. Please try again later." },
+			{ status: 429, headers: { "Retry-After": String(limit.reset) } },
+		);
 	}
 
 	const formData = await request.formData();
@@ -45,10 +54,10 @@ export async function POST(request: Request) {
 		});
 
 		return NextResponse.json({ url: blob.url });
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Upload failed:", error);
 		return NextResponse.json(
-			{ error: error.message || "Upload failed" },
+			{ error: error instanceof Error ? error.message : "Upload failed" },
 			{ status: 500 },
 		);
 	}

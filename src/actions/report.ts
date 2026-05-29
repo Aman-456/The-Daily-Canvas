@@ -17,8 +17,10 @@ import {
 } from "@/lib/cache-invalidation";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { getAnyAdminUserId, insertAdminOnlyNotification } from "@/lib/notify-admins";
+import { rateLimit } from "@/lib/rate-limit";
 
 const AUTO_HIDE_THRESHOLD = 5;
+const REPORTS_PER_HOUR = 10;
 
 function parseReportText(v: FormDataEntryValue | null): string {
 	return typeof v === "string" ? v.trim() : "";
@@ -28,6 +30,11 @@ export async function reportArticle(formData: FormData) {
 	try {
 		const session = await auth();
 		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+		const limit = await rateLimit(`report:${session.user.id}`, REPORTS_PER_HOUR, 3600);
+		if (!limit.success) {
+			return { success: false, error: "Too many reports. Please try again later." };
+		}
 
 		const blogId = parseReportText(formData.get("blogId"));
 		const slug = parseReportText(formData.get("slug"));
@@ -104,6 +111,11 @@ export async function reportComment(formData: FormData) {
 	try {
 		const session = await auth();
 		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+		const limit = await rateLimit(`report:${session.user.id}`, REPORTS_PER_HOUR, 3600);
+		if (!limit.success) {
+			return { success: false, error: "Too many reports. Please try again later." };
+		}
 
 		const commentId = parseReportText(formData.get("commentId"));
 		const slug = parseReportText(formData.get("slug"));

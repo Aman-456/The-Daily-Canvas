@@ -7,6 +7,7 @@ import {
 import { eq } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { CACHE_PROFILE, CACHE_TAGS } from "@/lib/cache-keys";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,6 +31,15 @@ export async function POST(req: Request) {
 			return NextResponse.json(
 				{ error: "Database is not configured (DATABASE_URL)." },
 				{ status: 503 },
+			);
+		}
+
+		const ip = await getClientIp();
+		const limit = await rateLimit(`newsletter:${ip}`, 5, 3600);
+		if (!limit.success) {
+			return NextResponse.json(
+				{ error: "Too many requests. Please try again later." },
+				{ status: 429, headers: { "Retry-After": String(limit.reset) } },
 			);
 		}
 
