@@ -5,7 +5,8 @@ import { getModerationQueue, type ModerationQueueType } from "@/queries/moderati
 import { db } from "@/db/index";
 import { articleReports, commentReports } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import { invalidateBlogs, invalidateComments } from "@/lib/cache-invalidation";
 
 export async function getModerationQueueAction(params: {
 	type: ModerationQueueType;
@@ -32,7 +33,7 @@ export async function resolveReports(params: {
 			.update(articleReports)
 			.set({ status: "resolved", updatedAt: new Date() })
 			.where(and(eq(articleReports.blogId, params.targetId), eq(articleReports.status, "open")));
-		revalidateTag("blogs", "max");
+		invalidateBlogs();
 	} else {
 		await db
 			.update(commentReports)
@@ -43,7 +44,7 @@ export async function resolveReports(params: {
 					eq(commentReports.status, "open"),
 				),
 			);
-		revalidateTag("comments", "max");
+		invalidateComments();
 	}
 
 	revalidatePath("/admin/moderation");

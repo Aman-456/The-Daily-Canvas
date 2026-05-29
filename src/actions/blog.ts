@@ -4,7 +4,9 @@ import { db } from "@/db/index";
 import { blogs, users, notifications } from "@/db/schema";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/utils";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-keys";
+import { invalidateBlogs, invalidateStats } from "@/lib/cache-invalidation";
 import slugify from "slugify";
 import { unstable_cache } from "next/cache";
 import { eq, desc, asc, and, sql, ilike } from "drizzle-orm";
@@ -95,7 +97,7 @@ const _getCachedAdminBlogsList = unstable_cache(
 		sort?: "created_desc" | "created_asc" | "views_desc" | "comments_desc",
 	) => fetchBlogsList(query, skip, limit, userId, role, permissions, sort),
 	["admin-blogs-list"],
-	{ revalidate: 86400, tags: ["blogs"] }
+	{ revalidate: 86400, tags: [CACHE_TAGS.blogs, CACHE_TAGS.blogList] }
 );
 
 export const getCachedBlogs = async (
@@ -182,10 +184,9 @@ export async function createBlog(formData: FormData) {
 
 		const newBlog = insertResult[0];
 
-		revalidatePath("/");
+		invalidateBlogs();
+		invalidateStats();
 		revalidatePath("/admin/blogs");
-		revalidateTag("blogs", "max");
-		revalidateTag("stats", "max");
 
 		if (isPublished) {
 			await pingIndexNow(slug);
@@ -265,10 +266,9 @@ export async function deleteBlog(id: string) {
 			}
 		}
 
-		revalidatePath("/");
+		invalidateBlogs();
+		invalidateStats();
 		revalidatePath("/admin/blogs");
-		revalidateTag("blogs", "max");
-		revalidateTag("stats", "max");
 
 		await pingIndexNow(slugToPing);
 
@@ -392,10 +392,9 @@ export async function updateBlog(id: string, formData: FormData) {
 			}
 		}
 
-		revalidatePath("/");
+		invalidateBlogs();
 		revalidatePath(`/articles/${existingSlug}`);
 		revalidatePath("/admin/blogs");
-		revalidateTag("blogs", "max");
 
 		if (isPublished) {
 			await pingIndexNow(existingSlug);
@@ -447,7 +446,7 @@ export async function saveDraft(blogId: string, formData: FormData) {
 			.where(eq(blogs.id, blogId));
 
 		revalidatePath(`/admin/blogs/${blogId}/edit`);
-		revalidateTag("blogs", "max");
+		invalidateBlogs();
 
 		return { success: true };
 	} catch (error: any) {

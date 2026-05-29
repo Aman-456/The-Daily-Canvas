@@ -1,10 +1,20 @@
 "use server";
 
-import { revalidateTag, revalidatePath } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/utils";
+import type { CacheGroup } from "@/lib/cache-keys";
+import {
+    invalidateAll,
+    invalidateBlogs,
+    invalidateComments,
+    invalidateNewsletter,
+    invalidatePages,
+    invalidateStats,
+    invalidateUsers,
+} from "@/lib/cache-invalidation";
 
-export async function clearAppCache(type: 'blogs' | 'comments' | 'users' | 'pages' | 'homepage' | 'newsletter' | 'stats' | 'all') {
+export async function clearAppCache(type: CacheGroup) {
     const session = await auth();
     if (!isAdmin(session?.user?.role)) {
         return { success: false, error: "Unauthorized: Admin only" };
@@ -13,53 +23,41 @@ export async function clearAppCache(type: 'blogs' | 'comments' | 'users' | 'page
     try {
         switch (type) {
             case 'blogs':
-                revalidateTag('blogs', 'max');
+                invalidateBlogs();
                 revalidatePath('/admin/blogs');
                 break;
             case 'comments':
-                revalidateTag('comments', 'max');
+                invalidateComments();
                 revalidatePath('/admin/comments');
                 break;
             case 'users':
-                revalidateTag('users', 'max');
+                invalidateUsers();
                 revalidatePath('/admin/users');
                 break;
             case 'pages':
-                revalidateTag('pages', 'max');
-                revalidateTag('page-privacy-policy', 'max');
-                revalidateTag('page-terms-of-service', 'max');
-                revalidateTag('page-faq', 'max');
-                revalidateTag('page-changelog', 'max');
+                invalidatePages();
                 revalidatePath('/admin/pages');
                 break;
             case 'newsletter':
-                revalidateTag('newsletter-subscribers', 'max');
+                invalidateNewsletter();
                 revalidatePath('/admin/newsletter');
                 break;
             case 'stats':
-                revalidateTag('stats', 'max');
+                invalidateStats();
                 revalidatePath('/admin');
                 break;
             case 'homepage':
                 revalidatePath('/');
                 break;
             case 'all':
-                revalidateTag('blogs', 'max');
-                revalidateTag('comments', 'max');
-                revalidateTag('users', 'max');
-                revalidateTag('pages', 'max');
-                revalidateTag('page-privacy-policy', 'max');
-                revalidateTag('page-terms-of-service', 'max');
-                revalidateTag('page-faq', 'max');
-                revalidateTag('page-changelog', 'max');
-                revalidateTag('newsletter-subscribers', 'max');
-                revalidateTag('stats', 'max');
-                revalidatePath('/');
-                revalidatePath('/admin');
+                invalidateAll();
                 break;
         }
         return { success: true };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to clear cache",
+        };
     }
 }

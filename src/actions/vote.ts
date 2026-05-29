@@ -5,6 +5,8 @@ import { db } from "@/db/index";
 import { articleVotes, commentVotes, comments, blogs } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { CACHE_PROFILE } from "@/lib/cache-keys";
+import { invalidateArticle, invalidateComments } from "@/lib/cache-invalidation";
 import {
 	ARTICLE_VOTES_TAG,
 	getArticleScoreCached,
@@ -90,11 +92,8 @@ export async function toggleArticleVote(params: {
 
 		const score = await readArticleScoreFresh(params.blogId);
 
-		if (params.slug) {
-			revalidatePath(`/articles/${params.slug}`);
-		}
-		revalidateTag(ARTICLE_VOTES_TAG, "max");
-		revalidateTag("blogs", "max");
+		revalidateTag(ARTICLE_VOTES_TAG, CACHE_PROFILE);
+		invalidateArticle(params.slug);
 
 		return { success: true, data: { score, myVote } };
 	} catch (error: any) {
@@ -159,10 +158,8 @@ export async function toggleCommentVote(params: {
 
 		const score = await getCommentScore(params.commentId);
 
-		if (params.slug) {
-			revalidatePath(`/articles/${params.slug}`);
-		}
-		revalidateTag("comments", "max");
+		if (params.slug) revalidatePath(`/articles/${params.slug}`);
+		invalidateComments();
 
 		return { success: true, data: { score, myVote } };
 	} catch (error: any) {

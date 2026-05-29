@@ -17,6 +17,7 @@ import {
 import { isBlogTagSlug } from "@/lib/blog-tags";
 import type { BlogListSort } from "@/lib/blog-list-sort";
 import { parseBlogListSort } from "@/lib/blog-list-sort";
+import { CACHE_TAGS, blogTag } from "@/lib/cache-keys";
 
 import { blogSummarySelector, blogFullSelector } from "@/db/selectors";
 
@@ -48,7 +49,7 @@ const _getCachedBlogsList = unstable_cache(
 	["blogs-list"],
 	{
 		revalidate: allBlogsCacheTTL,
-		tags: ["blogs"],
+		tags: [CACHE_TAGS.blogs, CACHE_TAGS.blogList],
 	},
 );
 
@@ -98,7 +99,7 @@ const _getHomeTeaserExcludingSlugsCached = unstable_cache(
 		};
 	},
 	["home-teaser-excluding-slugs-v1"],
-	{ revalidate: 3600, tags: ["blogs"] },
+	{ revalidate: 3600, tags: [CACHE_TAGS.blogs, CACHE_TAGS.blogList] },
 );
 
 export async function getHomeTeaserExcludingSlugsCached(params: {
@@ -142,7 +143,7 @@ const _getHomeSpotlightAndTeaserCached = unstable_cache(
 		return { spotlight, teaser };
 	},
 	["home-spotlight-and-teaser-v1"],
-	{ revalidate: 3600, tags: ["blogs"] },
+	{ revalidate: 3600, tags: [CACHE_TAGS.blogs, CACHE_TAGS.blogList] },
 );
 
 export async function getHomeSpotlightAndTeaserCached(params: {
@@ -409,18 +410,20 @@ const _getBlogSingleShared = async (idOrSlug: string, onlyPublished = true) => {
 	return bySlug[0] || null;
 };
 
-const _getBlogBySlugCached = unstable_cache(
-	async (slug: string) => _getBlogSingleShared(slug, true),
-	["blog-single-v2"],
-	{ revalidate: cacheTTL, tags: ["blogs"] },
-);
-
-export const getBlogBySlugCached = (slug: string) => _getBlogBySlugCached(slug);
+// Tagged per-slug so a comment/vote on one article only busts that article's
+// cache, not every cached post. `unstable_cache` tags are fixed at creation, so
+// the wrapper is built per slug (slug is also in the key parts).
+export const getBlogBySlugCached = (slug: string) =>
+	unstable_cache(
+		async () => _getBlogSingleShared(slug, true),
+		["blog-single-v2", slug],
+		{ revalidate: cacheTTL, tags: [CACHE_TAGS.blogs, blogTag(slug)] },
+	)();
 
 const _getBlogByIdCached = unstable_cache(
 	async (id: string) => _getBlogSingleShared(id, false),
 	["blog-id-v2"],
-	{ revalidate: cacheTTL, tags: ["blogs"] },
+	{ revalidate: cacheTTL, tags: [CACHE_TAGS.blogs] },
 );
 
 export const getBlogByIdCached = (id: string) => _getBlogByIdCached(id);
@@ -445,7 +448,7 @@ const _getSpotlightStrip = unstable_cache(
 		return { items };
 	},
 	["home-spotlight-strip"],
-	{ revalidate: 3600, tags: ["blogs"] },
+	{ revalidate: 3600, tags: [CACHE_TAGS.blogs, CACHE_TAGS.blogList] },
 );
 
 export const getSpotlightStrip = () => _getSpotlightStrip();

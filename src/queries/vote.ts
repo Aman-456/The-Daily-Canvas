@@ -2,8 +2,9 @@ import { db } from "@/db/index";
 import { articleVotes, commentVotes } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-keys";
 
-export const ARTICLE_VOTES_TAG = "article-votes";
+export const ARTICLE_VOTES_TAG = CACHE_TAGS.articleVotes;
 
 const ARTICLE_VOTE_CACHE_TTL = 3600;
 

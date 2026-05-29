@@ -3,9 +3,11 @@
 import { db } from "@/db/index";
 import { users } from "@/db/schema";
 import { auth } from "@/auth";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { isAdmin } from "@/lib/utils";
 import { unstable_cache } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-keys";
+import { invalidateStats, invalidateUsers } from "@/lib/cache-invalidation";
 import { and, count, eq, like, or, desc, asc, sql } from "drizzle-orm";
 
 export const getCachedUsers = unstable_cache(
@@ -54,7 +56,7 @@ export const getCachedUsers = unstable_cache(
 		return [userResults, userCount[0].count];
 	},
 	["admin-users-list"],
-	{ revalidate: 86400, tags: ["users"] }
+	{ revalidate: 86400, tags: [CACHE_TAGS.users] }
 );
 
 export async function toggleUserDisabled(userId: string) {
@@ -79,7 +81,7 @@ export async function toggleUserDisabled(userId: string) {
 			.where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
-		revalidateTag("users", "max");
+		invalidateUsers();
 
 		return { success: true };
 	} catch (error: any) {
@@ -130,7 +132,7 @@ export async function toggleUserRole(
 		await db.update(users).set({ role: newRole }).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
-		revalidateTag("users", "max");
+		invalidateUsers();
 
 		return { success: true };
 	} catch (error: any) {
@@ -243,8 +245,8 @@ export async function deleteUser(userId: string) {
 		await db.delete(users).where(eq(users.id, userId));
 
 		revalidatePath("/admin/users");
-		revalidateTag("users", "max");
-		revalidateTag("stats", "max");
+		invalidateUsers();
+		invalidateStats();
 
 		return { success: true };
 	} catch (error: any) {

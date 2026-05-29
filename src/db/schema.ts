@@ -7,6 +7,7 @@ import {
   boolean,
   json,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core"
 import type { AdapterAccountType } from "next-auth/adapters"
 
@@ -110,7 +111,11 @@ export const blogs = pgTable("blog", {
   viewCount: integer("viewCount").default(0).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
-})
+}, (t) => ({
+  authorIdx: index("blog_author_id_idx").on(t.authorId),
+  listIdx: index("blog_published_hidden_created_idx").on(t.isPublished, t.isHidden, t.createdAt),
+  tagsIdx: index("blog_tags_gin_idx").using("gin", t.tags),
+}))
 
 export const comments = pgTable("comment", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -126,7 +131,10 @@ export const comments = pgTable("comment", {
   isHidden: boolean("isHidden").default(false).notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().$onUpdate(() => new Date()).notNull(),
-});
+}, (t) => ({
+  blogIdx: index("comment_blog_id_idx").on(t.blogId),
+  parentIdx: index("comment_parent_id_idx").on(t.parentId),
+}));
 
 export const articleVotes = pgTable(
   "article_vote",

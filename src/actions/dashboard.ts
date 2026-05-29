@@ -5,6 +5,7 @@ import { users, blogs, comments } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import { eq, inArray, count } from "drizzle-orm";
 import type { UserPermissions } from "@/lib/constants";
+import { CACHE_TAGS } from "@/lib/cache-keys";
 
 export const getCachedStats = unstable_cache(
   async (userId?: string, role?: string, permissions?: UserPermissions | null) => {
@@ -36,5 +37,5 @@ export const getCachedStats = unstable_cache(
     return [userCountResult[0].count, blogCountResult[0].count, commentCountResult[0].count];
   },
   ["admin-dashboard-stats"],
-  { revalidate: 86400, tags: ["stats"] }
+  { revalidate: 86400, tags: [CACHE_TAGS.stats] }
 );

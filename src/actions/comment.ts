@@ -2,9 +2,15 @@
 
 import { db } from "@/db/index";
 import { comments, blogs, notifications, users } from "@/db/schema";
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 
+import { CACHE_TAGS } from "@/lib/cache-keys";
+import {
+	invalidateArticle,
+	invalidateComments,
+	invalidateStats,
+} from "@/lib/cache-invalidation";
 import { isAdmin } from "@/lib/utils";
 import { commentSchema } from "@/lib/validations/comment";
 import { getBlogComments, getCommentReplies, getAllComments } from "@/queries/comment";
@@ -22,7 +28,7 @@ const _getCachedAdminCommentsList = unstable_cache(
 		filters?: { status?: string; sort?: string },
 	) => getAllComments(page, limit, search, userId, role, permissions, filters),
 	["admin-comments-list"],
-	{ revalidate: 86400, tags: ["comments"] }
+	{ revalidate: 86400, tags: [CACHE_TAGS.comments] }
 );
 
 export const getCachedComments = async (
@@ -117,11 +123,9 @@ export async function addComment(formData: FormData) {
 			console.error("[addComment] Failed to create notification:", notifErr);
 		}
 
-		if (slug) revalidatePath(`/articles/${slug}`);
-		revalidatePath("/");
-		revalidateTag("blogs", "max");
-		revalidateTag("comments", "max");
-		revalidateTag("stats", "max");
+		invalidateArticle(slug);
+		invalidateComments();
+		invalidateStats();
 
 		return { success: true, data: { ...populated, _id: populated.id } };
 	} catch (error: any) {
@@ -174,9 +178,8 @@ export async function toggleCommentApproval(commentId: string) {
 
 		await updateBlogCommentCount(comment.blogId);
 
-		revalidatePath("/");
-		revalidateTag("blogs", "max");
-		revalidateTag("comments", "max");
+		invalidateArticle(null);
+		invalidateComments();
 		return { success: true };
 	} catch (error: any) {
 		console.error("[toggleCommentApproval] Error:", error);
@@ -224,9 +227,7 @@ export async function updateComment(
 		await db.update(comments).set({ content: parsed.data.content, isEdited: true }).where(eq(comments.id, commentId));
 
 		if (slug) revalidatePath(`/articles/${slug}`);
-		revalidatePath("/");
-		revalidateTag("blogs", "max");
-		revalidateTag("comments", "max");
+		invalidateComments();
 
 		return { success: true };
 	} catch (error: any) {
@@ -278,13 +279,11 @@ export async function deleteComment(
 			await db.delete(comments).where(eq(comments.id, commentId));
 		}
 
-		if (slug) revalidatePath(`/articles/${slug}`);
-		revalidatePath("/");
-		revalidateTag("blogs", "max");
-		revalidateTag("comments", "max");
-
 		await updateBlogCommentCount(blogId);
-		revalidateTag("stats", "max");
+
+		invalidateArticle(slug);
+		invalidateComments();
+		invalidateStats();
 
 		return { success: true };
 	} catch (error: any) {
@@ -311,11 +310,9 @@ export async function deleteAllCommentsForBlog(blogId: string, slug?: string) {
 
 		await updateBlogCommentCount(blogId);
 
-		if (slug) revalidatePath(`/articles/${slug}`);
-		revalidatePath("/");
-		revalidateTag("blogs", "max");
-		revalidateTag("comments", "max");
-		revalidateTag("stats", "max");
+		invalidateArticle(slug);
+		invalidateComments();
+		invalidateStats();
 
 		return { success: true };
 	} catch (error: any) {

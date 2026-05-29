@@ -9,7 +9,12 @@ import {
 	comments,
 } from "@/db/schema";
 import { and, count, eq } from "drizzle-orm";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
+import {
+	invalidateArticle,
+	invalidateBlogs,
+	invalidateComments,
+} from "@/lib/cache-invalidation";
 import { checkPermission, PERMISSIONS } from "@/lib/permissions";
 import { getAnyAdminUserId, insertAdminOnlyNotification } from "@/lib/notify-admins";
 
@@ -86,8 +91,7 @@ export async function reportArticle(formData: FormData) {
 			console.error("[reportArticle] admin notification:", err);
 		}
 
-		if (slug) revalidatePath(`/articles/${slug}`);
-		revalidateTag("blogs", "max");
+		invalidateArticle(slug || null);
 
 		return { success: true, data: { hidden, reportsCount } };
 	} catch (error: any) {
@@ -161,7 +165,7 @@ export async function reportComment(formData: FormData) {
 		}
 
 		if (slug) revalidatePath(`/articles/${slug}`);
-		revalidateTag("comments", "max");
+		invalidateComments();
 
 		return { success: true, data: { hidden, reportsCount } };
 	} catch (error: any) {
@@ -174,7 +178,7 @@ export async function setArticleHidden(params: { blogId: string; hidden: boolean
 	const { authorized } = await checkPermission(PERMISSIONS.MANAGE_BLOGS);
 	if (!authorized) return { success: false, error: "Unauthorized" };
 	await db.update(blogs).set({ isHidden: params.hidden, updatedAt: new Date() }).where(eq(blogs.id, params.blogId));
-	revalidateTag("blogs", "max");
+	invalidateBlogs();
 	return { success: true };
 }
 
@@ -182,7 +186,7 @@ export async function setCommentHidden(params: { commentId: string; hidden: bool
 	const { authorized } = await checkPermission(PERMISSIONS.MANAGE_COMMENTS);
 	if (!authorized) return { success: false, error: "Unauthorized" };
 	await db.update(comments).set({ isHidden: params.hidden, updatedAt: new Date() }).where(eq(comments.id, params.commentId));
-	revalidateTag("comments", "max");
+	invalidateComments();
 	return { success: true };
 }
 

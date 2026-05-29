@@ -4,16 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { clearAppCache } from "@/actions/cache";
+import type { CacheGroup } from "@/lib/cache-keys";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, Globe, FileText, MessageSquare, Users, Files, Database, Mail, LayoutDashboard } from "lucide-react";
 
 export function CacheManagerClient() {
     const [loading, setLoading] = useState<string | null>(null);
 
-    const handleClear = async (type: string, name: string) => {
+    const handleClear = async (type: CacheGroup, name: string) => {
         setLoading(type);
         try {
-            const result = await clearAppCache(type as any);
+            const result = await clearAppCache(type);
             if (result.success) {
                 toast.success(`${name} cleared successfully!`);
             } else {
@@ -26,7 +27,7 @@ export function CacheManagerClient() {
         }
     };
 
-    const caches = [
+    const caches: { id: CacheGroup; name: string; description: string; icon: typeof Globe }[] = [
         { id: 'homepage', name: 'Homepage Cache', description: 'Clear the main landing page, forcing a rebuild of the public UI.', icon: Globe },
         { id: 'blogs', name: 'Blogs API Cache', description: 'Clear blogs list from the cache. Affects Public and Admin fetching.', icon: FileText },
         { id: 'comments', name: 'Comments Cache', description: 'Clear all comments lists. Affects articles and moderation.', icon: MessageSquare },

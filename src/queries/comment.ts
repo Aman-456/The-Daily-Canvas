@@ -3,6 +3,7 @@ import { comments, users, blogs, commentVotes } from "@/db/schema";
 import { unstable_cache } from "next/cache";
 import { eq, and, desc, asc, isNull, inArray, sql, like } from "drizzle-orm";
 import type { UserPermissions } from "@/lib/constants";
+import { CACHE_TAGS } from "@/lib/cache-keys";
 
 export async function getBlogComments(
 	blogId: string,
@@ -318,37 +319,38 @@ export async function getApprovedCommentForPublicThread(
 	};
 }
 
-export const getLatestRootComment = async (blogId: string) => {
-	const fetchWithCache = unstable_cache(
-		async () => {
-			const fetched = await db.select({
-				id: comments.id,
-				content: comments.content,
-				blogId: comments.blogId,
-				parentId: comments.parentId,
-				isApproved: comments.isApproved,
-				isEdited: comments.isEdited,
-				isDeleted: comments.isDeleted,
-				createdAt: comments.createdAt,
-				updatedAt: comments.updatedAt,
-				_id: comments.id,
-				userId: {
-					_id: users.id,
-					name: users.name,
-					image: users.image
-				}
-			})
-			.from(comments)
-			.leftJoin(users, eq(comments.userId, users.id))
-			.where(and(eq(comments.blogId, blogId), isNull(comments.parentId), eq(comments.isApproved, true)))
-			.orderBy(desc(comments.createdAt))
-			.limit(1);
+// `blogId` is passed as an argument so `unstable_cache` folds it into the cache
+// key automatically — no need to rebuild the wrapper per call.
+const _getLatestRootCommentCached = unstable_cache(
+	async (blogId: string) => {
+		const fetched = await db.select({
+			id: comments.id,
+			content: comments.content,
+			blogId: comments.blogId,
+			parentId: comments.parentId,
+			isApproved: comments.isApproved,
+			isEdited: comments.isEdited,
+			isDeleted: comments.isDeleted,
+			createdAt: comments.createdAt,
+			updatedAt: comments.updatedAt,
+			_id: comments.id,
+			userId: {
+				_id: users.id,
+				name: users.name,
+				image: users.image
+			}
+		})
+		.from(comments)
+		.leftJoin(users, eq(comments.userId, users.id))
+		.where(and(eq(comments.blogId, blogId), isNull(comments.parentId), eq(comments.isApproved, true)))
+		.orderBy(desc(comments.createdAt))
+		.limit(1);
 
-			return fetched[0] || null;
-		},
-		["latest-comment", blogId],
-		{ revalidate: 3600, tags: ["blogs"] },
-	);
+		return fetched[0] || null;
+	},
+	["latest-comment"],
+	{ revalidate: 3600, tags: [CACHE_TAGS.blogs, CACHE_TAGS.comments] },
+);
 
-	return fetchWithCache();
-};
+export const getLatestRootComment = (blogId: string) =>
+	_getLatestRootCommentCached(blogId);

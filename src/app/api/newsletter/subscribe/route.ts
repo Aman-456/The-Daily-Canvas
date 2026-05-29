@@ -6,6 +6,7 @@ import {
 } from "@/lib/notify-admins";
 import { eq } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
+import { CACHE_PROFILE, CACHE_TAGS } from "@/lib/cache-keys";
 import { NextResponse } from "next/server";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
 			throw insertErr;
 		}
 
-		revalidateTag("newsletter-subscribers", "max");
+		revalidateTag(CACHE_TAGS.newsletter, CACHE_PROFILE);
 
 		try {
 			const adminId = await getAnyAdminUserId();

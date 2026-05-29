@@ -13,6 +13,7 @@ import {
 	cmsPageCacheTag,
 	defaultCmsPage,
 } from "@/lib/cms-pages";
+import { CACHE_PROFILE, CACHE_TAGS } from "@/lib/cache-keys";
 
 const getCachedAdminPages = unstable_cache(
 	async () => {
@@ -35,7 +36,7 @@ const getCachedAdminPages = unstable_cache(
 		return [...rows].sort((a, b) => order(a.slug) - order(b.slug));
 	},
 	["admin-pages-list-full"],
-	{ revalidate: 86400, tags: ["pages"] },
+	{ revalidate: 86400, tags: [CACHE_TAGS.pages] },
 );
 
 const getCachedPageBySlug = unstable_cache(
@@ -44,7 +45,7 @@ const getCachedPageBySlug = unstable_cache(
 		return result[0] || null;
 	},
 	["page-by-slug"],
-	{ revalidate: 86400, tags: ["pages"] },
+	{ revalidate: 86400, tags: [CACHE_TAGS.pages] },
 );
 
 export async function getPageBySlug(slug: string) {
@@ -67,7 +68,7 @@ export async function getPageBySlug(slug: string) {
 				.returning();
 			page = newPageResult[0];
 			after(() => {
-				revalidateTag("pages", "max");
+				revalidateTag(CACHE_TAGS.pages, CACHE_PROFILE);
 				const insertedTag = cmsPageCacheTag(slug);
 				if (insertedTag) {
 					revalidateTag(insertedTag, "max");
@@ -129,7 +130,7 @@ export async function updateAdminPage(slug: string, content: string, title?: str
 
 		revalidatePath(`/${slug}`);
 		revalidatePath("/admin/pages");
-		revalidateTag("pages", "max");
+		revalidateTag(CACHE_TAGS.pages, CACHE_PROFILE);
 		const pageTag = cmsPageCacheTag(slug);
 		if (pageTag) {
 			revalidateTag(pageTag, "max");

@@ -4,6 +4,7 @@ import { db } from "@/db/index";
 import { newsletterSubscribers } from "@/db/schema";
 import { desc, like, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { CACHE_TAGS } from "@/lib/cache-keys";
 
 export const getCachedNewsletterSubscribers = unstable_cache(
 	async (search: string, skip: number, limit: number) => {
@@ -33,5 +34,5 @@ export const getCachedNewsletterSubscribers = unstable_cache(
 		return [rows, total] as const;
 	},
 	["admin-newsletter-subscribers"],
-	{ revalidate: 300, tags: ["newsletter-subscribers"] },
+	{ revalidate: 300, tags: [CACHE_TAGS.newsletter] },
 );
